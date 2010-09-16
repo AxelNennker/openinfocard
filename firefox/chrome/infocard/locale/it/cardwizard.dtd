@@ -1,0 +1,6 @@
+<!ENTITY cardwizard.selectatypeofcard "Seleziona un tipo di card:" >
+<!ENTITY cardwizard.title "Creazione Guidata di una Nuova Card" >
+<!ENTITY cardwizard.first "Cominciamo con lo scegliere che tipo di carta vuoi." >
+<!ENTITY cardwizard.selfasserted "Self Asserted Card" >
+<!ENTITY cardwizard.managed "Managed Card" >
+<!ENTITY cardwizard.carddetails "Dettagli della Card" >

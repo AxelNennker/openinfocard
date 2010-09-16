@@ -1,0 +1,15 @@
+<!ENTITY infocard.prefs.chooseSelector "scegli un selector" >
+<!ENTITY infocard.prefs.encryption "cifra il cardstore" >
+<!ENTITY infocard.prefs.profile "profilo corrente" >
+<!ENTITY infocard.prefs.title "Preferenze OpenInfocard Id Selector" >
+<!ENTITY infocard.prefs.manageCards "Gestisci le card" >
+<!ENTITY infocard.prefs.filePicker "..." >
+<!ENTITY infocard.prefs.URL "URL" >
+<!ENTITY infocard.prefs.localFile "file locale" >
+<!ENTITY infocard.prefs.groupboxCaption "Preferenze Cardstore" >
+<!ENTITY infocard.prefs.advertiseSelectorNO "Non condividere la presenza di un id selector" >
+<!ENTITY infocard.prefs.advertiseSelectorInstallation "Condividi al presenza dell’id selector" >
+<!ENTITY infocard.prefs.advertiseSelectorName "Condividi il nome dell’id selector" >
+<!ENTITY infocard.prefs.advertiseSelectorNameAndVersion "Condividi il nome e la versione dell’id selector" >
+<!ENTITY infocard.prefs.advertiseSelector "Condividi al presenza dell’id selector" >
+<!ENTITY infocard.prefs.enabled "ID Selector Disabilitato" >

@@ -1,0 +1,27 @@
+<!ENTITY cardmanager.title "I Miei Contatti">
+<!ENTITY cardmanager.daylabel "Identity Selector">
+<!ENTITY cardmanager.cardname "Nome della Card:">
+<!ENTITY cardmanager.givenname "Nome:">
+<!ENTITY cardmanager.surname "Cognome:">
+<!ENTITY cardmanager.email "Email:">
+<!ENTITY cardmanager.streetaddress "Via:">
+<!ENTITY cardmanager.locality "Citta:">
+<!ENTITY cardmanager.stateorprovince "Stato/Provincia:">
+<!ENTITY cardmanager.postalcode "Codice Postale:">
+<!ENTITY cardmanager.country "Nazione:">
+<!ENTITY cardmanager.primaryphone "Telefono:">
+<!ENTITY cardmanager.mobilephone "Cellulare:">
+<!ENTITY cardmanager.otherphone "Altro Telefono:">
+<!ENTITY cardmanager.dateofbirth "Data di Nascita:">
+<!ENTITY cardmanager.gender "Sesso:">
+<!ENTITY cardmanager.webpage "Pagina Web:">
+<!ENTITY cardmanager.imgurl "URL dell’Immagine:"> 
+<!ENTITY cardmanager.disableSelector "Disabilita">
+<!ENTITY cardmanager.newcard "Nuova Card">
+<!ENTITY cardmanager.deletecard "Cancella Card">
+<!ENTITY cardmanager.updatecard "Salva Card">
+<!ENTITY cardmanager.cancel "Cancella">
+<!ENTITY cardmanager.selectcard "Seleziona Card">
+<!ENTITY cardmanager.privacy "Informazioni sulla Privacy">
+<!ENTITY cardmanager.firstTimeVisit "Questa e’ la prima volta che visiti questo sito web. Rifletti!">
+<!ENTITY cardmanager.usethiscard "Usa questa card">

@@ -1,0 +1,27 @@
+<!ENTITY mWallet.title "I Miei Contatti">
+<!ENTITY mWallet.daylabel "Identity Selector">
+<!ENTITY mWallet.cardname "Nome della Card:">
+<!ENTITY mWallet.givenname "Nome:">
+<!ENTITY mWallet.surname "Cognome:">
+<!ENTITY mWallet.email "Email:">
+<!ENTITY mWallet.streetaddress "Via:">
+<!ENTITY mWallet.locality "Citta:">
+<!ENTITY mWallet.stateorprovince "Stato/Provincia:">
+<!ENTITY mWallet.postalcode "Codice Postale:">
+<!ENTITY mWallet.country "Nazione:">
+<!ENTITY mWallet.primaryphone "Telefono:">
+<!ENTITY mWallet.mobilephone "Cellulare:">
+<!ENTITY mWallet.otherphone "Altro Telefono:">
+<!ENTITY mWallet.dateofbirth "Data di Nascita:">
+<!ENTITY mWallet.gender "Sesso:">
+<!ENTITY mWallet.webpage "Pagina Web:">
+<!ENTITY mWallet.imgurl "URL dell’Immagine:"> 
+<!ENTITY mWallet.disableSelector "Disabilita">
+<!ENTITY mWallet.newcard "Nuova Card">
+<!ENTITY mWallet.deletecard "Cancella Card">
+<!ENTITY mWallet.updatecard "Salva Card">
+<!ENTITY mWallet.cancel "Cancella">
+<!ENTITY mWallet.selectcard "Seleziona Card">
+<!ENTITY mWallet.privacy "Informazioni sulla Privacy">
+<!ENTITY mWallet.firstTimeVisit "Questa e’ la prima volta che visiti questo sito web. Rifletti!">
+<!ENTITY mWallet.usethiscard "Usa questa card">
