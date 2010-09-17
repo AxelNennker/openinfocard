@@ -34,21 +34,26 @@ function isPhoneAvailable(){
   var label = document.getElementById("notify");
   var stringsBundle = document.getElementById("string-bundle");
 
-  var phoneAvailable = TokenIssuer.isPhoneAvailable();
-  if (phoneAvailable === true) {
-    TokenIssuer.resetWalletException();
-    if (label) {
-      msg = "Thank you";
-      if (stringsBundle) {
-        var text = stringsBundle.getString('thankyou');
-        if (text) {
-          msg = text;
+  try {
+    var phoneAvailable = TokenIssuer.isPhoneAvailable();
+    if (phoneAvailable === true) {
+      TokenIssuer.resetWalletException();
+      if (label) {
+        msg = "Thank you";
+        if (stringsBundle) {
+          var text = stringsBundle.getString('thankyou');
+          if (text) {
+            msg = text;
+          }
         }
+        label.setAttribute("value", msg );
       }
-      label.setAttribute("value", msg );
+      return true;
     }
-    return true;
-  }
+  } catch (ee) {
+    mwDebug("isPhoneAvailable exception=" + ee );
+    throw ee;
+  } 
   var exception = TokenIssuer.getWalletException();
   if (exception) {
     Components.utils.reportError("mWallet.isPhoneAvailable: " + exception);
@@ -112,24 +117,22 @@ function pollForPhoneAvailableCallback(policy){
       delete policy.timeoutId;
     }
 
-    var parameters = {};
-    
     try {
 //    TokenIssuer.beginCardSelection();
-//      try {
-//        // remove certs for now FIXME
-//        if (policy.hasOwnProperty("cert")) {
-//          delete policy.cert;
-//        }
-//        if (policy.hasOwnProperty("chainLength")) {
-//          for (var i=0; i<policy.chainLength;i++) {
-//            delete policy["certChain"+i];
-//          }
-//          delete policy.chainLength;
-//        }
-//      } catch(ee) {
-//        // ignore missing certs
-//      }
+      try {
+        // remove certs for now FIXME
+        if (policy.hasOwnProperty("cert")) {
+          delete policy.cert;
+        }
+        if (policy.hasOwnProperty("chainLength")) {
+          for (var i=0; i<policy.chainLength;i++) {
+            delete policy["certChain"+i];
+          }
+          delete policy.chainLength;
+        }
+      } catch(ee) {
+        // ignore missing certs
+      }
       // FIXME
       // http://schemas.t-labs.de/ws/2010/10/identity/claims/shopname?v=T-Labs+Computershop
       if (policy.hasOwnProperty("optionalClaims")) {
@@ -142,8 +145,7 @@ function pollForPhoneAvailableCallback(policy){
           if (j > 0) {
             shopname = shopname.substring(0,j);
           }
-          policy.shopname = unescape(shopname);
-          parameters.shopname = unescape(shopname);
+          policy.shopname = shopname.replace('+',' '); // uri decode
         }
       }
       
@@ -158,13 +160,13 @@ function pollForPhoneAvailableCallback(policy){
           if (j > 0) {
             price = price.substring(0,j);
           }
-          policy.price = unescape(price);
-          parameters.price = unescape(price);
+          mwDebug("pollForPhoneAvailableCallback price=" + price );
+          policy.price = price.replace('+',' '); // uri decode
+          mwDebug("pollForPhoneAvailableCallback policy.price=" + policy.price );
         }
       }
       policy.timestamp = (new Date()).toLocaleString();
-      parameters.timestamp = (new Date()).toLocaleString();
-      var serializedPolicy = JSON.stringify(parameters);
+      var serializedPolicy = JSON.stringify(policy);
       TokenIssuer.startCardSelection(serializedPolicy);
     } catch (e) {
       Components.utils.reportError("TokenIssuer.startCardSelection " + e);
@@ -447,6 +449,7 @@ function mWalletLoad(policyParam){
     }
   } catch (e) {
     mwDebug("mWalletLoad exception: " + e );
+    throw e;
   }
 }
 
