@@ -120,19 +120,19 @@ function pollForPhoneAvailableCallback(policy){
     try {
 //    TokenIssuer.beginCardSelection();
       try {
-        // remove certs for now FIXME
-        if (policy.hasOwnProperty("cert")) {
-          delete policy.cert;
-        }
-        if (policy.hasOwnProperty("chainLength")) {
-          for (var i=0; i<policy.chainLength;i++) {
-            delete policy["certChain"+i];
-          }
-          delete policy.chainLength;
-        }
-      } catch(ee) {
-        // ignore missing certs
-      }
+//        // remove certs for now FIXME
+//        if (policy.hasOwnProperty("cert")) {
+//          delete policy.cert;
+//        }
+//        if (policy.hasOwnProperty("chainLength")) {
+//          for (var i=0; i<policy.chainLength;i++) {
+//            delete policy["certChain"+i];
+//          }
+//          delete policy.chainLength;
+//        }
+//      } catch(ee) {
+//        // ignore missing certs
+//      }
       // FIXME
       // http://schemas.t-labs.de/ws/2010/10/identity/claims/shopname?v=T-Labs+Computershop
       if (policy.hasOwnProperty("optionalClaims")) {
