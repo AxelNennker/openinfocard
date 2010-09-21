@@ -11,7 +11,7 @@ function cancel(){
     event.initEvent("CancelIdentitySelector", true, true);
     window.dispatchEvent(event);
 
-     if ((!(window.arguments == undefined)) && (window.arguments.length > null)) {
+     if (window.arguments && (window.arguments.length > null)) {
        try {
          window.arguments[1](null);
        } catch (e) {
@@ -23,7 +23,7 @@ function cancel(){
 
 function getPolicy(){
   var policy = null;
-  if ((!(window.arguments == undefined)) && (window.arguments.length > null)) {
+  if (window.arguments && (window.arguments.length > null)) {
       policy = window.arguments[0];
   }
   return policy;
@@ -113,13 +113,13 @@ function pollForPhoneAvailableCallback(policy){
 
   if (phoneAvailable === true) {
     if (policy.hasOwnProperty("timeoutId")) {
-      window.clearInterval(policy["timeoutId"]);
+      window.clearInterval(policy.timeoutId);
       delete policy.timeoutId;
     }
 
     try {
 //    TokenIssuer.beginCardSelection();
-      try {
+//      try {
 //        // remove certs for now FIXME
 //        if (policy.hasOwnProperty("cert")) {
 //          delete policy.cert;
@@ -172,7 +172,7 @@ function pollForPhoneAvailableCallback(policy){
       Components.utils.reportError("TokenIssuer.startCardSelection " + e);
       return;
     }
-    policy["timeoutId"] = window.setInterval(function(){pollForSelectedCardCallback(policy);}, 1000, true);
+    policy.timeoutId = window.setInterval(function(){pollForSelectedCardCallback(policy);}, 1000, true);
   }
 }
 
@@ -382,12 +382,12 @@ function pollForSelectedCardCallback(policy){
       try {
         mwDebug("pollForSelectedCardCallback: " + card);
         if (policy.hasOwnProperty("timeoutId")) {
-          window.clearInterval(policy["timeoutId"]);
+          window.clearInterval(policy.timeoutId);
         }
         
         var token = _card2token(policy, card);
         
-           if ((!(window.arguments == undefined)) && (window.arguments.length > null)) {
+           if (window.arguments && (window.arguments.length > null)) {
              try {
                window.arguments[1](token);
              } catch (e) {
@@ -443,9 +443,9 @@ function mWalletLoad(policyParam){
     var phoneAvailable = isPhoneAvailable();
     if (phoneAvailable) {
       TokenIssuer.beginCardSelection();
-      policy["timeoutId"] = window.setInterval(function(){pollForSelectedCardCallback(policy);}, 1000, true);
+      policy.timeoutId = window.setInterval(function(){pollForSelectedCardCallback(policy);}, 1000, true);
     } else {
-      policy["timeoutId"] = window.setInterval(function(){pollForPhoneAvailableCallback(policy);}, 1000, true);
+      policy.timeoutId = window.setInterval(function(){pollForPhoneAvailableCallback(policy);}, 1000, true);
     }
   } catch (e) {
     mwDebug("mWalletLoad exception: " + e );
