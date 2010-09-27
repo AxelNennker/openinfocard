@@ -1,4 +1,6 @@
 
+Components.utils.import("resource://infocard/tokenissuer.jsm");
+
 function mwDebug(msg) {
     var debug = Components.classes["@mozilla.org/consoleservice;1"].getService(Components.interfaces.nsIConsoleService);
     debug.logStringMessage("mWallet: " + msg);
@@ -419,7 +421,7 @@ function pollForSelectedCardCallback(policy){
 function mWalletLoad(policyParam){
   try {
     mwDebug("mWalletLoad start. href=" + window.document.location.href );
-    var tokenIssuerInitialized = TokenIssuer.initialize();
+    var tokenIssuerInitialized = TokenIssuer.initialize(java);
     if (tokenIssuerInitialized == false) {
       mwDebug("mWalletUnload could not initialize the tokenissuer" );
       return;

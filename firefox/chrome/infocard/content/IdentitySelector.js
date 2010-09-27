@@ -26,6 +26,10 @@
 //const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://infocard/IdentitySelectorDiag.jsm");
+Cu.import("resource://infocard/InformationCardHelper.jsm");
+Cu.import("resource://infocard/IdentitySelectorPrefs.jsm");
+Cu.import("resource://infocard/InformationCardDragAndDrop.jsm");
 
 var nsIX509Cert = Ci.nsIX509Cert;
 
@@ -355,12 +359,30 @@ var IdentitySelector =
                         IdentitySelectorDiag.debugReportError( "onProcessItems", e);
                 }
         },
-       
+        
         // ***********************************************************************
         // Method: processICardItems
         // ***********************************************************************
        
         processICardItems : function( doc, dispatchEvents)
+        {
+          if (dispatchEvents) {
+            var f = function(objElem, doc, arg) {};
+          } else {
+            var f = function(objElem, doc, arg) {
+              var event = doc.createEvent( "Event");
+              event.initEvent( arg, true, true);
+              objElem.dispatchEvent( event);
+            };
+          }
+          IdentitySelector.forEachICardItems(doc, f);
+        },
+        
+        // ***********************************************************************
+        // Method: processICardItems
+        // ***********************************************************************
+       
+        forEachICardItems : function( doc, callback)
         {
                 try
                 {
@@ -384,12 +406,7 @@ var IdentitySelector =
                                                 objTypeStr.toLowerCase() == nsICardObjTypeStr) ||
                                         objElem._type == nsICardObjTypeStr)
                                 {
-                                        if( dispatchEvents)
-                                        {
-                                                var event = doc.createEvent( "Event");
-                                                event.initEvent( "ICObjectLoaded", true, true);
-                                                objElem.dispatchEvent( event);
-                                        }
+                                        callback(objElem, doc, "ICObjectLoaded");
                                        
                                         icardObjectCount++;
                                 }
@@ -403,16 +420,11 @@ var IdentitySelector =
                         var icardElems = doc.getElementsByTagName( "IC:INFORMATIONCARD");
                         var icardElementCount = icardElems.length;
                        
-                        if( dispatchEvents)
+                        for( iLoop = 0; iLoop < icardElems.length; iLoop++)
                         {
-                                for( iLoop = 0; iLoop < icardElems.length; iLoop++)
-                                {
-                                        var icardElem = icardElems[ iLoop];
-                                        var elementEvent = doc.createEvent( "Event");
-                                       
-                                        elementEvent.initEvent( "ICElementLoaded", true, true);
-                                        icardElem.dispatchEvent( elementEvent);
-                                }
+                                var icardElem = icardElems[ iLoop];
+                                
+                                callback(icardElem, doc, "ICElementLoaded");
                         }
                        
                         IdentitySelectorDiag.logMessage( "processICardItems", "Found " +
@@ -1104,7 +1116,12 @@ var IdentitySelector =
             IdentitySelectorDiag.logMessage( "_getSelectorClass", "clasz=" + clasz);
 
             var categoryEntry = catman.getCategoryEntry(IIDENTITYSELECTOR_IID_STR, clasz);
+            IdentitySelectorDiag.logMessage( "_getSelectorClass", "categoryEntry=" + categoryEntry);
             var j = categoryEntry.indexOf(':');
+            if (j === -1) {
+              IdentitySelectorDiag.reportError("_getSelectorClass", "Internal Error: no colon in " + categoryEntry);
+              return null;
+            }
             var selectorClass = categoryEntry.substring(0,j);
             var contractid = categoryEntry.substring(j+1);
             IdentitySelectorDiag.logMessage( "_getSelectorClass", "contractid=" + contractid);
@@ -1117,7 +1134,7 @@ var IdentitySelector =
                 return obj;
               } catch(e) {
                 IdentitySelectorDiag.debugReportError("_getSelectorClass", 
-                    "contractid=" + contractid + "is not defined. " + e);
+                    "contractid=" + contractid + " is not defined. " + e);
                 return null;
               }
             }
@@ -1474,7 +1491,8 @@ var IdentitySelector =
                                 "len=" + len + "; value=" + extraParams[len] + ";");
                           }
 
-                          var sslCert = InformationCardHelper.getSSLCertFromDocument(doc);
+                          var browser = getBrowser();
+                          var sslCert = InformationCardHelper.getSSLCertFromBrowser(browser);
                           if (!sslCert) {
                             IdentitySelectorDiag.logMessage("onCallIdentitySelector ",
                                 "sslCert is null for doc.location.href=" + doc.location.href + 

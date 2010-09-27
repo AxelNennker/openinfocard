@@ -1,3 +1,5 @@
+Components.utils.import("resource://infocard/cmCommon.jsm");
+
 function findBackingCard(managedCard, icUserCredential, tsEndpointAddressStr, tsIdentityX509CertificateStr) {
   var ic = new Namespace("ic", "http://schemas.xmlsoap.org/ws/2005/05/identity");
   if (icUserCredential.ic::SelfIssuedCredential.toString() === "") {

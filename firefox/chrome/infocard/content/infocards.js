@@ -32,6 +32,12 @@ var tokenIssuerInitialized = false;
 
 var gOpenIdManager = null;
 
+Components.utils.import("resource://infocard/CardstoreToolkit.jsm");
+Components.utils.import("resource://infocard/OICCrypto.jsm");
+Components.utils.import("resource://infocard/tokenissuer.jsm");
+Components.utils.import("resource://infocard/IdentitySelectorDiag.jsm");
+Components.utils.import("resource://infocard/cmDebug.jsm");
+
 function getPolicy(){
   var policy = null;
   if ((window.hasOwnProperty("arguments")) && (window.arguments !== undefined) && (window.arguments.length > 0)) {
@@ -103,7 +109,7 @@ function updateRPs(policy) {
 
 function computeClientPseudonymPre20080829(policy){
   var url = policy.url; // RP url
-  return hex_sha1(url + selectedCard.id);
+  return OICCrypto.hex_sha1(url + selectedCard.id);
 }
 
 function getRandomBytes(howMany) {
@@ -238,6 +244,10 @@ function getXmldapHttpListener() {
 }
 
 function removeOpenIdListener(gOpenIdManager) {
+  if (!gOpenIdManager) {
+    icDebug("removeOpenIdListener !gOpenIdManager" );
+    return;
+  }
   try {
     icDebug("removeOpenIdListener start." );
       var claszInstance = getXmldapHttpListener();
@@ -246,7 +256,7 @@ function removeOpenIdListener(gOpenIdManager) {
         icDebug("removeOpenIdListener removeOpenidListener");
         claszInstance.removeOpenidListener(gOpenIdManager);
       } else {
-        icDebug("removeOpenIdListener Could not register openid listener" );
+        icDebug("removeOpenIdListener Could not unregister openid listener" );
       }
   } catch(e) {
     icDebug("removeOpenIdListener exception:"+e );
@@ -299,7 +309,7 @@ function finalizeOpenId(openid_nickname, openid_fullname, openid_email, verified
     var policy = getPolicy();
 
     policy.type = "selfAsserted";
-    selectedCard.privatepersonalidentifier = hex_sha1(selectedCard.cardName + selectedCard.version + selectedCard.id);
+    selectedCard.privatepersonalidentifier = OICCrypto.hex_sha1(selectedCard.cardName + selectedCard.version + selectedCard.id);
 
     var count = 0;
     var data = new XML("<selfasserted/>");
@@ -358,7 +368,7 @@ function handleOK(policy, aCard) {
       try {
         if (setOptionalClaimsSelf) {
           // this is not defined when called from the sidebar
-          setOptionalClaimsSelf(policy);
+          setOptionalClaimsSelf(document, policy);
         }
       } catch (e) {
         icDebug("setOptionalClaimsSelf failed:" + e);
@@ -385,9 +395,9 @@ function handleOK(policy, aCard) {
       if (policy.hasOwnProperty("issuerPolicy")) {
         issuerPolicy = policy.issuerPolicy;
       }
-      var clientPseudonym = hex_sha1(url + aCard.id);
+      var clientPseudonym = OICCrypto.hex_sha1(url + aCard.id);
       
-      var assertion = processManagedCard(
+      var assertion = processManagedCard(document,
             aCard, requiredClaims, optionalClaims, tokenType, 
             clientPseudonym, url, relyingPartyCertB64, issuerPolicy);
           icDebug("assertion:" + assertion);
@@ -412,29 +422,31 @@ function handleOK(policy, aCard) {
 
     } else if (aCard.type == "openid"){
       icDebug("ok: openid setup aCard.id=" + aCard.id);
-      try {
-          var extraParamsOpenIdReturnTo = null;
-          var extraParamsOpenIDAuthParameters = null;
-          if ((policy !== null) && policy.hasOwnProperty("extraParams")) {
-            var extraParams = policy.extraParams;
-            extraParamsOpenIDAuthParameters = getOpenIDAuthParameters(extraParams);
-            icDebug("ok: extraParamsOpenIDAuthParameters=" + extraParamsOpenIDAuthParameters);
-          }
-        
-          try {
-            gOpenIdManager.setParams(aCard.id, newFinalizeOpenId, document, extraParamsOpenIDAuthParameters);
-          } catch (ee) {
-            icDebug("cardManagerLoad start. Exception: " + ee );
-          }
-        
-          icDebug("ok: typeof(gOpenIdManager.registerSetupUrl)=" + typeof(gOpenIdManager.registerSetupUrl));
-          icDebug("ok: typeof(gOpenIdManager.registerSetupUrl)=" + typeof(gOpenIdManager.registerOpenId));
+      if (gOpenIdManager) {
+        try {
+            var extraParamsOpenIdReturnTo = null;
+            var extraParamsOpenIDAuthParameters = null;
+            if ((policy !== null) && policy.hasOwnProperty("extraParams")) {
+              var extraParams = policy.extraParams;
+              extraParamsOpenIDAuthParameters = getOpenIDAuthParameters(extraParams);
+              icDebug("ok: extraParamsOpenIDAuthParameters=" + extraParamsOpenIDAuthParameters);
+            }
           
-          icDebug("ok: openid 1");
-          gOpenIdManager.doit();
-          icDebug("ok: openid started");
-      } catch (eee) {
-        icDebug("ok: openid setup failed: " + eee);
+            try {
+              gOpenIdManager.setParams(aCard.id, newFinalizeOpenId, document, extraParamsOpenIDAuthParameters);
+            } catch (ee) {
+              icDebug("cardManagerLoad start. Exception: " + ee );
+            }
+          
+            icDebug("ok: typeof(gOpenIdManager.registerSetupUrl)=" + typeof(gOpenIdManager.registerSetupUrl));
+            icDebug("ok: typeof(gOpenIdManager.registerSetupUrl)=" + typeof(gOpenIdManager.registerOpenId));
+            
+            icDebug("ok: openid 1");
+            gOpenIdManager.doit();
+            icDebug("ok: openid started");
+        } catch (eee) {
+          icDebug("ok: openid setup failed: " + eee);
+        }
       }
     }
 
@@ -691,7 +703,6 @@ function fillCardArea(cardFile, policy, rpIdentifier){
               rpId = rpXmllist[j];
               IdentitySelectorDiag.logMessage("cardmanagerOnLoad", "RpId:" + rpId + " RpIdentifier:" + rpIdentifier);
               if (rpId == rpIdentifier) {
-                //debug("been there at: " + policy.cn);
                 beenThere = true;
                 if (scrolledIntoView === false) {
                   var xpcomInterface = cardArea.scrollBoxObject.QueryInterface(Components.interfaces.nsIScrollBoxObject);
@@ -825,7 +836,28 @@ function setCard(card){
       icDebug("claimValues: typeof(claimValues)=" + typeof(claimValues));
       icDebug("claimValues: claimValues.length()=" + claimValues.length());
       
-      setCardManaged(requiredClaims, optionalClaims, list, "managedRows0", claimValues);
+      var cardManagerOnInput = function() {
+        if (selectedCard) {
+          icDebug("cardManagerOnInput start");
+          selectedCard.claimsValuesChanged = "true";
+          var policy = getPolicy();
+          if (policy === null) { // cardmanagement
+            var selectlabel = document.getElementById('select');
+            if (selectlabel) {
+              selectlabel.setAttribute('value', 'save');
+              var selectcontrol = document.getElementById('selectcontrol');
+              if (selectcontrol) {
+                selectcontrol.setAttribute('hidden', 'false');
+              }
+            }
+          }
+
+        }
+      };
+
+
+      setCardManaged(requiredClaims, optionalClaims, list, 
+          "managedRows0", claimValues, cardManagerOnInput);
     }  else if (selectedCard.type == "managedCard" )   {
        if (policy !== null) {
            requiredClaims = policy.requiredClaims;
@@ -885,13 +917,12 @@ function cardManagerLoad(policyParam){
   
   try {
     gOpenIdManager = new openidRP();
+    registerOpenIdListener(gOpenIdManager);
   } catch (ee) {
     icDebug("cardManagerLoad start. Exception: " + ee );
-    throw ee;
+//    throw ee;
   }
 
-  registerOpenIdListener(gOpenIdManager);
-  
   var controlarea = document.getElementById('selectcontrol');
   if (controlarea) {
       var select = document.getElementById('selectcontrol');
@@ -954,9 +985,6 @@ function cardManagerLoad(policyParam){
 
   var cardFile;
   try {
-    var cardstoreManagerSvc = Components.classes["@openinfocard.org/CardstoreManager/service;1"].
-                                   getService( Components.interfaces.nsIHelloWorld);
-
     cardFile = CardstoreToolkit.readCardStore();
     //icDebug("cardManagerLoad cardFile = " + cardFile)
   } catch (eee) {
@@ -969,7 +997,7 @@ function cardManagerLoad(policyParam){
 
   if (policy !== null) {
     var serializedPolicy = JSON.stringify(policy);
-    if (TokenIssuer.initialize() === true) {
+    if (TokenIssuer.initialize(java) === true) {
       var issuerLogoURL = TokenIssuer.getIssuerLogoURL(serializedPolicy);
       icDebug("issuerLogoURL=" + issuerLogoURL);
       if (issuerLogoURL) {
@@ -1184,7 +1212,7 @@ function computeMatchingTokenType(card, policy) {
 }
 
 function computeRpIdentifier(cert) {
-  return hex_sha1(cert);
+  return OICCrypto.hex_sha1(cert);
 }
 
 function computeHasBeenSend(card, policy) {
@@ -1648,7 +1676,7 @@ function validateSignature(callback) {
   } catch (e) {
     icDebug("error JSON.stringifying(cardFile) " + e);
   }
-  if (tokenIssuerInitialized = TokenIssuer.initialize() == false) {
+  if (tokenIssuerInitialized = TokenIssuer.initialize(java) == false) {
     icDebug("validateSignature: could not initialize TokenIssuer. Signature will not be validated");
     icDebug("validateSignature: window.java = " + window.java + "window.document.location.href=" + window.document.location.href);
 // alert("Could not initialize java. The card's signature will not be
@@ -1823,7 +1851,7 @@ function deleteCard(){
 function processCard(policy, enableDebug){
   icDebug("processCard: {");
     try {
-      var tokenIssuerInitialized = TokenIssuer.initialize();
+      var tokenIssuerInitialized = TokenIssuer.initialize(java);
       if (tokenIssuerInitialized == false) {
         icDebug("processCard: could not initialize TokenIssuer. window.document.location.href=" + window.document.location.href);
         icDebug("processCard: window.java=" + window.java);

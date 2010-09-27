@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+
+<window onload="onLoad();" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+<script><![CDATA[
+  var gMsg;;
+  function onLoad() {
+    gMsg = document.getElementById("msg");
+  
+    if("arguments" in window && window.arguments.length > 0) {
+      gMsg.value(window.arguments[0].msg);
+    }
+  }
+]]></script>
+ 
+<label id="msg" value="" />
+<hbox>
+  <button label="Cancel" oncommand="close();" />
+</hbox>
+
+</window>

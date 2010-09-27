@@ -17,6 +17,8 @@
 // Author: Andrew Hodgkinson <ahodgkinson@novell.com>
 //------------------------------------------------------------------------------
 
+Components.utils.import("resource://infocard/IdentitySelectorDiag.jsm");
+
 // **************************************************************************
 // Desc: Platform detection
 // **************************************************************************

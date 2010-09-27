@@ -13,7 +13,7 @@ var InformationCardHelper = {
 	, getSSLCertFromDocument : function(doc) {
 	   var sslCert = null;
 	   var browser = null;
-	   var aContent = document.getElementById( "content");
+	   var aContent = doc.getElementById( "content");
 	   if (aContent !== null) {
 		   browser = aContent.mCurrentBrowser;
 	   }

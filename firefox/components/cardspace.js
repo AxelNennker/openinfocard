@@ -93,10 +93,22 @@ function getDer(cert,win){
 }
 
 function Cardspace() {
-    this.init();
+  this.wrappedJSObject = this;  
+  this.init();
 }
 
 Cardspace.prototype = {
+    // properties required for XPCOM registration:  
+    classDescription: CLASS_NAME,  
+    classID:          CLASS_ID,  
+    contractID:       CONTRACT_ID,  
+    _xpcom_categories : [ {
+      category : IIDENTITYSELECTOR_IID_STR,
+      entry : CLASS_NAME,
+      value : SELECTOR_CLASS_NAME + ':' + CONTRACT_ID,
+      service : false
+    } ],
+
     prefBranch : null,
     debug      : true,  // extensions.infocard.log.cardspaceDebug
     dll        : null,
@@ -306,74 +318,12 @@ Cardspace.prototype = {
     
 };
 
-//=================================================
-//Note: You probably don't want to edit anything
-//below this unless you know what you're doing.
-//
-//Factory
-var cardspaceFactory = {
-  createInstance: function (aOuter, aIID)
-  {
-   if (aOuter !== null) {
-     throw Components.results.NS_ERROR_NO_AGGREGATION;
-   }
-   return (new cardspace()).QueryInterface(aIID);
-  }
-};
-
-//Module
-var cardspaceModule = {
-  registerSelf: function(aCompMgr, aFileSpec, aLocation, aType)
-  {
-    debug("registerSelf");
-    aCompMgr = aCompMgr.QueryInterface(Components.interfaces.nsIComponentRegistrar);
-    aCompMgr.registerFactoryLocation(CLASS_ID, CLASS_NAME, CONTRACT_ID, aFileSpec, aLocation, aType);
-    
-    var catman = Components.classes[CATMAN_CONTRACTID].getService(nsICategoryManager);
-   
-    var categoryEntry = SELECTOR_CLASS_NAME + ':' + CONTRACT_ID;
-    catman.addCategoryEntry(IIDENTITYSELECTOR_IID_STR,
-                            CLASS_NAME,
-                            categoryEntry,
-                            true,
-                            true);
-    var selectors = catman.enumerateCategory ( IIDENTITYSELECTOR_IID_STR );
-    for (;selectors.hasMoreElements(); ) {
-      var clasz = selectors.getNext().QueryInterface(Components.interfaces.nsISupportsCString).data;
-      debug("clasz=" + clasz);
-      var contractid = catman.getCategoryEntry(IIDENTITYSELECTOR_IID_STR, clasz);
-      debug("contractid=" + contractid);
-    }
-    debug("registerSelf end");
-  },
-
-  unregisterSelf: function(aCompMgr, aLocation, aType)
-  {
-   debug("unregisterSelf");
-   aCompMgr = aCompMgr.QueryInterface(Components.interfaces.nsIComponentRegistrar);
-   aCompMgr.unregisterFactoryLocation(CLASS_ID, aLocation);
-   
-   var catman = Components.classes[CATMAN_CONTRACTID].
-                           getService(nsICategoryManager);
-  
-   catman.deleteCategoryEntry(IIDENTITYSELECTOR_IID_STR, CLASS_NAME);
-  },
-  
-  getClassObject: function(aCompMgr, aCID, aIID)
-  {
-   if (!aIID.equals(Components.interfaces.nsIFactory)) {
-     throw Components.results.NS_ERROR_NOT_IMPLEMENTED;
-   }
-   
-   if (aCID.equals(CLASS_ID)) {
-     return cardspaceFactory;
-   }
-   
-   throw Components.results.NS_ERROR_NO_INTERFACE;
-  },
-
-  canUnload: function(aCompMgr) { return true; }
-};
-
-//module initialization
-function NSGetModule(aCompMgr, aFileSpec) { return cardspaceModule; }
+/**
+* XPCOMUtils.generateNSGetFactory was introduced in Mozilla 2 (Firefox 4).
+* XPCOMUtils.generateNSGetModule is for Mozilla 1.9.2 (Firefox 3.6).
+*/
+if (XPCOMUtils.generateNSGetFactory) {
+  var NSGetFactory = XPCOMUtils.generateNSGetFactory([Cardspace]);
+} else {
+  var NSGetModule = XPCOMUtils.generateNSGetModule([Cardspace]);
+}

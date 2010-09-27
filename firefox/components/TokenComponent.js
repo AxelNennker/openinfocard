@@ -30,6 +30,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+const Cu = Components.utils;
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+
 function _printToJSConsole(msg) {
     Components.classes["@mozilla.org/consoleservice;1"]
         .getService(Components.interfaces.nsIConsoleService)
@@ -83,11 +86,15 @@ function getBootstrapClassLoader(java, firefoxClassLoaderURL) {
  * The Module (instance factory)
  *----------------------------------------------------------------------
  */
-
-var TokenModule = {
-    _myComponentID : Components.ID("{1DC99670-D2EF-11DA-BCD8-9416D6839540}"),
-    _myName :        "The TokenIssuer component of the Java Firefox Extension",
-    _myContractID :  "@xmldap.org/token-issuer;1",
+function TokenModule() {  
+  this.wrappedJSObject = this;  
+}  
+ 
+//class definition  
+TokenModule.prototype = {  
+    classID : Components.ID("{1DC99670-D2EF-11DA-BCD8-9416D6839540}"),
+    classDescription :        "The TokenIssuer component of the Java Firefox Extension",
+    contractID :  "@xmldap.org/token-issuer;1",
     
     /*
      *  This flag specifies whether this factory will create only a
@@ -121,9 +128,9 @@ var TokenModule = {
     registerSelf : function(compMgr, fileSpec, location, type) {
         compMgr = compMgr.QueryInterface(Components.interfaces.nsIComponentRegistrar);
         compMgr.registerFactoryLocation(
-            this._myComponentID,
-            this._myName,
-            this._myContractID,
+            this.classID,
+            this.classDescription,
+            this.contractID,
             fileSpec,
             location,
             type
@@ -132,11 +139,11 @@ var TokenModule = {
 
     unregisterSelf : function(compMgr, fileSpec, location) {
         compMgr = compMgr.QueryInterface(Components.interfaces.nsIComponentRegistrar);
-        compMgr.unregisterFactoryLocation(this._myComponentID, fileSpec);
+        compMgr.unregisterFactoryLocation(this.classID, fileSpec);
     },
 
     getClassObject : function(compMgr, cid, iid) {
-        if (cid.equals(this._myComponentID)) {
+        if (cid.equals(this.classID)) {
             return this._myFactory;
         } else if (!iid.equals(Components.interfaces.nsIFactory)) {
             throw Components.results.NS_ERROR_NOT_IMPLEMENTED;
@@ -164,14 +171,14 @@ var TokenModule = {
     }
 };
 
-/*
- *  This function NSGetModule will be called by Firefox to retrieve the
- *  module object. This function has to have that name and it has to be
- *  specified for every single .JS file in the components directory of
- *  your extension.
- */
-function NSGetModule(compMgr, fileSpec) {
-    return TokenModule;
+/**
+* XPCOMUtils.generateNSGetFactory was introduced in Mozilla 2 (Firefox 4).
+* XPCOMUtils.generateNSGetModule is for Mozilla 1.9.2 (Firefox 3.6).
+*/
+if (XPCOMUtils.generateNSGetFactory) {
+  var NSGetFactory = XPCOMUtils.generateNSGetFactory([TokenModule]);
+} else {
+  var NSGetModule = XPCOMUtils.generateNSGetModule([TokenModule]);
 }
 
 

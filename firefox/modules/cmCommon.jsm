@@ -1,5 +1,9 @@
-function isClaimChecked(elementId, uri) {
-	 var checkbox = document.getElementById(elementId);
+var EXPORTED_SYMBOLS = ["isClaimChecked", "xmlreplace"];
+
+Components.utils.import("resource://infocard/cmDebug.jsm");
+
+function isClaimChecked(doc, elementId, uri) {
+	 var checkbox = docgetElementById(elementId);
 //	 icDebug("isClaimChecked: typeof(checkbox)=" + typeof(checkbox));
 	 if (checkbox) {
 icDebug("isClaimChecked: found " + elementId);

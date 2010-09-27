@@ -43,30 +43,12 @@
      <stringbundle id="string-bundle" src="chrome://infocard/locale/infocards.properties"/>
     </stringbundleset>
 
-    <script src="chrome://infocard/content/crypto/hash.js"/>
-    <script src="chrome://infocard/content/json.js"/>
-    <script type="application/x-javascript" src="chrome://infocard/content/InformationCardHelper.js"/>
-    <script type="application/x-javascript" src="chrome://infocard/content/IdentitySelectorDiag.js"/>
-    <script src="chrome://infocard/content/cmDebug.js"/>
     <script src="chrome://infocard/content/openidRP.js"/>
-    <script src="chrome://infocard/content/cmCommon.js"/>
-    <script src="chrome://infocard/content/tokenissuerXul.js"/>
     <script src="chrome://infocard/content/cmManagedCardWSStar.js"/>
     <script src="chrome://infocard/content/cmManagedCard.js"/>
     <script src="chrome://infocard/content/cmSelfIssued.js"/>
     <script src="chrome://infocard/content/infocards.js"/>
-    <script src="chrome://infocard/content/cardstoreToolkit.js"/>
     <script src="chrome://infocard/content/cardstore.js"/>
-    
-    <!--
-    <script>
-		if (TokenIssuer.initialize() == true) {
-			icDebug("load TokenIssuer.initialize == true");
-		} else {
-			icDebug("load TokenIssuer.initialize == false");
-		}
-    </script>
-    -->
     
     <keyset>
   		<key id="cancel-key" keycode="VK_ESCAPE" oncommand="cancel();"/>

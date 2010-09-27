@@ -11,9 +11,38 @@ locale infocard cs-CZ chrome/infocard/locale/cs-CZ/
 locale infocard ar chrome/infocard/locale/ar/
 locale infocard fr chrome/infocard/locale/fr/
 locale infocard no chrome/infocard/locale/no/
+locale infocard it chrome/infocard/locale/it/
 locale infocard sv-SE chrome/infocard/locale/sv-SE/
 locale infocard tr-TR chrome/infocard/locale/tr-TR/
 locale infocard zh-CN chrome/infocard/locale/zh-CN/
 locale infocard es-ES chrome/infocard/locale/es-ES/
 
 resource infocard modules/
+
+interfaces components/IdentitySelector.xpt
+interfaces components/cardstoreAPI.xpt
+interfaces components/nsIHelloWorld.xpt
+interfaces components/openidlistener.xpt
+
+
+component {2e894fd-0d6c-484d-abe8-5903b5f8bf3b} components/Identityselector.js
+contract @xmldap.org/identityselector;1 {2e894fd-0d6c-484d-abe8-5903b5f8bf3b}
+
+component {1DC99670-D2EF-11DA-BCD8-9416D6839540} components/TokenComponent.js
+contract @xmldap.org/token-issuer;1 {1DC99670-D2EF-11DA-BCD8-9416D6839540}
+
+component {72e894fd-0d6c-484d-abe8-5903b5f8bf3d} components/cardspace.js
+contract @openinfocard/cardspace;1 {72e894fd-0d6c-484d-abe8-5903b5f8bf3d}
+
+component {bdc78940-db54-11de-8a39-0800200c9a66} components/cardstoreFile.js
+contract @openinfocard.org/cardstore-file;1 {bdc78940-db54-11de-8a39-0800200c9a66}
+
+component {74b89fb0-cafe-4ae8-a3ec-dd164117f6de} components/cardstoreManager.js
+contract @openinfocard.org/CardstoreManager/service;1 {74b89fb0-cafe-4ae8-a3ec-dd164117f6de}
+category profile-after-change CardstoreManagerService @openinfocard.org/CardstoreManager/service;1
+
+component {DC7D00A8-CAFE-11DD-8B0A-5D0156D89593} components/httplistener.js
+contract @xmldap/httplistener-service;1 {DC7D00A8-CAFE-11DD-8B0A-5D0156D89593}
+category profile-after-change module @xmldap/httplistener-service;1
+
+../firefox/components/mWalletCardSelector.js

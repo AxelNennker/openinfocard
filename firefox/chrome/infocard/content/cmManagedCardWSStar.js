@@ -1,3 +1,4 @@
+Components.utils.import("resource://infocard/cmCommon.jsm");
 
 function getMex1(to, mexAddress) {
   var mexResponse;

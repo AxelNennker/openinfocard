@@ -43,12 +43,10 @@
      <stringbundle id="string-bundle" src="chrome://infocard/locale/infocards.properties"/>
     </stringbundleset>
 
-  <script src="chrome://infocard/content/json.js"/>
   <script src="chrome://infocard/content/cardWizard.js"/>
   <script src="chrome://infocard/content/cardstoreToolkit.js"/>
   <script src="chrome://infocard/content/cardstore.js"/>
   <script src="chrome://infocard/content/infocards.js"/>
-  <script src="chrome://infocard/content/tokenissuerXUL.js"/>
 
   <wizardpage pageid="type" onpageadvanced="next(); return false;">
 

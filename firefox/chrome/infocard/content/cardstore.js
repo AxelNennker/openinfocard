@@ -1,3 +1,7 @@
+Components.utils.import("resource://infocard/tokenissuer.jsm");
+Components.utils.import("resource://infocard/OICCrypto.jsm");
+Components.utils.import("resource://infocard/CardstoreToolkit.jsm");
+
 var db = "cardDb.xml";
 
 function isCardInStore(cardId) {
@@ -543,7 +547,7 @@ function newSelfIssuedCard(callback) {
     }
     var id = Math.floor(Math.random()*100000+1);
     card.id = id;
-    card.privatepersonalidentifier = hex_sha1(callback.cardName + card.version + id);
+    card.privatepersonalidentifier = OICCrypto.hex_sha1(callback.cardName + card.version + id);
 
     var count = 0;
     

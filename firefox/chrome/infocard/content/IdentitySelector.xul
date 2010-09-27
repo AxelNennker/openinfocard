@@ -38,10 +38,6 @@
 
 <!DOCTYPE overlay SYSTEM "chrome://infocard/locale/cardmanager.dtd">
 <overlay id="InformationCardOverlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
-  <script type="application/x-javascript" src="chrome://infocard/content/json.js"/>
-  <script type="application/x-javascript" src="chrome://infocard/content/InformationCardHelper.js"/>
-  <script type="application/x-javascript" src="chrome://infocard/content/IdentitySelectorDiag.js"/>
-  <script type="application/x-javascript" src="chrome://infocard/content/IdentitySelectorPrefs.js"/>
   <script type="application/x-javascript" src="chrome://infocard/content/IdentitySelectorIntercept.js"/>
   <script type="application/x-javascript" src="chrome://infocard/content/DragAndDrop.js"/>
   <script type="application/x-javascript" src="chrome://infocard/content/IdentitySelector.js"/>

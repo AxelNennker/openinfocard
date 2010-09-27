@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/xul.css" type="text/css"?>
+<?xml-stylesheet href="cards.css" type="text/css"?>
+<!DOCTYPE overlay SYSTEM "chrome://infocard/locale/prefs.dtd">
+
+<window id="openinfocard_cardstorefile_preferences_window"
+  xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+  xmlns:html="http://www.w3.org/1999/xhtml"
+  onload="OICCardstoreFile.cardstoreFileOnload();">
+
+      <groupbox id="enabledDisabledGroup">
+        <groupbox id="cardStorePrefsBox">
+          <caption label="&infocard.prefs.groupboxCaption;" />
+          <checkbox id="cardStoreMasterPasswordEncryption" label="&infocard.prefs.encryption;"
+            checked="true" preference="pref_cardStoreMasterPasswordEncryption" />
+          <hbox>
+            <textbox class="prefText" flex="1" id="cardStoreLocalFileName"/>
+            <label class="prefLabel" value="&infocard.prefs.localFile;" />
+            <textbox class="prefText" flex="1" id="cardStoreLocalFilePath"
+              type="autocomplete"
+              autocompletesearch="history" />
+            <button label="&infocard.prefs.filePicker;" oncommand="filePicker();" />
+          </hbox>
+        </groupbox>
+    <!-- beware of https://bugzilla.mozilla.org/show_bug.cgi?id=296418 -->
+    <script src="chrome://infocard/content/cardstoreFilePres.js"/>
+</overlay>

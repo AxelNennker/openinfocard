@@ -1,19 +1,30 @@
+Components.utils.import("resource://infocard/IdentitySelectorDiag.jsm");
+Components.utils.import("resource://infocard/InformationCardHelper.jsm");
+
 var InformationCardUrlbar = {
 
-	/*******************************************************************************
-	 * Desc:
-	 ******************************************************************************/
-	showUrlbarIcon : function(doc, show, openidB) {
+  /*******************************************************************************
+   * Desc:
+   ******************************************************************************/
+  showUrlbarIcon : function(doc, show, openidB) {
     var image = doc.getElementById("ic-url-bar-image");
     if (image !== null) {
       if (show === true) {
-        if (openidB) {
-          image.src = "chrome://infocard/content/img/openid-16x16.png";
+        if (doc.wrappedJSObject) {
+          doc = doc.wrappedJSObject;
+        }
+        if (doc.__identityselector__ && doc.__identityselector__.last_card_image) {
+          image.src = doc.__identityselector__.last_card_image;
         } else {
-          image.src = "chrome://infocard/content/img/infocard_23x16.png";
+          if (openidB) {
+            image.src = "chrome://infocard/content/img/openid-16x16.png";
+          } else {
+            image.src = "chrome://infocard/content/img/infocard_23x16.png";
+          }
         }
       } else {
-        image.src = "chrome://infocard/content/img/infocard_23x16-crossed.png";
+        // image.src = "chrome://infocard/content/img/infocard_23x16-crossed.png";
+        image.src = "chrome://infocard/content/xmldap16x31.png";
       }
     } else {
       // the object is created before the status-bar is created
@@ -21,47 +32,47 @@ var InformationCardUrlbar = {
     }
   },
 
-	// ***********************************************************************
-	// Method: tabSelected
-	// ***********************************************************************
-	tabSelected : function(event) {
-		IdentitySelectorDiag.logMessage("tabSelected: ", "start");
-		var browser = gBrowser.selectedTab.linkedBrowser;
-		// browser is the XUL element of the browser that's just been selected
-		var doc = gBrowser.selectedBrowser.contentDocument;
-		if (doc instanceof HTMLDocument) {
-			IdentitySelectorDiag.logMessage("tabSelected: ",
-					"document is HTMLDocument: " + doc.location.href);
-			if (doc.wrappedJSObject !== undefined) {
-				IdentitySelectorDiag.logMessage("tabSelected: ",
-						"document was wrapped: " + doc.location.href);
-				doc = doc.wrappedJSObject;
-			}
-			if (doc.__identityselector__ === undefined) {
-				IdentitySelectorDiag.logMessage("tabSelected: ", "this false");
-				InformationCardUrlbar.showUrlbarIcon(document, false);
-			} else {
-				InformationCardUrlbar.cancelTimer(doc);
-				if (((doc.__identityselector__.icLoginService !== undefined) && (doc.__identityselector__.icLoginPolicy !== undefined)) || (doc.__identityselector__.notificationBoxHidden !== undefined)) {
-					InformationCardUrlbar.showUrlbarIcon(document, true);
-				} else {
-					IdentitySelectorDiag.logMessage("tabSelected: ", "that false");
-					InformationCardUrlbar.showUrlbarIcon(document, false);
-				}
-			}
+  // ***********************************************************************
+  // Method: tabSelected
+  // ***********************************************************************
+  tabSelected : function(event) {
+    IdentitySelectorDiag.logMessage("tabSelected: ", "start");
+    var browser = gBrowser.selectedTab.linkedBrowser;
+    // browser is the XUL element of the browser that's just been selected
+    var doc = gBrowser.selectedBrowser.contentDocument;
+    if (doc instanceof HTMLDocument) {
+      IdentitySelectorDiag.logMessage("tabSelected: ",
+          "document is HTMLDocument: " + doc.location.href);
+      if (doc.wrappedJSObject !== undefined) {
+        IdentitySelectorDiag.logMessage("tabSelected: ",
+            "document was wrapped: " + doc.location.href);
+        doc = doc.wrappedJSObject;
+      }
+      if (doc.__identityselector__ === undefined) {
+        IdentitySelectorDiag.logMessage("tabSelected: ", "this false");
+        InformationCardUrlbar.showUrlbarIcon(document, false);
+      } else {
+        InformationCardUrlbar.cancelTimer(doc);
+        if (((doc.__identityselector__.icLoginService !== undefined) && (doc.__identityselector__.icLoginPolicy !== undefined)) || (doc.__identityselector__.notificationBoxHidden !== undefined)) {
+          InformationCardUrlbar.showUrlbarIcon(document, true);
+        } else {
+          IdentitySelectorDiag.logMessage("tabSelected: ", "that false");
+          InformationCardUrlbar.showUrlbarIcon(document, false);
+        }
+      }
 
-			var sidebarElement = document.getElementById("sidebar");
-			if (sidebarElement !== null) {
-				var sidebarWindow = sidebarElement.contentWindow;
-				if (sidebarWindow && sidebarWindow.location.href == "chrome://infocard/content/cardSidebar.xul") {
-					sidebarWindow.reload();
-				}
-			}
-		} else {
-			IdentitySelectorDiag.logMessage("tabSelected: ",
-					"document is no HTMLDocument: " + doc.location.href);
-		}
-	},
+      var sidebarElement = document.getElementById("sidebar");
+      if (sidebarElement !== null) {
+        var sidebarWindow = sidebarElement.contentWindow;
+        if (sidebarWindow && sidebarWindow.location.href == "chrome://infocard/content/cardSidebar.xul") {
+          sidebarWindow.reload();
+        }
+      }
+    } else {
+      IdentitySelectorDiag.logMessage("tabSelected: ",
+          "document is no HTMLDocument: " + doc.location.href);
+    }
+  },
     
     // ***********************************************************************
     // Method: onICardObjectLoaded
@@ -79,10 +90,10 @@ var InformationCardUrlbar = {
         doc = target.ownerDocument;
         if( doc.wrappedJSObject)
         {
-        	doc = doc.wrappedJSObject;
+          doc = doc.wrappedJSObject;
         }
         IdentitySelectorDiag.logMessage("InformationCardUrlbar.onICardObjectLoaded",
-				"document: " + doc.location.href);
+        "document: " + doc.location.href);
         InformationCardUrlbar.showUrlbarIcon(document, true);
     },
     
@@ -90,26 +101,26 @@ var InformationCardUrlbar = {
         var doc = event.target;
         if( doc.wrappedJSObject)
         {
-        	doc = doc.wrappedJSObject;
+          doc = doc.wrappedJSObject;
         }
 
-		var container = gBrowser.tabContainer; 
-		container.addEventListener("TabSelect", InformationCardUrlbar.tabSelected, false);
-		window.addEventListener("ICObjectLoaded",InformationCardUrlbar.onICardObjectLoaded, false);	
-		window.addEventListener("DOMContentLoaded", 
-				function(event) {InformationCardUrlbar.onDomContentLoaded(event);}, false );
+    var container = gBrowser.tabContainer; 
+    container.addEventListener("TabSelect", InformationCardUrlbar.tabSelected, false);
+    window.addEventListener("ICObjectLoaded",InformationCardUrlbar.onICardObjectLoaded, false);  
+    window.addEventListener("DOMContentLoaded", 
+        function(event) {InformationCardUrlbar.onDomContentLoaded(event);}, false );
 
-		if (doc.__identityselector__ === undefined) {
-			InformationCardUrlbar.showUrlbarIcon(document, false);
-		} else {
-			if (((doc.__identityselector__.icLoginService !== undefined) && (doc.__identityselector__.icLoginPolicy !== undefined)) || (doc.__identityselector__.notificationBoxHidden !== undefined)) {
-				InformationCardUrlbar.showUrlbarIcon(document, true);
-			} else {
-				InformationCardUrlbar.showUrlbarIcon(document, false);
-			}
-		}
+    if (doc.__identityselector__ === undefined) {
+      InformationCardUrlbar.showUrlbarIcon(document, false);
+    } else {
+      if (((doc.__identityselector__.icLoginService !== undefined) && (doc.__identityselector__.icLoginPolicy !== undefined)) || (doc.__identityselector__.notificationBoxHidden !== undefined)) {
+        InformationCardUrlbar.showUrlbarIcon(document, true);
+      } else {
+        InformationCardUrlbar.showUrlbarIcon(document, false);
+      }
+    }
 
-	
+  
     },
     
     onDomContentLoaded : function(event) {
@@ -132,13 +143,13 @@ var InformationCardUrlbar = {
     },
     
     cancelTimer : function(doc) {
-    	if( doc.wrappedJSObject !== undefined) {
+      if( doc.wrappedJSObject !== undefined) {
             doc = doc.wrappedJSObject;
         }
-		if ((doc.__identityselector__ !== undefined) && (doc.__identityselector__.timer !== undefined)) {
-			doc.__identityselector__.timer.cancel();
-			delete doc.__identityselector__.timer;
-		}
+    if ((doc.__identityselector__ !== undefined) && (doc.__identityselector__.timer !== undefined)) {
+      doc.__identityselector__.timer.cancel();
+      delete doc.__identityselector__.timer;
+    }
     },
     
     _findInformationCardObjectAndClick : function(doc) {
@@ -167,16 +178,16 @@ var InformationCardUrlbar = {
 //                    objElem.dispatchEvent(evt);
                     
                     var form = objElem.parentNode;
-    				while (form != null) {
-    					if (form.tagName != undefined && form.tagName == "FORM") {
-    						// the objElem is inside a form -> submit it
-    						var evnt = doc.createEvent("Event");
-    						evnt.initEvent("submit", true, true);
-    						form.dispatchEvent(evnt);
-    						return true;
-    					}
-    					form = form.parentNode;
-    				}
+            while (form != null) {
+              if (form.tagName != undefined && form.tagName == "FORM") {
+                // the objElem is inside a form -> submit it
+                var evnt = doc.createEvent("Event");
+                evnt.initEvent("submit", true, true);
+                form.dispatchEvent(evnt);
+                return true;
+              }
+              form = form.parentNode;
+            }
                 }
         }
         return false;
@@ -192,118 +203,99 @@ var InformationCardUrlbar = {
 
         if( !(doc.__identityselector__ === undefined)) {
            if ((doc.__identityselector__.icLoginService !== undefined) && (doc.__identityselector__.icLoginPolicy !== undefined)) {
-         	  InformationCardHelper.callIdentitySelector(doc);
+             InformationCardHelper.callIdentitySelector(doc);
               }
            else {
-        	    if (InformationCardUrlbar._findInformationCardObjectAndClick(doc) === true) return;
-        	    
-				if (doc.__identityselector__.openidReturnToUri !== undefined) {
-					InformationCardHelper.callIdentitySelector(doc);
-				} else {
-					var msg = "";
-					if (doc.__identityselector__.icLoginService === undefined) {
-						msg = "doc.__identityselector__.icLoginService === undefined ";
-					}
-					if (doc.__identityselector__.icLoginPolicy === undefined) {
-						msg = "doc.__identityselector__.icLoginPolicy === undefined ";
-					}
-					if (doc.location !== undefined) {
-						IdentitySelectorDiag
-								.logMessage(
-										"urlbarClick",
-										"The site "
-												+ doc.location.href
-												+ " does not support Information Cards on this page.\n"
-												+ msg);
-						alert("The site "
-								+ doc.location.href
-								+ " does not support Information Cards.\n"
-								+ "To learn more about Information Cards please visit the Information Card Foundation at\n"
-								+ "https://informationcard.net/");
-					} else {
-						IdentitySelectorDiag.logMessage("urlbarClick",
-								"Information Cards are not supported here.\n"
-										+ msg);
-						alert("Information Cards are not supported here.\n"
-								+ "To learn more about Information Cards please visit the Information Card Foundation at\n"
-								+ "https://informationcard.net/");
-					}
-				}
-			}
-           }
-        else {
-           if (doc.location !== undefined) {
-              IdentitySelectorDiag.logMessage( "urlbarClick", 
-             		 "The site " + doc.location.href + " does not support Information Cards on this page. " + 
-             		 "doc.__identityselector__ === undefined");
-              alert("The site " + doc.location.href + " does not support Information Cards.\n" + 
-             		 "To learn more about Information Cards please visit the Information Card Foundation at\n" + 
-             		 "https://informationcard.net/");
-              }
-           else {
-              IdentitySelectorDiag.logMessage( "urlbarClick", 
-             		 "Information Cards are not supported here.\n" + 
-             		 "doc.__identityselector__ === undefined");
-              alert("Information Cards are not supported here.\n" + 
-             		 "To learn more about Information Cards please visit the Information Card Foundation at\n" + 
-             		 "https://informationcard.net/");
-              }
-           }
-        
+              if (InformationCardUrlbar._findInformationCardObjectAndClick(doc) === true) { return; }
+              
+              if (doc.__identityselector__.openidReturnToUri !== undefined) {
+                InformationCardHelper.callIdentitySelector(doc);
+              } else {
+                var policy = null;
+                var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"].getService(Components.interfaces.nsIWindowMediator);
+                var win = wm.getMostRecentWindow("navigator:browser");
+                var cardManager = win.openDialog("chrome://infocard/content/cardManager.xul",
+                  "Card Management", 
+                  "modal,chrome,resizable,width=800,height=640,centerscreen");
+                }
+            }
+        } else {
+//           if (doc.location !== undefined) {
+//              IdentitySelectorDiag.logMessage( "urlbarClick", 
+//                  "The site " + doc.location.href + " does not support Information Cards on this page. " + 
+//                  "doc.__identityselector__ === undefined");
+//              alert("The site " + doc.location.href + " does not support Information Cards.\n" + 
+//                  "To learn more about Information Cards please visit the Information Card Foundation at\n" + 
+//                  "https://informationcard.net/");
+//              }
+//           else {
+//              IdentitySelectorDiag.logMessage( "urlbarClick", 
+//                  "Information Cards are not supported here.\n" + 
+//                  "doc.__identityselector__ === undefined");
+//              alert("Information Cards are not supported here.\n" + 
+//                  "To learn more about Information Cards please visit the Information Card Foundation at\n" + 
+//                  "https://informationcard.net/");
+//              }
+//           }
+            var policy = null;
+            var cardManager = win.openDialog("chrome://infocard/content/cardManager.xul",
+              "Card Management", 
+              "modal,chrome,resizable,width=800,height=640,centerscreen");
+            }
         }, 
         
         onProgress : function(doc, e) {
-//    	var req = e.target;
-    	if ((e !== null) && (e.totalSize !== 0)) {
-    		IdentitySelectorDiag.logMessage( "urlbarOnProgress", "progress " + (e.position / e.totalSize)*100);
-    	} else {
-    		//IdentitySelectorDiag.logMessage( "urlbarOnProgress", "progress ");
-    	}
-//    	var win = doc.defaultView;
-    	var urlBarImage = document.getElementById("ic-url-bar-image");
-    	if (urlBarImage !== null) {
-    		var src = urlBarImage.src;
-    		if (src !== null && src !== "") {
-    			var i = src.indexOf("-");
-    			if ( i > 0 ) {
-    				var tail = src.substring(i+1);
-    				var extIndex = tail.indexOf(".gif");
-    				if (extIndex > 0) {
-    					var ext = tail.substring(extIndex);
-    					var num = tail.substring(0,extIndex);
-//    					IdentitySelectorDiag.logMessage( "urlbarOnProgress", "ext=" + ext + " num=" + num + " tail=" + tail);
-    					var number = parseInt(num, 10);
-    					if (!isNaN(number) && (number >= 1) && (number <= 25)) {
-    						if (number === 25 ) {
-        						urlBarImage.src = "chrome://infocard/content/img/infocard_23x16-1.gif";
-    						} else {
-    							urlBarImage.src = "chrome://infocard/content/img/infocard_23x16-" + (number+1) + ext;
-    						}
-    					} else {
-    						urlBarImage.src = "chrome://infocard/content/img/infocard_23x16-1.gif";
-    					}
-    				} else {
-    					urlBarImage.src = "chrome://infocard/content/img/infocard_23x16-1.gif";
-    				}
-    			} else {
-    				urlBarImage.src = "chrome://infocard/content/img/infocard_23x16-1.gif";
-    			}
-    		} else {
-    			urlBarImage.src = "chrome://infocard/content/img/infocard_23x16-1.gif";
-    		}
-    	} else {
-    		IdentitySelectorDiag.logMessage( "urlbarOnProgress", "urlbar not found ");
-    	}
-//    	var percentComplete = (e.position / e.totalSize)*100;
+//      var req = e.target;
+      if ((e !== null) && (e.totalSize !== 0)) {
+        IdentitySelectorDiag.logMessage( "urlbarOnProgress", "progress " + (e.position / e.totalSize)*100);
+      } else {
+        //IdentitySelectorDiag.logMessage( "urlbarOnProgress", "progress ");
+      }
+//      var win = doc.defaultView;
+      var urlBarImage = document.getElementById("ic-url-bar-image");
+      if (urlBarImage !== null) {
+        var src = urlBarImage.src;
+        if (src !== null && src !== "") {
+          var i = src.indexOf("-");
+          if ( i > 0 ) {
+            var tail = src.substring(i+1);
+            var extIndex = tail.indexOf(".gif");
+            if (extIndex > 0) {
+              var ext = tail.substring(extIndex);
+              var num = tail.substring(0,extIndex);
+//              IdentitySelectorDiag.logMessage( "urlbarOnProgress", "ext=" + ext + " num=" + num + " tail=" + tail);
+              var number = parseInt(num, 10);
+              if (!isNaN(number) && (number >= 1) && (number <= 25)) {
+                if (number === 25 ) {
+                    urlBarImage.src = "chrome://infocard/content/img/infocard_23x16-1.gif";
+                } else {
+                  urlBarImage.src = "chrome://infocard/content/img/infocard_23x16-" + (number+1) + ext;
+                }
+              } else {
+                urlBarImage.src = "chrome://infocard/content/img/infocard_23x16-1.gif";
+              }
+            } else {
+              urlBarImage.src = "chrome://infocard/content/img/infocard_23x16-1.gif";
+            }
+          } else {
+            urlBarImage.src = "chrome://infocard/content/img/infocard_23x16-1.gif";
+          }
+        } else {
+          urlBarImage.src = "chrome://infocard/content/img/infocard_23x16-1.gif";
+        }
+      } else {
+        IdentitySelectorDiag.logMessage( "urlbarOnProgress", "urlbar not found ");
+      }
+//      var percentComplete = (e.position / e.totalSize)*100;
     }
 };
 
 try {
-	IdentitySelectorDiag.logMessage( "Urlbar", "start");
+  IdentitySelectorDiag.logMessage( "Urlbar", "start");
     window.addEventListener( "load", InformationCardUrlbar.onLoad, false);
 //    window.addEventListener( "load", function(event){gBrowser.addEventListener("load", InformationCardUrlbar.onLoad, true);}, false);
 } catch( e) {
-	IdentitySelectorDiag.reportError( "urlbar window.addEventListener failed: ", e);
+  IdentitySelectorDiag.reportError( "urlbar window.addEventListener failed: ", e);
 }
 
 

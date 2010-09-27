@@ -34,14 +34,17 @@ const Ci = Components.interfaces;
 const Cr = Components.results;
 const Cu = Components.utils;
 
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+
 const nsISupports = Components.interfaces.nsISupports;
 const IIdentitySelector = Components.interfaces.IIdentitySelector;
 
 const IIDENTITYSELECTOR_IID_STR = "ddd9bc02-c964-4bd5-b5bc-943e483c6c57";
 
-const CLASS_ID = Components.ID("72e894fd-0d6c-484d-abe8-5903b5f8bf3c");
-const CLASS_NAME = "The phone card selector";
 const CONTRACT_ID = "@laboratories/identityselector;1";
+const CLASS_ID = Components.ID("{72e894fd-0d6c-484d-abe8-5903b5f8bf3c}");
+const CLASS_NAME = "The phone card selector";
+
 const SELECTOR_CLASS_NAME = "mWalletSelector";
 
 const nsIX509Cert = Components.interfaces.nsIX509Cert;
@@ -50,31 +53,31 @@ const CATMAN_CONTRACTID = "@mozilla.org/categorymanager;1";
 const nsICategoryManager = Components.interfaces.nsICategoryManager;
 
 function debug(msg) {
-	  var cs = Components.classes["@mozilla.org/consoleservice;1"].getService(Components.interfaces.nsIConsoleService);
-	  cs.logStringMessage("WALLET: " + msg);
+    var cs = Components.classes["@mozilla.org/consoleservice;1"].getService(Components.interfaces.nsIConsoleService);
+    cs.logStringMessage("WALLET: " + msg);
 }
 
 function debugObject(prefix, object, indent) {
-	var msg = "";
-	var count = 0;
-	//if (indent > 3) return;
-	var pre = "";
-	for (var j=0; j<indent; j++) { pre += '\t'; }
-	for (var i in object) {
-		var value = object[i];
-		if (typeof(value) == 'object') {
-			//debugObject(prefix, value, indent+1);
-			msg += pre + i + ' type=' + typeof(value) + ':' + value + '\n';
-//			debug(prefix + pre + i + ' type=' + typeof(value) + ':' + value);
-		} else if ((typeof(value) == 'string') || ((typeof(value) == 'boolean')) || ((typeof(value) == 'number'))) {
-			msg += pre + ':' + i + '=' + value + '\n';
-//			debug(prefix + pre + ':' + i + '=' + value);
-		} else {
-			msg += pre + i + ' type=' + typeof(value) + '\n';
-//			debug(prefix + pre + i + ' type=' + typeof(value));
-		}
-	}
-	debug(msg);
+  var msg = "";
+  var count = 0;
+  //if (indent > 3) return;
+  var pre = "";
+  for (var j=0; j<indent; j++) { pre += '\t'; }
+  for (var i in object) {
+    var value = object[i];
+    if (typeof(value) == 'object') {
+      //debugObject(prefix, value, indent+1);
+      msg += pre + i + ' type=' + typeof(value) + ':' + value + '\n';
+//      debug(prefix + pre + i + ' type=' + typeof(value) + ':' + value);
+    } else if ((typeof(value) == 'string') || ((typeof(value) == 'boolean')) || ((typeof(value) == 'number'))) {
+      msg += pre + ':' + i + '=' + value + '\n';
+//      debug(prefix + pre + ':' + i + '=' + value);
+    } else {
+      msg += pre + i + ' type=' + typeof(value) + '\n';
+//      debug(prefix + pre + i + ' type=' + typeof(value));
+    }
+  }
+  debug(msg);
 }
 
 function getDer(cert,win){
@@ -89,11 +92,22 @@ function getDer(cert,win){
 
 }
 
-function mWalletIdentitySelector() {}
+function mWalletIdentitySelector() {
+  this.wrappedJSObject = this;  
+}
 
 mWalletIdentitySelector.prototype = {
-		
-	GetBrowserToken: function (
+  classDescription: CLASS_NAME,
+  classID:          CLASS_ID,  
+  contractID:       CONTRACT_ID,  
+  _xpcom_categories : [ {
+    category : IIDENTITYSELECTOR_IID_STR,
+    entry : CLASS_NAME,
+    value : SELECTOR_CLASS_NAME + ':' + CONTRACT_ID,
+    service : false
+  } ],
+    
+  GetBrowserToken: function (
      issuer , recipientURL, requiredClaims, optionalClaims , tokenType, 
      privacyPolicy, privacyPolicyVersion, serverCert, issuerPolicy, 
      extraParamsLenght, extraParams) {
@@ -127,27 +141,27 @@ mWalletIdentitySelector.prototype = {
         var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"].getService(Components.interfaces.nsIWindowMediator);
         var win = wm.getMostRecentWindow("navigator:browser");
 
-		if (serverCert !== null) {
-	        policy.cert = getDer(serverCert,win);
-	        policy.cn = serverCert.commonName;
+    if (serverCert !== null) {
+          policy.cert = getDer(serverCert,win);
+          policy.cn = serverCert.commonName;
 
-		    var chain = serverCert.getChain();
-			debug('chain: ' + chain);
-			debug('chainLength: ' + chain.length);
-			debug('chain[0]: ' + chain.queryElementAt(0, nsIX509Cert));
-			
-			policy.chainLength = ""+chain.length;
-			for (var i = 0; i < chain.length; ++i) {
-			  var currCert = chain.queryElementAt(i, nsIX509Cert);
-			  policy["certChain"+i] = getDer(currCert,win);
-			}
-			
-//			debugObject("serverCert: ", serverCert, 0);
-		}
-		
+        var chain = serverCert.getChain();
+      debug('chain: ' + chain);
+      debug('chainLength: ' + chain.length);
+      debug('chain[0]: ' + chain.queryElementAt(0, nsIX509Cert));
+      
+      policy.chainLength = ""+chain.length;
+      for (var i = 0; i < chain.length; ++i) {
+        var currCert = chain.queryElementAt(i, nsIX509Cert);
+        policy["certChain"+i] = getDer(currCert,win);
+      }
+      
+//      debugObject("serverCert: ", serverCert, 0);
+    }
+    
         // win.document.URL is undefined
         // win.document.location.href is chrome://.../browser.xul
-		policy.url = recipientURL; 
+    policy.url = recipientURL; 
 
         var cardManager = win.openDialog("chrome://infocard/content/mWallet.xul","Phone Card Selector", "modal,chrome,resizable,width=800,height=640,centerscreen", policy, function (callbackData) { callback = callbackData;});
         var doc = win.document;
@@ -172,74 +186,12 @@ mWalletIdentitySelector.prototype = {
 
 };
 
-//=================================================
-// Note: You probably don't want to edit anything
-// below this unless you know what you're doing.
-//
-// Factory
-var mWalletIdentitySelectorFactory = {
-  createInstance: function (aOuter, aIID)
-  {
-    if (aOuter !== null) {
-      throw Components.results.NS_ERROR_NO_AGGREGATION;
-    }
-    return (new mWalletIdentitySelector()).QueryInterface(aIID);
-  }
-};
-
-// Module
-var mWalletIdentitySelectorModule = {
-  registerSelf: function(aCompMgr, aFileSpec, aLocation, aType)
-  {
-  	debug("registerSelf");
-    aCompMgr = aCompMgr.QueryInterface(Components.interfaces.nsIComponentRegistrar);
-    aCompMgr.registerFactoryLocation(CLASS_ID, CLASS_NAME, CONTRACT_ID, aFileSpec, aLocation, aType);
-    
-    var catman = Components.classes[CATMAN_CONTRACTID].getService(nsICategoryManager);
-
-    var categoryEntry = SELECTOR_CLASS_NAME + ':' + CONTRACT_ID;
-    catman.addCategoryEntry(IIDENTITYSELECTOR_IID_STR,
-                            CLASS_NAME,
-                            categoryEntry,
-                            true,
-                            true);
-    var selectors = catman.enumerateCategory ( IIDENTITYSELECTOR_IID_STR );
-	for (;selectors.hasMoreElements(); ) {
-	   var clasz = selectors.getNext().QueryInterface(Components.interfaces.nsISupportsCString).data;
-	   debug("clasz=" + clasz);
-       var contractid = catman.getCategoryEntry(IIDENTITYSELECTOR_IID_STR, clasz);
-	   debug("contractid=" + contractid);
-	}
-	debug("registerSelf end");
-  },
-
-  unregisterSelf: function(aCompMgr, aLocation, aType)
-  {
-  	debug("unregisterSelf");
-    aCompMgr = aCompMgr.QueryInterface(Components.interfaces.nsIComponentRegistrar);
-    aCompMgr.unregisterFactoryLocation(CLASS_ID, aLocation);
-    
-    var catman = Components.classes[CATMAN_CONTRACTID].
-                            getService(nsICategoryManager);
-
-    catman.deleteCategoryEntry(IIDENTITYSELECTOR_IID_STR, CLASS_NAME);
-  },
-
-  getClassObject: function(aCompMgr, aCID, aIID)
-  {
-    if (!aIID.equals(Components.interfaces.nsIFactory)) {
-      throw Components.results.NS_ERROR_NOT_IMPLEMENTED;
-    }
-    
-    if (aCID.equals(CLASS_ID)) {
-      return mWalletIdentitySelectorFactory;
-    }
-    
-    throw Components.results.NS_ERROR_NO_INTERFACE;
-  },
-
-  canUnload: function(aCompMgr) { return true; }
-};
-
-//module initialization
-function NSGetModule(aCompMgr, aFileSpec) { return mWalletIdentitySelectorModule; }
+/**
+* XPCOMUtils.generateNSGetFactory was introduced in Mozilla 2 (Firefox 4).
+* XPCOMUtils.generateNSGetModule is for Mozilla 1.9.2 (Firefox 3.6).
+*/
+if (XPCOMUtils.generateNSGetFactory) {
+  var NSGetFactory = XPCOMUtils.generateNSGetFactory([mWalletIdentitySelector]);
+} else {
+  var NSGetModule = XPCOMUtils.generateNSGetModule([mWalletIdentitySelector]);
+}

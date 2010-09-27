@@ -1,6 +1,8 @@
 var Cc = Components.classes;
 var Ci = Components.interfaces;
 
+Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+
 var gConsoleService = Cc[ "@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService);
 var gbLoggingEnabled = false;
 
@@ -16,9 +18,28 @@ function LOG(text)
 	}
 }
 
-function httpListener() { }
+const CONTRACT_ID = "@xmldap/httplistener-service;1";
+const CLASS_ID = Components.ID("{DC7D00A8-CAFE-11DD-8B0A-5D0156D89593}");
+const CLASS_NAME = "HTTP Listener for Openinfocard";
 
-httpListener.prototype = {
+function OICHttpListener() { }
+
+OICHttpListener.prototype = {
+  classDescription: CLASS_NAME,  
+  classID:          CLASS_ID,
+  contractID:       CONTRACT_ID,  
+  _xpcom_categories : [ {
+    category : "profile-after-change",
+    entry : CLASS_NAME,
+    value : CONTRACT_ID,
+    service : true
+  } ],
+  QueryInterface: XPCOMUtils.generateQI(
+      [Components.interfaces.nsIObserver,
+       Components.interfaces.nsIWebProgressListener,
+       Components.interfaces.nsISupportsWeakReference,
+       Components.interfaces.nsIXULBrowserWindow,
+       Components.interfaces.nsISupports]),
 
   headerName: "User-Agent",
   
@@ -173,9 +194,9 @@ httpListener.prototype = {
     	  return;
       }
 
-      if (topic == "app-startup") {
+      if (topic == "profile-after-change") {
 
-          LOG("----------------------------> app-startup");
+          LOG("----------------------------> profile-after-change");
           
           var os = Cc["@mozilla.org/observer-service;1"].getService(Ci.nsIObserverService);
           os.addObserver(this, "http-on-modify-request", false);
@@ -196,64 +217,12 @@ httpListener.prototype = {
     }
 };
 
-var module = {
-    registerSelf: function (compMgr, fileSpec, location, type) {
-
-        var compMgr = compMgr.QueryInterface(Ci.nsIComponentRegistrar);
-        compMgr.registerFactoryLocation(this.CID,
-                                        this.CLASSNAME,
-                                        this.CONTRACTID,
-                                        fileSpec,
-                                        location,
-                                        type);
-
-
-        LOG("----------------------------> httplistener: registerSelf");
-
-        var catMgr = Cc["@mozilla.org/categorymanager;1"].getService(Ci.nsICategoryManager);
-        catMgr.addCategoryEntry("app-startup", this.CLASSNAME, this.CONTRACTID, true, true);
-    },
-
-
-    getClassObject: function (compMgr, cid, iid) {
-
-        LOG("----------------------------> httplistener: getClassObject");
-
-        return this.factory;
-    },
-    
-    CLASSNAME: "HTTPListener_OpeninfocardService",
-    
-    CONTRACTID: "@xmldap/httplistener-service;1",
-    
-    CID: Components.ID("{DC7D00A8-CAFE-11DD-8B0A-5D0156D89593}"),
-
-    factory: {
-        QueryInterface: function (aIID) {
-    	LOG("----------------------------> QueryInterface: " + aIID);
-        if (aIID.equals(Components.interfaces.nsIObserver) ||
-        		aIID.equals(Components.interfaces.nsIWebProgressListener) ||
-                aIID.equals(Components.interfaces.nsISupportsWeakReference) ||
-                aIID.equals(Components.interfaces.nsIXULBrowserWindow) ||
-                aIID.equals(Components.interfaces.nsISupports)) {
-              return this;
-        }
-        throw Components.results.NS_NOINTERFACE;
-     },
-
-     createInstance: function (outer, iid) {
-
-          LOG("----------------------------> createInstance");
-
-          return new httpListener();
-     }
-    },
-
-    canUnload: function(compMgr) {
-        return true;
-    }
-};
-
-function NSGetModule(compMgr, fileSpec) {
-    return module;
+/**
+* XPCOMUtils.generateNSGetFactory was introduced in Mozilla 2 (Firefox 4).
+* XPCOMUtils.generateNSGetModule is for Mozilla 1.9.2 (Firefox 3.6).
+*/
+if (XPCOMUtils.generateNSGetFactory) {
+  var NSGetFactory = XPCOMUtils.generateNSGetFactory([OICHttpListener]);
+} else {
+  var NSGetModule = XPCOMUtils.generateNSGetModule([OICHttpListener]);
 }

@@ -1,3 +1,6 @@
+Components.utils.import("resource://infocard/IdentitySelectorDiag.jsm");
+Components.utils.import("resource://infocard/InformationCardHelper.jsm");
+
 var InformationCardStatusbar = {
 
 	/*******************************************************************************

@@ -15,13 +15,14 @@ function CardstoreManagerService() {
                                 // javascript
 }
 CardstoreManagerService.prototype = {
-  mCardstores: [],
-  
   classDescription: "CardstoreManager Service",
   contractID: "@openinfocard.org/CardstoreManager/service;1",
   classID: Components.ID("{74b89fb0-cafe-4ae8-a3ec-dd164117f6de}"),
-  _xpcom_categories: [{ category: "app-startup", service: true }],
+  _xpcom_categories: [{ category: "app-startup", service: true },
+                      { category: "profile-after-change", service: true }],
 
+  mCardstores: [],
+  
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIHelloWorld, 
                                          Ci.nsIObserver,
                                          Ci.nsISupportsWeakReference]),
@@ -30,8 +31,9 @@ CardstoreManagerService.prototype = {
     var consoleService = Cc[ "@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService);
     try {
         switch (topic) {
-        case "app-startup":
-          consoleService.logStringMessage("CardstoreManagerService: app-startup");
+        case "app-startup": // fall through
+        case "profile-after-change":
+          consoleService.logStringMessage("CardstoreManagerService: profile-after-change");
           let os = Cc["@mozilla.org/observer-service;1"].
             getService(Ci.nsIObserverService);
           os.addObserver(this, "final-ui-startup", true);
@@ -71,7 +73,12 @@ CardstoreManagerService.prototype = {
   }
 };
 
-function NSGetModule(compMgr, fileSpec) {
-  return XPCOMUtils.generateModule([CardstoreManagerService]);
+/**
+* XPCOMUtils.generateNSGetFactory was introduced in Mozilla 2 (Firefox 4).
+* XPCOMUtils.generateNSGetModule is for Mozilla 1.9.2 (Firefox 3.6).
+*/
+if (XPCOMUtils.generateNSGetFactory) {
+  var NSGetFactory = XPCOMUtils.generateNSGetFactory([CardstoreManagerService]);
+} else {
+  var NSGetModule = XPCOMUtils.generateNSGetModule([CardstoreManagerService]);
 }
-

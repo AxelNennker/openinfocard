@@ -1,56 +1,48 @@
 <?xml version="1.0"?>
-	<!--
-		/* * Copyright (c) 2008, Axel Nennker axel at nennker.de * xmldap.org
-		* All rights reserved. * * based upon work by
-		http://www.georgenava.com/ * * Redistribution and use in source and
-		binary forms, with or without * modification, are permitted provided
-		that the following conditions are met: * * * Redistributions of source
-		code must retain the above copyright * notice, this list of conditions
-		and the following disclaimer. * * Redistributions in binary form must
-		reproduce the above copyright * notice, this list of conditions and
-		the following disclaimer in the * documentation and/or other materials
-		provided with the distribution. * * Neither the names xmldap,
-		xmldap.org, xmldap.com nor the * names of its contributors may be used
-		to endorse or promote products * derived from this software without
-		specific prior written permission. * * THIS SOFTWARE IS PROVIDED BY
-		THE REGENTS AND CONTRIBUTORS ``AS IS'' AND ANY * EXPRESS OR IMPLIED
-		WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED * WARRANTIES OF
-		MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE * DISCLAIMED.
-		IN NO EVENT SHALL THE REGENTS AND CONTRIBUTORS BE LIABLE FOR ANY *
-		DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-		DAMAGES * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
-		GOODS OR SERVICES; * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-		INTERRUPTION) HOWEVER CAUSED AND * ON ANY THEORY OF LIABILITY, WHETHER
-		IN CONTRACT, STRICT LIABILITY, OR TORT * (INCLUDING NEGLIGENCE OR
-		OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS * SOFTWARE, EVEN
-		IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
-	-->
+  <!--
+    /* * Copyright (c) 2008, Axel Nennker axel at nennker.de * xmldap.org
+    * All rights reserved. * * based upon work by
+    http://www.georgenava.com/ * * Redistribution and use in source and
+    binary forms, with or without * modification, are permitted provided
+    that the following conditions are met: * * * Redistributions of source
+    code must retain the above copyright * notice, this list of conditions
+    and the following disclaimer. * * Redistributions in binary form must
+    reproduce the above copyright * notice, this list of conditions and
+    the following disclaimer in the * documentation and/or other materials
+    provided with the distribution. * * Neither the names xmldap,
+    xmldap.org, xmldap.com nor the * names of its contributors may be used
+    to endorse or promote products * derived from this software without
+    specific prior written permission. * * THIS SOFTWARE IS PROVIDED BY
+    THE REGENTS AND CONTRIBUTORS ``AS IS'' AND ANY * EXPRESS OR IMPLIED
+    WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED * WARRANTIES OF
+    MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE * DISCLAIMED.
+    IN NO EVENT SHALL THE REGENTS AND CONTRIBUTORS BE LIABLE FOR ANY *
+    DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+    DAMAGES * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+    GOODS OR SERVICES; * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+    INTERRUPTION) HOWEVER CAUSED AND * ON ANY THEORY OF LIABILITY, WHETHER
+    IN CONTRACT, STRICT LIABILITY, OR TORT * (INCLUDING NEGLIGENCE OR
+    OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS * SOFTWARE, EVEN
+    IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+  -->
 <?xml-stylesheet href="chrome://global/skin" type="text/css"?>
 <?xml-stylesheet href="sidebar.css" type="text/css"?>
 <!DOCTYPE page SYSTEM "chrome://infocard/locale/cardmanager.dtd">
 <page title="&cardmanager.title;"
-	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-	xmlns:html="http://www.w3.org/1999/xhtml" onload="sidebarLoad()">
-	<stringbundleset id="stringbundleset">
-		<stringbundle id="string-bundle"
-			src="chrome://infocard/locale/infocards.properties" />
-	</stringbundleset>
+  xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+  xmlns:html="http://www.w3.org/1999/xhtml" onload="sidebarLoad()">
+  <stringbundleset id="stringbundleset">
+    <stringbundle id="string-bundle"
+      src="chrome://infocard/locale/infocards.properties" />
+  </stringbundleset>
 
-	<script src="chrome://global/content/nsDragAndDrop.js"/>
-	<script src="chrome://global/content/nsTransferable.js"/>
+  <script src="chrome://global/content/nsTransferable.js"/>
 
-	<script src="chrome://infocard/content/crypto/hash.js" />
-	<script src="chrome://infocard/content/json.js" />
-    <script type="application/x-javascript" src="chrome://infocard/content/InformationCardHelper.js"/>
-    <script type="application/x-javascript" src="chrome://infocard/content/IdentitySelectorDiag.js"/>
-	<script src="chrome://infocard/content/openidRP.js" />
-	<script src="chrome://infocard/content/cmDebug.js" />
-    <script src="chrome://infocard/content/cmManagedCard.js"/>
-	<script src="chrome://infocard/content/infocards.js" />
-	<script src="chrome://infocard/content/sidebar.js" />
-	<script src="chrome://infocard/content/cardstoreToolkit.js" />
+  <script src="chrome://infocard/content/infocards.js" />
+  <script src="chrome://infocard/content/sidebar.js" />
+  <script src="chrome://infocard/content/cardstoreToolkit.js" />
     <script src="chrome://infocard/content/cardstore.js"/>
-	<script src="chrome://infocard/content/tokenissuerXUL.js" />
+    <script src="chrome://infocard/content/openidRP.js"/>
 
-	<scrollbox style='overflow: auto;' flex="1" orient="vertical" id="cardselection"></scrollbox>
+  <scrollbox style='overflow: auto;' flex="1" orient="vertical" id="cardselection"></scrollbox>
 </page>

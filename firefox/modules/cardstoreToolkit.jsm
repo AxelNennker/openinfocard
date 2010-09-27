@@ -1,3 +1,4 @@
+var EXPORTED_SYMBOLS = ["CardstoreToolkit"];  
 
 var CardstoreToolkit = {
   readCardStore : function readCardStore() {

@@ -39,8 +39,6 @@
     </stringbundleset>
 
     <script type="application/x-javascript" src="chrome://infocard/content/crypto/hash.js"/>
-	<script type="application/x-javascript" src="chrome://infocard/content/IdentitySelectorDiag.js"/>
-	<script type="application/x-javascript" src="chrome://infocard/content/InformationCardHelper.js"/>
     <script src="chrome://infocard/content/cardstoreToolkit.js"/>
     <script src="chrome://infocard/content/cardstore.js"/>
 	<script type="application/x-javascript" src="chrome://infocard/content/xrds_pageinfo.js"/>
