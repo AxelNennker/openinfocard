@@ -1,0 +1,14 @@
+#include "nsISupports.idl"
+#include "nsISimpleEnumerator.idl"
+
+[scriptable, uuid(C13E7230-CB33-11DF-BD3B-0800200C9A66)]
+interface IInformationCardStoreManager : nsISupports
+{
+
+  /**
+   * Get a nsISimpleEnumerator whose elements are IInformationCardStore objects.
+   */
+  //readonly attribute nsISimpleEnumerator cardstoreEnumerator;
+  nsISimpleEnumerator getCardstores();
+
+};

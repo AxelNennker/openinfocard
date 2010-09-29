@@ -10,10 +10,31 @@ function debug(msg) {
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
+function CardstoreEnumerator(mCardstores) {
+  this.index = 0;
+  this.mCardstores = mCardstores;
+}
+
+CardstoreEnumerator.prototype.QueryInterface = function(iid) {
+  if (iid.equals(Components.interfaces.nsISupports) ||
+      iid.equals(Components.interfaces.nsISimpleEnumerator))
+    return this;
+  throw Components.results.NS_NOINTERFACE;
+};
+
+CardstoreEnumerator.prototype.getNext = function() {
+  return this.mCardstores[this.index++];
+};
+
+CardstoreEnumerator.prototype.hasMoreElements = function() {
+  return (this.index < this.mCardstores.length);
+};
+
 function CardstoreManagerService() {
   this.wrappedJSObject = this; // no interface definition. callable only from
                                 // javascript
 }
+
 CardstoreManagerService.prototype = {
   classDescription: "CardstoreManager Service",
   contractID: "@openinfocard.org/CardstoreManager/service;1",
@@ -23,9 +44,14 @@ CardstoreManagerService.prototype = {
 
   mCardstores: [],
   
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIHelloWorld, 
+  QueryInterface: XPCOMUtils.generateQI([Ci.IInformationCardStoreManager,
+                                         Ci.nsISupports, 
                                          Ci.nsIObserver,
                                          Ci.nsISupportsWeakReference]),
+
+  getCardstores : function() {
+    return new CardstoreEnumerator(this.mCardstores);
+  },
 
   observe: function CMS__observe(subject, topic, data) {
     var consoleService = Cc[ "@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService);
