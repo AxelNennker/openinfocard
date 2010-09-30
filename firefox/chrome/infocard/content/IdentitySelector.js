@@ -1099,7 +1099,45 @@ var IdentitySelector =
         // Method: _getSelectorClass
         // ***********************************************************************
        
-        _getSelectorClass : function()
+        _getCardstore : function _getCardstore()
+        {
+          var prefClasz = IdentitySelectorPrefs.getStringPref("identityselector", "selector_class");
+          IdentitySelectorDiag.logMessage( "_getCardstore", "prefClasz=" + prefClasz );
+
+          var categoryManager = XPCOMUtils.categoryManager;
+          var enumerator = categoryManager.enumerateCategory("information-card-storage");
+          while (enumerator.hasMoreElements()) {
+            var item = enumerator.getNext();
+            var entry = item.QueryInterface(Ci.nsISupportsCString);
+            IdentitySelectorDiag.logMessage( "_getCardstore", "entry=" + entry );
+            var clasz = Cc[entry];
+            var cardstore = clasz.getService(Ci.IInformationCardStore);
+            var name = cardstore.getCardStoreName();
+            IdentitySelectorDiag.logMessage( "_getCardstore", "name=" + name );
+            if (entry == prefClasz) {
+              IdentitySelectorDiag.logMessage( "_getCardstore", "using=" + name );
+              return cardstore;
+            }
+          }
+          IdentitySelectorDiag.logMessage("_getCardstore", "no matching cardstore found");
+          enumerator = categoryManager.enumerateCategory("information-card-storage");
+          if (enumerator.hasMoreElements()) {
+            var item = enumerator.getNext();
+            var entry = item.QueryInterface(Ci.nsISupportsCString);
+            IdentitySelectorDiag.logMessage( "_getCardstore", "entry=" + entry );
+            var clasz = Cc[entry];
+            var cardstore = clasz.getService(Ci.IInformationCardStore);
+            var name = cardstore.getCardStoreName();
+            IdentitySelectorDiag.logMessage( "_getCardstore", "using:" + name );
+            return cardstore;
+          }
+        },
+        
+        // ***********************************************************************
+        // Method: _getSelectorClass
+        // ***********************************************************************
+       
+        _getSelectorClass : function _getSelectorClass()
         {
           var prefClasz = IdentitySelectorPrefs.getStringPref("identityselector", "selector_class");
           IdentitySelectorDiag.logMessage( "_getSelectorClass", "prefClasz=" + prefClasz );
@@ -1373,9 +1411,10 @@ var IdentitySelector =
                                 }
                         }
                        
-                        // Get the selector
-                        var aSelectorClasz = IdentitySelector._getSelectorClass();
-                        if (aSelectorClasz === null) {
+                        // Get the selector 
+//                        var aSelectorClasz = IdentitySelector._getSelectorClass();
+                        var aSelectorClasz = IdentitySelector._getCardstore();
+                        if (!aSelectorClasz) {
                           IdentitySelectorDiag.reportError( "onCallIdentitySelector",
                                     "Unable to locate an identity selector.  " +
                                     "Please make sure one is installed.");
@@ -1595,7 +1634,7 @@ var IdentitySelector =
                 }
                 catch( e)
                 {
-                        alert( e);
+                  IdentitySelectorDiag.reportError("onHideNotificationBox", "" + e);
                 }
         },
        
@@ -1699,7 +1738,7 @@ var IdentitySelector =
                 }
                 catch( e)
                 {
-                        alert( e);
+                  IdentitySelectorDiag.reportError("onHideNotificationBox", ""+ e);
                 }
                
                 return( certListBuf);
@@ -1798,7 +1837,7 @@ var ICProgressListener =
                                         }
                                         catch( e)
                                         {
-                                                alert( e);
+                                          IdentitySelectorDiag.reportError("onStateChange",  ""+e);
                                         }
 //                                        var aSelectorClasz = IdentitySelector._getSelectorClass();
 //                                        if (aSelectorClasz !== null) {

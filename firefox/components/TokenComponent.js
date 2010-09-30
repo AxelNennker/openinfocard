@@ -311,8 +311,6 @@ TokenComponent.prototype.getTokenIssuer = function() {
     return this._test;
 };
 
-
-
 TokenComponent.prototype._fail = function(e) {
     if (e.getMessage) {
         this.error = e + ": " + e.getMessage() + "\n";

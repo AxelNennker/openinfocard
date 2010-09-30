@@ -37,6 +37,7 @@ Components.utils.import("resource://infocard/OICCrypto.jsm");
 Components.utils.import("resource://infocard/tokenissuer.jsm");
 Components.utils.import("resource://infocard/IdentitySelectorDiag.jsm");
 Components.utils.import("resource://infocard/cmDebug.jsm");
+Components.utils.import("resource://infocard/InformationCardHelper.jsm");
 
 function getPolicy(){
   var policy = null;
@@ -295,7 +296,7 @@ function newFinalizeOpenId(logService, url, error) {
       }
     }
     if (error !== null) {
-      alert(error);
+      logService.logStringMessage("newFinalizeOpenId. error=" + error );
       window.close();
     }
 }
@@ -518,12 +519,12 @@ function showPrivacyStatement() {
   if (policy !== null) {
       var privacyUrl = policy.privacyUrl;
       if (privacyUrl === null) {
-       alert("relying party did not specify a privacy statement URL");
+        InformationCardHelper.alert("relying party did not specify a privacy statement URL");
        return;
       }
       // prevent file:// and chrome:// etc
       if (privacyUrl.indexOf("http") !== 0) {
-       alert("The relying party's privacy statement URL does not start with 'http'\n" + privacyUrl);
+       InformationCardHelper.alert("The relying party's privacy statement URL does not start with 'http'\n" + privacyUrl);
        return;
       }
       
@@ -643,17 +644,17 @@ function handleCardChoice(event){
 
   var choice = event.originalTarget;
   if (choice === undefined) {
-    alert("internal error: handleCardChoice: choice === undefined");
+    InformationCardHelper.alert("internal error: handleCardChoice: choice === undefined");
   }
   var selectedCardId = choice.getAttribute("cardid");
   if (!selectedCardId) {
-    alert("internal error: handleCardChoice: selectedCardId === undefined");
+    InformationCardHelper.alert("internal error: handleCardChoice: selectedCardId === undefined");
   }
   icDebug("selectedCardId="+selectedCardId);
   var choosenCard = getCard(selectedCardId);
   if (choosenCard === null) {
     Component.utils.reportError("internal error: card not found: " + selectedCardId);
-    alert("internal error: card not found: " + selectedCardId);
+    InformationCardHelper.alert("internal error: card not found: " + selectedCardId);
     return;
   }
   icDebug("choosenCard="+choosenCard);
@@ -901,7 +902,7 @@ function setCard(card){
       }
 
     } else  {
-      alert("unsupported card type\n" + selectedCard.type);
+      InformationCardHelper.alert("unsupported card type\n" + selectedCard.type);
       return;
     }
   } catch (setCardException) {
@@ -1045,7 +1046,7 @@ function cardManagerLoad(policyParam){
       var choosenCard = getCard(extraParamsCardId);
       if (!choosenCard) {
         Components.utils.reportError("cardManagerLoad: extraParamsCardId=" + extraParamsCardId + " but card not found");
-        alert("internal error: card not found in cardstore.");
+        InformationCardHelper.alert("internal error: card not found in cardstore.");
         window.close();
         return;
       }
@@ -1125,7 +1126,7 @@ function computeMatchingRequiredClaims(card, policy) {
       for (var index=0; index<list.length(); index++) {
         var supportedClaim = list[index];
         var uri = supportedClaim.@Uri.toXMLString();
-        icDebug("computeMatchingRequiredClaims: uri=" + uri);
+        //icDebug("computeMatchingRequiredClaims: uri=" + uri);
         if (uri === aClaim) {
           found = true;
           break;
@@ -1702,16 +1703,16 @@ function validateSignature(callback) {
         if (importedCard == false) {
           // oops. Could not parse json
           icDebug2("Internal error: could not parse json=" + importedCardStr, 120);
-          alert("Internal error: could not parse json=" + importedCardStr);
+          InformationCardHelper.alert("Internal error: could not parse json=" + importedCardStr);
           return;
         }
         if (importedCard === null) {
-          alert("The managed card is NOT imported");
+          InformationCardHelper.alert("The managed card is NOT imported");
           return;
         }
         
         if (importedCard.error) {
-             alert("The card is NOT imported\n" + importedCard.error);
+             InformationCardHelper.alert("The card is NOT imported\n" + importedCard.error);
           return;
         } 
         var result = importedCard.result;
@@ -1721,24 +1722,24 @@ function validateSignature(callback) {
         // icDebug("RoamingStoreXML: " + roamingstore);
         saveRoamingStore(roamingstore);
       } else {
-        alert("Could not verify SIGNATURE of card: " + callback.cardName + "\nContinuing anyways with import.");
+        InformationCardHelper.alert("Could not verify SIGNATURE of card: " + callback.cardName + "\nContinuing anyways with import.");
       }
   }
 }
 function digestNewCard(callback) {
   icDebug("digestNewCard");
   if (callback === undefined) {
-   alert("no new card was imported");
+   InformationCardHelper.alert("no new card was imported");
    return;
   }
   if (callback === null) {
-   alert("No new card was imported");
+   InformationCardHelper.alert("No new card was imported");
    return;
   }
   
   var cardName = "" + callback.cardName;
   if (cardName == "") {
-    alert("No new card was imported!");
+    InformationCardHelper.alert("No new card was imported!");
     return;
   }
   
@@ -1747,7 +1748,7 @@ function digestNewCard(callback) {
     var card = null;
     
     if (isCardInStore(cardId)) {
-      alert("This card is already in the card store. Please delete it first.");
+      InformationCardHelper.alert("This card is already in the card store. Please delete it first.");
     return;
     }
   
@@ -1756,7 +1757,7 @@ function digestNewCard(callback) {
         card = newSelfIssuedCard(callback);
         if (card === null) {
           icDebug("digestNewCard: card is null. callback = " + callback);
-          alert("This card is null. This might be an internal error");
+          InformationCardHelper.alert("This card is null. This might be an internal error");
           return;
         }
         saveCard(card);
@@ -1768,7 +1769,7 @@ function digestNewCard(callback) {
       card = newManagedCard(callback);
         if (card === null) {
           icDebug("digestNewCard: card is null. callback = " + callback);
-          alert("This card is null. This might be an internal error");
+          InformationCardHelper.alert("This card is null. This might be an internal error");
           return;
         }
         saveCard(card);
@@ -1779,7 +1780,7 @@ function digestNewCard(callback) {
       card = newOpenIdCard(callback);
         if (card === null) {
           icDebug("digestNewCard: card is null. callback = " + callback);
-          alert("This card is null. This might be an internal error");
+          InformationCardHelper.alert("This card is null. This might be an internal error");
           return;
         }
         saveCard(card);

@@ -3,12 +3,12 @@
 
 <window onload="onLoad();" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 <script><![CDATA[
-  var gMsg;;
   function onLoad() {
-    gMsg = document.getElementById("msg");
+    var gMsg = document.getElementById("msg");
   
     if("arguments" in window && window.arguments.length > 0) {
-      gMsg.value(window.arguments[0].msg);
+      var data = window.arguments[0].wrappedJSObject;
+      gMsg.setAttribute("value", data.msg);
     }
   }
 ]]></script>

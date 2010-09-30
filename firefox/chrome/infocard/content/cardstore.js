@@ -1,6 +1,7 @@
 Components.utils.import("resource://infocard/tokenissuer.jsm");
 Components.utils.import("resource://infocard/OICCrypto.jsm");
 Components.utils.import("resource://infocard/CardstoreToolkit.jsm");
+Components.utils.import("resource://infocard/IdentitySelectorDiag.jsm");
 
 var db = "cardDb.xml";
 
@@ -133,7 +134,7 @@ function login(cardStorePath) {
 	else if (CC_loginManager!= null) {
  	  // Login Manager exists so this is Firefox 3
  	  // Login Manager code
- 	  alert("loginManager support is not implemented.");
+ 	  IdentitySelectorDiag.reportError("cardstore.js", "loginManager support is not implemented.");
 	}
 }
 
@@ -165,7 +166,7 @@ function save(fileName, fileContents) {
 	    	saveLocalFile(localFilePath, fileContents);
 	    	return;
 	    } catch(e) {
-	    	alert("writing local file cardstore failed:" + e);
+	    	IdentitySelectorDiag.reportError("cardstore.js", "writing local file cardstore failed:" + e);
 	    } 
 	    return;
     }
@@ -184,11 +185,11 @@ function save(fileName, fileContents) {
         if(req.status == 200) {
         	return;
 		} else {
-			alert(req.responseText);    
+			IdentitySelectorDiag.logMessage("cardstore.js", req.responseText);    
 	    	return;
 	    }
     }
-	alert("writing cardstore failed");
+	aIdentitySelectorDiag.logMessage("cardstore.js", writing cardstore failed");
 }
 
 function saveLocalFile(fileName, contents) {
@@ -280,7 +281,7 @@ function read(fileName) {
 	    try {
 	    	return readLocalFile(localFilePath);
 	    } catch(e) {
-	    	alert("reading local file cardstore failed:" + e);
+	    	IdentitySelectorDiag.reportError("cardstore.js", "reading local file cardstore failed:" + e);
 	    } 
 	    return new XML(newDB());
     }
@@ -316,12 +317,12 @@ function read(fileName) {
         	}
 		} else {
 			cardstoreDebug("req.status = " + req.status);
-			alert(req.responseText);    
+			IdentitySelectorDiag.logMessage("cardstore.js", req.responseText);    
 	    	return new XML(newDB());
 	    }
     }
     
-    alert("reading cardstore failed");
+    IdentitySelectorDiag.reportError("cardstore.js", "reading cardstore failed");
     return new XML(newDB());
 } 
 
@@ -470,14 +471,14 @@ function getDir(){
     try {
         netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
     } catch (e) {
-        alert("Permission to save file was denied." + e);
+        IdentitySelectorDiag.reportError("cardstore.js", "Permission to save file was denied." + e);
     }
     // get the path to the user's home (profile) directory
     const DIR_SERVICE = new Components.Constructor("@mozilla.org/file/directory_service;1","nsIProperties");
     try {
         path=(new DIR_SERVICE()).get("ProfD", Components.interfaces.nsIFile).path;
     } catch (e) {
-        alert("error");
+        IdentitySelectorDiag.reportError("cardstore.js", "error");
     }
     // determine the file-separator
     if (path.search(/\\/) != -1) {

@@ -7,19 +7,50 @@ const nsIX509Cert = Ci.nsIX509Cert;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-function OicCardstoreFile() {
-  // If you only need to access your component from Javascript, uncomment the following line:
-  this.wrappedJSObject = this;
+function CardEnumerator() {
+  this.index = 0;
+  this.cardFile = this.readCardStore();
 }
 
-OicCardstoreFile.prototype = {
+CardEnumerator.prototype.QueryInterface = function(iid) {
+  if (iid.equals(Components.interfaces.nsISupports) ||
+      iid.equals(Components.interfaces.nsISimpleEnumerator))
+    return this;
+  throw Components.results.NS_NOINTERFACE;
+};
+
+CardEnumerator.prototype.getNext = function() {
+  return this.cardFile.infocard[this.index++];
+};
+
+CardEnumerator.prototype.hasMoreElements = function() {
+  return (this.index < this.cardFile.length());
+};
+
+var gOICstrBundleService; 
+
+function OicCardstoreNFCPhone() {
+  // If you only need to access your component from Javascript, uncomment the following line:
+  this.wrappedJSObject = this;
+  try {
+    this.strBundleService =
+      Components.classes["component://netscape/intl/stringbundle"].getService(); 
+    this.strBundleService = 
+        this.strBundleService.QueryInterface(Ci.nsIStringBundleService);
+    this.strBundle = this.strBundleService.createBundle("chrome://infocard/locale/mwallet.properties");
+  } catch (e) {
+    Cu.reportError("OicCardstoreNFCPhone: " + e);
+  }
+}
+
+OicCardstoreNFCPhone.prototype = {
     // properties required for XPCOM registration:
-    classDescription: "The openinfocard cardstore in a local file implementation",
-    classID:          Components.ID("{bdc78940-db54-11de-8a39-0800200c9a66}"),
-    contractID:       "@openinfocard.org/cardstore-file;1",
+    classDescription: "phone",
+    classID:          Components.ID("{bdc78940-db54-11de-cafe-0800200c9a66}"),
+    contractID:       "@openinfocard.org/cardstore-phone;1",
     _xpcom_categories: [{  
            category: "information-card-storage",
-           entry: "@openinfocard.org/cardstore-file;1",
+           entry: "@openinfocard.org/cardstore-phone;1",
            service: true  
     }],  
     // QueryInterface implementation
@@ -95,7 +126,7 @@ OicCardstoreFile.prototype = {
     },
 
     getCardStoreName : function getCardStoreName() {
-      return "openinfocard"; //this.mDB;
+      return "NFC Phone"; //this.mDB;
     },
     getCardStoreVersion : function getCardStoreVersion() {
       return "1.0";
@@ -116,104 +147,80 @@ OicCardstoreFile.prototype = {
         privacyPolicy, privacyPolicyVersion, serverCert, issuerPolicy, 
         extraParamsLenght, extraParams) {
 
-       this.log('issuer: ' + issuer);
-       this.log('recipientURL: ' + recipientURL);
-       if (requiredClaims !== null) {
-         requiredClaims = requiredClaims.replace(/\s+/g,' ');
-       }
-       this.log('requiredClaims: ' + requiredClaims);
-       if (optionalClaims !== null) {
-         optionalClaims = optionalClaims.replace(/\s+/g,' ');
-       }
-       this.log('optionalClaims: ' + optionalClaims);
-       this.log('tokenType: ' + tokenType);
-       this.log('privacyPolicy: ' + privacyPolicy);
-       this.log('privacyPolicyVersion: ' + privacyPolicyVersion);
-       this.log('serverCert: ' + serverCert);
-       this.log('issuerPolicy: ' + issuerPolicy);
-       this.log('extraParamsLenght: ' + extraParamsLenght);
-
-       var callback;
-
-       var policy = {};
-       if (tokenType) {
-         policy.tokenType = tokenType;
-       }
-       if (issuer) {
-         policy.issuer = issuer;
-       }
-       if (requiredClaims) {
-         policy.requiredClaims = requiredClaims;
-       }
-       if (optionalClaims) {
-         policy.optionalClaims = optionalClaims;
-       }
-       if (privacyPolicy) {
-         policy.privacyUrl = privacyPolicy;
-       }
-       if (privacyPolicyVersion) {
-         policy.privacyVersion = privacyPolicyVersion;
-       }
-       if (issuerPolicy) {
-         policy.issuerPolicy = issuerPolicy;
-       }
-       if (extraParamsLenght) {
-         policy.extraParamsLenght = extraParamsLenght;
-       }
-       if (extraParams) {
-         policy.extraParams = extraParams;
-       }
-
-       //get a handle on a window
-       var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"].getService(Components.interfaces.nsIWindowMediator);
-       var win = wm.getMostRecentWindow("navigator:browser");
-
-       var mwNode = win.document.getElementById("main-window");
-       if (mwNode) {
-         if (mwNode.style.backgroundImage) {
-           policy.backgroundImage = mwNode.style.backgroundImage;
-           this.log('backgroundImage: ' + mwNode.style.backgroundImage);
-         }
-       }
-       
-       if (serverCert !== null) {
-         policy.cert = this.getDer(serverCert,win);
-         policy.cn = serverCert.commonName;
-
-         var chain = serverCert.getChain();
-         this.log('chain: ' + chain);
-         this.log('chainLength: ' + chain.length);
-         this.log('chain[0]: ' + chain.queryElementAt(0, nsIX509Cert));
-
-         policy.chainLength = ""+chain.length;
-         for (var i = 0; i < chain.length; ++i) {
-           var currCert = chain.queryElementAt(i, nsIX509Cert);
-           policy["certChain"+i] = this.getDer(currCert,win);
-         }
-//         debugObject("serverCert: ", serverCert, 0);
-       }
-
-           // win.document.URL is undefined
-           // win.document.location.href is chrome://.../browser.xul
-       policy.url = recipientURL; 
-
-       if ("urn:oasis:names:tc:IC:1.0:managedcard" == tokenType) {
-         var cardWiz = win.openDialog("chrome://infocard/content/cardWizard.xul","Card Wizard", "modal,chrome,resizable=yes,width=640,height=480",
-                   policy, function (callbackData) { callback = callbackData;});
+        this.log('issuer: ' + issuer);
+        this.log('recipientURL: ' + recipientURL);
+        this.log('requiredClaims: ' + requiredClaims);
+        this.log('optionalClaims: ' + optionalClaims);
+        this.log('tokenType: ' + tokenType);
+        this.log('privacyPolicy: ' + privacyPolicy);
+        this.log('privacyPolicyVersion: ' + privacyPolicyVersion);
+        this.log('serverCert: ' + serverCert);
+        this.log('issuerPolicy: ' + issuerPolicy);
+        this.log('extraParamsLenght: ' + extraParamsLenght);
+        
+        
+        var callback;
+        var policy = {};
+        policy.tokenType = tokenType;
+        policy.issuer = issuer;
+        policy.requiredClaims = requiredClaims;
+        policy.optionalClaims = optionalClaims;
+        policy.privacyUrl = privacyPolicy;
+        policy.privacyVersion = privacyPolicyVersion;
+        policy.issuerPolicy = issuerPolicy;
+        policy.extraParamsLenght = extraParamsLenght;
+        policy.extraParams = extraParams;
+      
+        //get a handle on a window
+        var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"].getService(Components.interfaces.nsIWindowMediator);
+        var win = wm.getMostRecentWindow("navigator:browser");
+        
+        if (serverCert !== null) {
+          policy.cert = this.getDer(serverCert,win);
+          policy.cn = serverCert.commonName;
+      
+          var chain = serverCert.getChain();
+          this.log('chain: ' + chain);
+          this.log('chainLength: ' + chain.length);
+          this.log('chain[0]: ' + chain.queryElementAt(0, nsIX509Cert));
+               
+          policy.chainLength = ""+chain.length;
+          for (var i = 0; i < chain.length; ++i) {
+            var currCert = chain.queryElementAt(i, nsIX509Cert);
+            policy["certChain"+i] = this.getDer(currCert,win);
+          }
+        }
+             
+        // win.document.URL is undefined
+        // win.document.location.href is chrome://.../browser.xul
+        policy.url = recipientURL; 
+      
+        policy.channelType = "nfc";
+        
+        var title;
+        try {
+          title = this.strBundle.getString("dialogtitlenfc");
+        } catch (e) {
+          this.log('cardstoreNFCPhone: ' + e);
+        }
+        if (!title) {
+          title = "Phone Card Selector";
+        }
+        var cardManager = win.openDialog(
+            "chrome://infocard/content/mWallet.xul",
+            title, 
+            "modal,chrome,resizable,width=800,height=640,centerscreen", 
+            policy, function (callbackData) { callback = callbackData;});
+        var doc = win.document;
+        var event = doc.createEvent("Events");
+        event.initEvent("CloseIdentitySelector", true, true);
+        win.dispatchEvent(event);
          
-       } else {
-             var cardManager = win.openDialog("chrome://infocard/content/cardManager.xul","InfoCard Selector", "modal,chrome,resizable,width=800,height=640,centerscreen", policy, function (callbackData) { callback = callbackData;});
-             var doc = win.document;
-             var event = doc.createEvent("Events");
-             event.initEvent("CloseIdentitySelector", true, true);
-             win.dispatchEvent(event);
-     
-             this.log('Token: ' + callback);
-       }
+        this.log('Token: ' + callback);
+      
+        return callback;
 
-       return callback;
-
-  },
+      },
 
   getToken : function getToken(serializedPolicy) {
     var policy = JSON.parse(serializedPolicy);
@@ -518,37 +525,18 @@ OicCardstoreFile.prototype = {
     
     log: function _log(msg) {
       var consoleService = Cc[ "@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService);
-      consoleService.logStringMessage("cardstoreFile: " + msg);
+      consoleService.logStringMessage("CardstoreManagerService: " + msg);
     }
 
 };
 
-function CardEnumerator() {
-  this.index = 0;
-  this.cardFile = this.readCardStore();
-}
-
-CardEnumerator.prototype.QueryInterface = function(iid) {
-  if (iid.equals(Components.interfaces.nsISupports) ||
-      iid.equals(Components.interfaces.nsISimpleEnumerator))
-    return this;
-  throw Components.results.NS_NOINTERFACE;
-};
-
-CardEnumerator.prototype.getNext = function() {
-  return this.cardFile.infocard[this.index++];
-};
-
-CardEnumerator.prototype.hasMoreElements = function() {
-  return (this.index < this.cardFile.length());
-};
 
 /**
 * XPCOMUtils.generateNSGetFactory was introduced in Mozilla 2 (Firefox 4).
 * XPCOMUtils.generateNSGetModule is for Mozilla 1.9.2 (Firefox 3.6).
 */
 if (XPCOMUtils.generateNSGetFactory) {
-  var NSGetFactory = XPCOMUtils.generateNSGetFactory([OicCardstoreFile]);
+  var NSGetFactory = XPCOMUtils.generateNSGetFactory([OicCardstoreNFCPhone]);
 } else {
-  var NSGetModule = XPCOMUtils.generateNSGetModule([OicCardstoreFile]);
+  var NSGetModule = XPCOMUtils.generateNSGetModule([OicCardstoreNFCPhone]);
 }

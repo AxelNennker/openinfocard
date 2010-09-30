@@ -23,7 +23,7 @@ interfaces components/IdentitySelector.xpt
 interfaces components/cardstoreAPI.xpt
 interfaces components/nsIHelloWorld.xpt
 interfaces components/openidlistener.xpt
-
+interfaces components/cardstoreManager.xpt
 
 component {2e894fd-0d6c-484d-abe8-5903b5f8bf3b} components/Identityselector.js
 contract @xmldap.org/identityselector;1 {2e894fd-0d6c-484d-abe8-5903b5f8bf3b}
@@ -39,10 +39,10 @@ contract @openinfocard.org/cardstore-file;1 {bdc78940-db54-11de-8a39-0800200c9a6
 
 component {74b89fb0-cafe-4ae8-a3ec-dd164117f6de} components/cardstoreManager.js
 contract @openinfocard.org/CardstoreManager/service;1 {74b89fb0-cafe-4ae8-a3ec-dd164117f6de}
-category profile-after-change CardstoreManagerService @openinfocard.org/CardstoreManager/service;1
 
 component {DC7D00A8-CAFE-11DD-8B0A-5D0156D89593} components/httplistener.js
 contract @xmldap/httplistener-service;1 {DC7D00A8-CAFE-11DD-8B0A-5D0156D89593}
 category profile-after-change module @xmldap/httplistener-service;1
 
-../firefox/components/mWalletCardSelector.js
+component {72e894fd-0d6c-484d-abe8-5903b5f8bf3c} components/mWalletCardSelector.js
+contract @laboratories/identityselector;1 {72e894fd-0d6c-484d-abe8-5903b5f8bf3c}

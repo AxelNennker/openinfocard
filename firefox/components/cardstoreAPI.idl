@@ -1,6 +1,7 @@
 #include "nsISupports.idl"
 #include "nsIX509Cert.idl"
-            
+#include "nsISimpleEnumerator.idl"
+
 [scriptable, uuid(DDD9BC02-C964-4bd5-B5BC-943E483C6C58)]
 interface IInformationCardStore : nsISupports
 {
@@ -25,9 +26,7 @@ interface IInformationCardStore : nsISupports
 
   unsigned long getCardCount(); 
 
-  string cardIdIterator();
-  string cardidIteratorNext(in string iterator);
-  boolean cardIdIteratorHasNext(in string iterator);
+  nsISimpleEnumerator getInformationCards();
 
   // returns an encrypted card store as defined in ISIP 1.5
   string cardStoreExportAllCards(in wstring password);
@@ -46,6 +45,13 @@ interface IInformationCardStore : nsISupports
   string readCardStore();
   
   string getToken(in string serializedPolicy);
+  
+  string GetBrowserToken(in wstring issuerUri, in wstring recipientUrl, 
+    in wstring requiredClaims, in wstring optionalClaims, in wstring tokenType, 
+    in wstring privacyPolicy, in long privacyPolicyVersion ,
+    in nsIX509Cert certificate, in wstring issuerPolicy,
+    in unsigned long extraParamsLenght,
+    [array, size_is(extraParamsLenght)] in wstring extraParams);
 
   readonly attribute wstring errorstring;
   readonly attribute long errornumber;

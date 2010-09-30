@@ -3,6 +3,18 @@ var EXPORTED_SYMBOLS = ["TokenIssuer"];
 var TokenIssuer = {
     tokenIssuer : null,
 
+
+    _alert : function(msg) {
+      var data = {};
+      data.msg = "Alert: " + msg;
+      data.wrappedJSObject = data;
+
+      var ww = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
+                         .getService(Components.interfaces.nsIWindowWatcher);
+      ww.openWindow(null, "chrome://infocard/content/alert.xul",
+        "Open Information Card", "chrome,centerscreen,modal", data);
+    },
+
     _trace : function(msg) {
       Components.classes["@mozilla.org/consoleservice;1"]
        .getService(Components.interfaces.nsIConsoleService)
@@ -23,7 +35,7 @@ var TokenIssuer = {
         Components.classes["@mozilla.org/consoleservice;1"]
                            .getService(Components.interfaces.nsIConsoleService)
                                 .logStringMessage(msg);
-        alert(msg);  
+        this._alert(msg);  
     },
     
     _getExtensionPath : function(extensionName) {

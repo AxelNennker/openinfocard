@@ -5,6 +5,7 @@
 <!ENTITY infocard.prefs.manageCards "tarjetas gestionadas" >
 <!ENTITY infocard.prefs.filePicker "..." >
 <!ENTITY infocard.prefs.URL "URL" >
+<!ENTITY infocard.prefs.cardstoreName "cardstore name" >
 <!ENTITY infocard.prefs.localFile "Archivo local" >
 <!ENTITY infocard.prefs.groupboxCaption "Preferencias del almacen de clabes" >
 <!ENTITY infocard.prefs.advertiseSelectorNO "No anunciar el selector de identidad" >

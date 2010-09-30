@@ -5,6 +5,7 @@
 <!ENTITY infocard.prefs.manageCards "managed cards" >
 <!ENTITY infocard.prefs.filePicker "..." >
 <!ENTITY infocard.prefs.URL "URL" >
+<!ENTITY infocard.prefs.cardstoreName "cardstore name" >
 <!ENTITY infocard.prefs.localFile "local file" >
 <!ENTITY infocard.prefs.groupboxCaption "Cardstore Preferences" >
 <!ENTITY infocard.prefs.advertiseSelectorNO "Don't advertise id selector" >

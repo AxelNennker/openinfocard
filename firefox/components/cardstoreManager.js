@@ -10,9 +10,9 @@ function debug(msg) {
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-function CardstoreEnumerator(mCardstores) {
-  this.index = 0;
-  this.mCardstores = mCardstores;
+function CardstoreEnumerator() {
+  var categoryManager = XPCOMUtils.categoryManager;
+  this.enumerator = categoryManager.enumerateCategory("information-card-storage");
 }
 
 CardstoreEnumerator.prototype.QueryInterface = function(iid) {
@@ -23,11 +23,15 @@ CardstoreEnumerator.prototype.QueryInterface = function(iid) {
 };
 
 CardstoreEnumerator.prototype.getNext = function() {
-  return this.mCardstores[this.index++];
+  var item = this.enumerator.getNext();
+  var entry = item.QueryInterface(Ci.nsISupportsCString)
+  var clasz = Cc[entry];
+  var cardstoreService = clasz.getService(Ci.IInformationCardStore);
+  return cardstoreService;
 };
 
 CardstoreEnumerator.prototype.hasMoreElements = function() {
-  return (this.index < this.mCardstores.length);
+  return this.enumerator.hasMoreElements();
 };
 
 function CardstoreManagerService() {
@@ -39,64 +43,14 @@ CardstoreManagerService.prototype = {
   classDescription: "CardstoreManager Service",
   contractID: "@openinfocard.org/CardstoreManager/service;1",
   classID: Components.ID("{74b89fb0-cafe-4ae8-a3ec-dd164117f6de}"),
-  _xpcom_categories: [{ category: "app-startup", service: true },
-                      { category: "profile-after-change", service: true }],
-
-  mCardstores: [],
-  
+  service : true,
   QueryInterface: XPCOMUtils.generateQI([Ci.IInformationCardStoreManager,
-                                         Ci.nsISupports, 
-                                         Ci.nsIObserver,
-                                         Ci.nsISupportsWeakReference]),
+                                         Ci.nsISupports]),
 
   getCardstores : function() {
-    return new CardstoreEnumerator(this.mCardstores);
+    return new CardstoreEnumerator();
   },
 
-  observe: function CMS__observe(subject, topic, data) {
-    var consoleService = Cc[ "@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService);
-    try {
-        switch (topic) {
-        case "app-startup": // fall through
-        case "profile-after-change":
-          consoleService.logStringMessage("CardstoreManagerService: profile-after-change");
-          let os = Cc["@mozilla.org/observer-service;1"].
-            getService(Ci.nsIObserverService);
-          os.addObserver(this, "final-ui-startup", true);
-          var categoryManager = XPCOMUtils.categoryManager;
-          var enumerator = categoryManager.enumerateCategory("information-card-storage");
-          while (enumerator.hasMoreElements()) {
-            var item = enumerator.getNext();
-            var entry = item.QueryInterface(Ci.nsISupportsCString)
-            consoleService.logStringMessage("CardstoreManagerService: entry=" + entry);
-            var clasz = Cc[entry];
-            if (clasz) {
-              var cardstoreService = clasz.getService(Components.interfaces.IInformationCardStore);
-              var cardstorename = cardstoreService.getCardStoreName();
-              consoleService.logStringMessage("CardstoreManagerService: cardstorename=" + cardstorename);
-              this.mCardstores.push(cardstoreService);
-            } else {
-              consoleService.logStringMessage("CardstoreManagerService: Components.classes[" + entry + "] is undefined or null");
-            }
-          }
-          consoleService.logStringMessage("CardstoreManagerService: lenght=" + this.mCardstores.length);
-          break;
-    
-        case "final-ui-startup":
-          consoleService.logStringMessage("CardstoreManagerService: final-ui-startup");
-          // TODO read cardstore and cache it
-          break;
-        }
-    } catch (e) {
-      consoleService.logStringMessage("CardstoreManagerService: exception=" + e);
-      dump("CardstoreManagerService Exception:" + e);
-    }
-  }, 
-  
-  readCardStore : function readCardStore() {
-    var cardstore = this.mCardstores[0];
-    return cardstore.readCardStore();
-  }
 };
 
 /**

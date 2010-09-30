@@ -1,0 +1,8 @@
+<!ENTITY cardstoremanagerPrefs.title                           "Cardstore Manager">
+<!ENTITY cardstoremanagerPrefs.devlist.label                   "Cardstores">
+<!ENTITY cardstoremanagerPrefs.details.title                   "Details">
+<!ENTITY cardstoremanagerPrefs.details.title2                  "Value">
+<!ENTITY cardstoremanagerPrefs.button.load.label               "Load">
+<!ENTITY cardstoremanagerPrefs.button.load.accesskey           "L">
+<!ENTITY cardstoremanagerPrefs.button.unload.label             "Unload">
+<!ENTITY cardstoremanagerPrefs.button.unload.accesskey         "U">

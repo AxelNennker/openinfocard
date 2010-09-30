@@ -1,0 +1,8 @@
+<!ENTITY cardstoremanagerPrefs.title                           "Kartenspeicher Manager">
+<!ENTITY cardstoremanagerPrefs.devlist.label                   "Kartenspeicher">
+<!ENTITY cardstoremanagerPrefs.details.title                   "Details">
+<!ENTITY cardstoremanagerPrefs.details.title2                  "Wert">
+<!ENTITY cardstoremanagerPrefs.button.load.label               "Laden">
+<!ENTITY cardstoremanagerPrefs.button.load.accesskey           "L">
+<!ENTITY cardstoremanagerPrefs.button.unload.label             "Entladend">
+<!ENTITY cardstoremanagerPrefs.button.unload.accesskey         "U">

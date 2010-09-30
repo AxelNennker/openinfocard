@@ -1,4 +1,5 @@
 Components.utils.import("resource://infocard/cmCommon.jsm");
+Components.utils.import("resource://infocard/IdentitySelectorDiag.jsm");
 
 function getMex1(to, mexAddress) {
   var mexResponse;
@@ -34,7 +35,7 @@ icDebug("managedCard.carddata.managed.mex: " + mexAddress);
     }
     catch (e) {
       icDebug(e);
-      alert("posting the MEX request failed." + e);
+      IdentitySelectorDiag.reportError("getMex", "posting the MEX request failed." + e);
       return null;
     }
 icDebug("getMex: mex POST request status="+req.status);
@@ -60,7 +61,7 @@ icDebug("getMex POST 200: " + mexResponse);
       }
       catch (ee) {
         icDebug(ee);
-        alert("getting the MEX request failed." + ee);
+        IdentitySelectorDiag.reportError("getMex", "getting the MEX request failed." + ee);
         return null;
       }
       icDebug("getMex: mex GET request status="+req.status);
@@ -173,15 +174,13 @@ function sendRST(sendRstParameter) {
         rst = rst + "</o:Password></o:UsernameToken>";
     }  else if (usercredential.ic::KerberosV5Credential.toString() !== "") {
       Components.utils.reportError("unimplemented user credential type: KerberosV5Credential");
-    alert("unimplemented user credential type: KerberosV5Credential");
-    return null;
+      return null;
     } else if (usercredential.ic::X509V3Credential.toString() !== "") {
 //        var dsigNS = new Namespace("dsig", "http://www.w3.org/2000/09/xmldsig#");
 //        var wsaNS = new Namespace("wsa", "http://www.w3.org/2005/08/addressing");
 //        var mexNS = new Namespace("mex", "http://schemas.xmlsoap.org/ws/2004/09/mex");
 //        var wssNS = new Namespace("wss", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd");
       Components.utils.reportError("unimplemented user credential type: X509V3Credential");
-      alert("unimplemented user credential type: X509V3Credential");
       return null;
     } else if (usercredential.ic::SelfIssuedCredential.toString() !== "") {
       var hintSelfIssuedCredential = usercredential.ic::DisplayCredentialHint;
@@ -223,7 +222,7 @@ function sendRST(sendRstParameter) {
 //      return null;
     } else {
       Components.utils.reportError("undefined user credential type: " + usercredential.ic::SelfIssuedCredential);
-      alert("undefined user credential type");
+      IdentitySelectorDiag.reportError("sendRST", "undefined user credential type");
       return null;
     }         
             
@@ -327,7 +326,7 @@ icDebug("cardid xmlreplaced:"+ xmlreplace(managedCard.id));
     } 
     catch (e) {
     icDebug("rstReq.send(rst) failed: " + e);
-    alert("posting the request to get the security tokens failed. " + e);
+    IdentitySelectorDiag.reportError("cmManagedCardWSStar", "posting the request to get the security tokens failed. " + e);
       return null;              
     }
     
@@ -345,7 +344,7 @@ icDebug("cardid xmlreplaced:"+ xmlreplace(managedCard.id));
     
       var j = rstReq.responseText.indexOf("RequestedSecurityToken");
       if (j<0) {
-       alert("token server did not sent a RequestedSecurityToken.\n" + rstReq.responseText);
+       IdentitySelectorDiag.reportError("cmManagedCardWSStar", "token server did not sent a RequestedSecurityToken.\n" + rstReq.responseText);
        return null;
       }
       var prefix;
@@ -353,7 +352,7 @@ icDebug("cardid xmlreplaced:"+ xmlreplace(managedCard.id));
           var start = rstReq.responseText.substring(0,j-1);
           var iii = start.lastIndexOf("<");
           if (iii<0) {
-           alert("illegal XML\n" + start);
+           IdentitySelectorDiag.reportError("cmManagedCardWSStar", "illegal XML\n" + start);
            return null;
           }
           prefix = start.substring(iii+1) + ":";
@@ -372,7 +371,7 @@ icDebug("cardid xmlreplaced:"+ xmlreplace(managedCard.id));
       icDebug("RSTR: " + tokenToReturn);
     } else {
       icDebug("token request (" + tsEndpointAddressStr + ") failed. (" + rstReq.status +")\n" + rstReq.responseText);
-      alert("token request (" + tsEndpointAddressStr + ") failed. (" + rstReq.status +")\n" + rstReq.responseText);
+      IdentitySelectorDiag.reportError("cmManagedCardWSStar", "token request (" + tsEndpointAddressStr + ") failed. (" + rstReq.status +")\n" + rstReq.responseText);
     }
     return tokenToReturn;
 }
