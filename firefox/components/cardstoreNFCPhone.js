@@ -27,8 +27,6 @@ CardEnumerator.prototype.hasMoreElements = function() {
   return (this.index < this.cardFile.length());
 };
 
-var gOICstrBundleService; 
-
 function OicCardstoreNFCPhone() {
   // If you only need to access your component from Javascript, uncomment the following line:
   this.wrappedJSObject = this;
