@@ -82,6 +82,11 @@ public class Base64 {
      */
     public final static int DONT_BREAK_LINES = 8;
 
+    /**
+     * url encode the result of the normal encoding
+     */
+    public final static int URL = 16;
+
 /* ********  P R I V A T E   F I E L D S  ******** */
 
 
@@ -467,6 +472,7 @@ public class Base64 {
     public static String encodeBytes(byte[] source, int off, int len, int options) {
         // Isolate options
         int dontBreakLines = (options & DONT_BREAK_LINES);
+        int urlEncode = (options & URL);
         int gzip = (options & GZIP);
 
         // Compress?
@@ -541,10 +547,26 @@ public class Base64 {
                 encode3to4(source, d + off, len - d, outBuff, e);
                 e += 4;
             }   // end if: some padding needed
-
+            
             // Return value according to relevant encoding.
             try {
-                return new String(outBuff, 0, e, PREFERRED_ENCODING);
+              if (urlEncode == URL) {
+                switch (len-d) // remove Pad
+                {
+                  case 0: e -= 2; break; // No pad chars in this case
+                  case 2: e -= 1; break; // Two pad chars
+                }
+
+                for (int i=0; i<e;i++) {
+                  byte o = outBuff[i];
+                  if (o == '+') {
+                    outBuff[i] = '-';
+                  } else if (o == '/') {
+                    outBuff[i] = '_';
+                  }
+                }
+              }
+              return new String(outBuff, 0, e, PREFERRED_ENCODING);
             }   // end try
             catch (java.io.UnsupportedEncodingException uue) {
                 return new String(outBuff, 0, e);
@@ -688,7 +710,21 @@ public class Base64 {
         return out;
     }   // end decode
 
-
+    public static byte[] decodeUrl(String arg) throws Exception {
+      String s = arg;
+      s = s.replace('-', '+'); // 62nd char of encoding
+      s = s.replace('_', '/'); // 63rd char of encoding
+      switch (s.length() % 4) // Pad with trailing '='s
+      {
+        case 0: break; // No pad chars in this case
+        case 2: s += "=="; break; // Two pad chars
+        case 3: s += "="; break; // One pad char
+        default: throw new java.lang.Exception(
+          "Illegal base64url string!");
+      }
+      return Base64.decode(s);
+    }
+    
     /**
      * Decodes data from org.xmldap.util.Base64 notation, automatically
      * detecting gzip-compressed data and decompressing it.
