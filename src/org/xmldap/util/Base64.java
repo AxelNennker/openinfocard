@@ -551,12 +551,12 @@ public class Base64 {
             // Return value according to relevant encoding.
             try {
               if (urlEncode == URL) {
-                switch (len-d) // remove Pad
-                {
-                  case 0: e -= 2; break; // No pad chars in this case
-                  case 2: e -= 1; break; // Two pad chars
+                if (outBuff[e-1] == EQUALS_SIGN) {
+                  e--;
                 }
-
+                if (outBuff[e-1] == EQUALS_SIGN) {
+                  e--;
+                }
                 for (int i=0; i<e;i++) {
                   byte o = outBuff[i];
                   if (o == '+') {
