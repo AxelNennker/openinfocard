@@ -74,24 +74,24 @@ public class WebToken {
     BigInteger r = res[0];
     BigInteger s = res[1];
     
-    System.out.println("R:" + r.toString());
-    System.out.println("S:" + s.toString());
+//    System.out.println("R:" + r.toString());
+//    System.out.println("S:" + s.toString());
     byte[] rBytes = r.toByteArray();
-    System.out.println("rBytes.length:" + rBytes.length);
+//    System.out.println("rBytes.length:" + rBytes.length);
     byte[] sBytes = s.toByteArray();
-    System.out.println("sBytes.length:" + sBytes.length);
+//    System.out.println("sBytes.length:" + sBytes.length);
     StringBuffer sb = new StringBuffer();
     for (int i=0; i<rBytes.length;i++) {
       sb.append(String.valueOf((int)rBytes[i]));
       sb.append(',');
     }
-    System.out.println("Rbytes:" + sb.toString());
+//    System.out.println("Rbytes:" + sb.toString());
     sb = new StringBuffer();
     for (int i=0; i<sBytes.length;i++) {
       sb.append(String.valueOf((int)sBytes[i]));
       sb.append(',');
     }
-    System.out.println("Sbytes:" + sb.toString());
+//    System.out.println("Sbytes:" + sb.toString());
     byte[] rsBytes = new byte[64];
     for (int i=0; i<rsBytes.length; i++) {
       rsBytes[i] = 0;
@@ -108,7 +108,7 @@ public class WebToken {
     }
     String signed = Base64.encodeBytes(rsBytes, 
         org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
-    System.out.println("Signed:" + signed);
+    //System.out.println("Signed:" + signed);
     return signed;
   }
 
@@ -142,7 +142,7 @@ public class WebToken {
     System.arraycopy(sBytes, 0, rsBytes, rBytes.length, sBytes.length);
     signed = Base64.encodeBytes(rsBytes, 
         org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
-    System.out.println("Signed:" + signed);
+//    System.out.println("Signed:" + signed);
     return signed;
   }
 
