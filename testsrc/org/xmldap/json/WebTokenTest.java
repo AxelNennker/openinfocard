@@ -1,19 +1,9 @@
 package org.xmldap.json;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
-import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.PrivateKey;
-import java.security.Provider;
-import java.security.Security;
-import java.security.SignatureException;
-import java.security.spec.ECParameterSpec;
-import java.security.spec.ECPrivateKeySpec;
-import java.security.spec.InvalidKeySpecException;
 
 import junit.framework.TestCase;
 
@@ -25,14 +15,11 @@ import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.crypto.signers.ECDSASigner;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.math.ec.ECCurve;
 import org.bouncycastle.math.ec.ECPoint;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.xmldap.util.Base64;
-
-import sun.security.ec.NamedCurve;
 
 public class WebTokenTest extends TestCase {
   JSONObject joeO = null;
@@ -147,7 +134,6 @@ public class WebTokenTest extends TestCase {
   }
   
   public void test1() throws InvalidKeyException, NoSuchAlgorithmException, IllegalStateException, UnsupportedEncodingException, JSONException {
-    String algorithm = null;
     WebToken jwt = new WebToken(joeStr, hs256);
     byte[] key = {83, (byte)159, 117, 12, (byte)235, (byte)169, (byte)168, (byte)200, (byte)131, (byte)152, (byte)227, (byte)246, (byte)214, (byte)212, (byte)188, 74, 71, 83, (byte)244, (byte)166, 90, 24, (byte)239, (byte)251, 32, 124, 6, (byte)201, (byte)194, 104, (byte)241, 62, (byte)174, (byte)246, 65, 111, 49, 52, (byte)210, 118, (byte)212, 124, 34, 88, (byte)167, 112, 84, 88, 83, 65, (byte)155, 18, (byte)234, (byte)250, (byte)224, 101, (byte)147, (byte)221, 23, 104, (byte)219, (byte)170, (byte)146, (byte)215};
     String signed = jwt.serialize(key);
