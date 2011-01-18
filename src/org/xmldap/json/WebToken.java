@@ -10,6 +10,7 @@ import java.security.PrivateKey;
 import java.security.Security;
 import java.security.Signature;
 import java.security.SignatureException;
+import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.ECPrivateKeySpec;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Enumeration;
@@ -21,8 +22,17 @@ import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERInteger;
 import org.bouncycastle.asn1.DERObject;
+import org.bouncycastle.asn1.pkcs.RSAPrivateKeyStructure;
+import org.bouncycastle.crypto.AsymmetricBlockCipher;
+import org.bouncycastle.crypto.CryptoException;
+import org.bouncycastle.crypto.DataLengthException;
+import org.bouncycastle.crypto.Digest;
+import org.bouncycastle.crypto.digests.SHA256Digest;
+import org.bouncycastle.crypto.engines.RSAEngine;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
+import org.bouncycastle.crypto.params.RSAKeyParameters;
 import org.bouncycastle.crypto.signers.ECDSASigner;
+import org.bouncycastle.crypto.signers.RSADigestSigner;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -69,48 +79,52 @@ public class WebToken {
     BigInteger r = res[0];
     BigInteger s = res[1];
     
-//    System.out.println("R:" + r.toString());
-//    System.out.println("S:" + s.toString());
-    byte[] rBytes = r.toByteArray();
-//    System.out.println("rBytes.length:" + rBytes.length);
-    byte[] sBytes = s.toByteArray();
-//    System.out.println("sBytes.length:" + sBytes.length);
-    StringBuffer sb = new StringBuffer();
-    for (int i=0; i<rBytes.length;i++) {
-      sb.append(String.valueOf((int)rBytes[i]));
-      sb.append(',');
-    }
-//    System.out.println("Rbytes:" + sb.toString());
-    sb = new StringBuffer();
-    for (int i=0; i<sBytes.length;i++) {
-      sb.append(String.valueOf((int)sBytes[i]));
-      sb.append(',');
-    }
-//    System.out.println("Sbytes:" + sb.toString());
-    byte[] rsBytes = new byte[64];
-    for (int i=0; i<rsBytes.length; i++) {
-      rsBytes[i] = 0;
-    }
-    if (rBytes.length >= 32) {
-      System.arraycopy(rBytes, rBytes.length - 32, rsBytes, 0, 32);
-    } else {
-      System.arraycopy(rBytes, 0, rsBytes, 32-rBytes.length, rBytes.length);
-    }
-    if (sBytes.length >= 32) {
-      System.arraycopy(sBytes, sBytes.length - 32, rsBytes, 32, 32);
-    } else {
-      System.arraycopy(sBytes, 0, rsBytes, 64-sBytes.length, sBytes.length);
-    }
-    String signed = Base64.encodeBytes(rsBytes, 
-        org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
+    String signed = rs2jwt(r, s);
     //System.out.println("Signed:" + signed);
+    return signed;
+  }
+
+  private String rs2jwt(BigInteger r, BigInteger s) {
+    //    System.out.println("R:" + r.toString());
+    //    System.out.println("S:" + s.toString());
+        byte[] rBytes = r.toByteArray();
+    //    System.out.println("rBytes.length:" + rBytes.length);
+        byte[] sBytes = s.toByteArray();
+    //    System.out.println("sBytes.length:" + sBytes.length);
+    //    StringBuffer sb = new StringBuffer();
+    //    for (int i=0; i<rBytes.length;i++) {
+    //      sb.append(String.valueOf((int)rBytes[i]));
+    //      sb.append(',');
+    //    }
+    //    System.out.println("Rbytes:" + sb.toString());
+    //    sb = new StringBuffer();
+    //    for (int i=0; i<sBytes.length;i++) {
+    //      sb.append(String.valueOf((int)sBytes[i]));
+    //      sb.append(',');
+    //    }
+    //    System.out.println("Sbytes:" + sb.toString());
+        byte[] rsBytes = new byte[64];
+        for (int i=0; i<rsBytes.length; i++) {
+          rsBytes[i] = 0;
+        }
+        if (rBytes.length >= 32) {
+          System.arraycopy(rBytes, rBytes.length - 32, rsBytes, 0, 32);
+        } else {
+          System.arraycopy(rBytes, 0, rsBytes, 32-rBytes.length, rBytes.length);
+        }
+        if (sBytes.length >= 32) {
+          System.arraycopy(sBytes, sBytes.length - 32, rsBytes, 32, 32);
+        } else {
+          System.arraycopy(sBytes, 0, rsBytes, 64-sBytes.length, sBytes.length);
+        }
+        String signed = Base64.encodeBytes(rsBytes, 
+            org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
     return signed;
   }
 
   private String signES256(ECPrivateKeySpec ecPrivateKeySpec)
       throws NoSuchAlgorithmException, InvalidKeyException, SignatureException,
       UnsupportedEncodingException, IOException, InvalidKeySpecException {
-    String signed;
     Signature signature = Signature.getInstance("SHA256withECDSA");
     
     Security.addProvider(new BouncyCastleProvider());
@@ -128,20 +142,65 @@ public class WebToken {
     Enumeration e = encodedSeq.getObjects();
     BigInteger r = DERInteger.getInstance(e.nextElement()).getValue();
     BigInteger s = DERInteger.getInstance(e.nextElement()).getValue();
-
-    byte[] rBytes = r.toByteArray();
-    byte[] sBytes = s.toByteArray();
     
-    byte[] rsBytes = new byte[rBytes.length+sBytes.length];
-    System.arraycopy(rBytes, 0, rsBytes, 0, rBytes.length);
-    System.arraycopy(sBytes, 0, rsBytes, rBytes.length, sBytes.length);
-    signed = Base64.encodeBytes(rsBytes, 
-        org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
-//    System.out.println("Signed:" + signed);
+    String signed = rs2jwt(r, s);
     return signed;
   }
 
-  public String serialize(byte[] passphraseBytes) 
+  public String serialize(RSAPrivateKey privateKey) throws UnsupportedEncodingException, JSONException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+    String b64 = Base64.encodeBytes(mPKAlgorithm.getBytes("utf-8"), 
+        org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
+    StringBuffer sb = new StringBuffer(b64);
+    sb.append('.');
+    b64 = Base64.encodeBytes(mJsonStr.getBytes("utf-8"), 
+        org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
+    sb.append(b64);
+    sb.append('.');
+    
+    JSONObject algO = new JSONObject(mPKAlgorithm);
+    String jwtAlgStr = algO.getString("alg");
+    Signature signature;
+    if ("RS256".equals(jwtAlgStr)) {
+      String algorithm = "SHA256withRSA";
+      signature = Signature.getInstance(algorithm);
+    } else {
+      throw new NoSuchAlgorithmException("JWT algorithm: " + jwtAlgStr);
+    }
+    signature.initSign(privateKey);
+    signature.update(mJsonStr.getBytes("utf-8"));
+    byte[] bytes = signature.sign();
+    b64 = Base64.encodeBytes(bytes, 
+        org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
+    sb.append(b64);
+    return sb.toString();
+  }
+
+  public String serialize(PrivateKey privateKey) 
+    throws UnsupportedEncodingException, JSONException, 
+    NoSuchAlgorithmException, InvalidKeyException, SignatureException 
+  {
+    String b64 = Base64.encodeBytes(mPKAlgorithm.getBytes("utf-8"), 
+        org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
+    StringBuffer sb = new StringBuffer(b64);
+    sb.append('.');
+    b64 = Base64.encodeBytes(mJsonStr.getBytes("utf-8"), 
+        org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
+    sb.append(b64);
+    sb.append('.');
+    
+    JSONObject algO = new JSONObject(mPKAlgorithm);
+    String jwtAlgStr = algO.getString("alg");
+
+    Signature signature = Signature.getInstance(jwtAlgStr);
+    signature.initSign(privateKey);
+    signature.update(mJsonStr.getBytes("utf-8"));
+    byte[] bytes = signature.sign();
+    String signed = new String(bytes);
+    sb.append(signed);
+    return sb.toString();
+  }
+
+public String serialize(byte[] passphraseBytes) 
     throws JSONException, NoSuchAlgorithmException, InvalidKeyException, IllegalStateException, UnsupportedEncodingException {
     String     b64 = Base64.encodeBytes(mPKAlgorithm.getBytes("utf-8"), 
         org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
@@ -150,6 +209,9 @@ public class WebToken {
     b64 = Base64.encodeBytes(mJsonStr.getBytes("utf-8"), 
         org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
     sb.append(b64);
+    
+    String stringToSign = sb.toString();
+    
     sb.append('.');
     String signed;
     
@@ -158,7 +220,7 @@ public class WebToken {
     if ("HS256".equals(jwtAlgStr)) { // HMAC SHA-256
       Mac mac = Mac.getInstance("HMACSHA256");
       mac.init(new SecretKeySpec(passphraseBytes, mac.getAlgorithm()));
-      mac.update(mJsonStr.getBytes("utf-8"));
+      mac.update(stringToSign.getBytes("utf-8"));
       byte[] bytes = mac.doFinal();
       signed = Base64.encodeBytes(bytes, 
           org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
