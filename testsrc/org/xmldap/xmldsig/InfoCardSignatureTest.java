@@ -7,18 +7,15 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import junit.framework.TestCase;
 import nu.xom.Attribute;
 import nu.xom.Document;
 import nu.xom.Element;
 import nu.xom.Elements;
-import nu.xom.Node;
-import nu.xom.Nodes;
 import nu.xom.ParsingException;
-import nu.xom.XPathContext;
 
 import org.xmldap.exceptions.CryptoException;
 import org.xmldap.exceptions.SerializationException;
-import org.xmldap.exceptions.TokenIssuanceException;
 import org.xmldap.infocard.InfoCard;
 import org.xmldap.infocard.policy.SupportedClaim;
 import org.xmldap.infocard.policy.SupportedClaimTypeList;
@@ -26,10 +23,6 @@ import org.xmldap.infocard.policy.SupportedToken;
 import org.xmldap.infocard.policy.SupportedTokenList;
 import org.xmldap.ws.WSConstants;
 import org.xmldap.xml.XmlUtils;
-
-import sun.security.x509.X509Cert;
-
-import junit.framework.TestCase;
 
 public class InfoCardSignatureTest extends TestCase {
 	InfoCard card = null;
