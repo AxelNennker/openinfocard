@@ -10,9 +10,9 @@ public class Base64Test extends TestCase {
   byte[] mJWTbytes = {0x3, (byte)236, (byte)255, (byte)224, (byte)193};
 
   // http://self-issued.info/docs/draft-jones-json-web-token-00.html#anchor4
-  String joeStr = "{\"iss\":\"joe\",\n" +
-  "\"exp\":1300819380,\n" +
-  "\"http://example.com/is_root\":true}";
+  String joeStr = "{\"iss\":\"joe\",\r\n" +
+  " \"exp\":1300819380,\r\n" +
+  " \"http://example.com/is_root\":true}";
 
   public void setUp() throws Exception {
     super.setUp();
@@ -33,11 +33,11 @@ public class Base64Test extends TestCase {
   
   // http://self-issued.info/docs/draft-jones-json-web-token-00.html#anchor4
   public void test0() throws UnsupportedEncodingException {
-    byte[] joeBytes = joeStr.getBytes("utf-8");
-    String joeBase64urlStr = Base64.encodeBytes(joeBytes, 
+    byte[] bytes = joeStr.getBytes("utf-8");
+    String base64urlStr = Base64.encodeBytes(bytes, 
         org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
-    String expected = "eyJpc3MiOiJqb2UiLAoiZXhwIjoxMzAwODE5MzgwLAoiaHR0cDovL2V4YW1wbGUuY29tL2lzX3Jvb3QiOnRydW";
-    assertEquals(expected, joeBase64urlStr);
+    String expected = "eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFtcGxlLmNvbS9pc19yb290Ijp0cnVlfQ";
+    assertEquals(expected, base64urlStr);
   }
 
 }
