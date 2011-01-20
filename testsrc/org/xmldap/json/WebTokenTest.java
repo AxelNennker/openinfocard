@@ -15,16 +15,6 @@ import java.security.spec.RSAPublicKeySpec;
 
 import junit.framework.TestCase;
 
-import org.bouncycastle.asn1.DERObjectIdentifier;
-import org.bouncycastle.asn1.sec.SECNamedCurves;
-import org.bouncycastle.asn1.sec.SECObjectIdentifiers;
-import org.bouncycastle.asn1.x9.X9ECParameters;
-import org.bouncycastle.crypto.params.ECDomainParameters;
-import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
-import org.bouncycastle.crypto.params.ECPublicKeyParameters;
-import org.bouncycastle.crypto.signers.ECDSASigner;
-import org.bouncycastle.math.ec.ECCurve;
-import org.bouncycastle.math.ec.ECPoint;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.xmldap.json.WebToken;
@@ -93,6 +83,15 @@ public class WebTokenTest extends TestCase {
 //      System.out.println(p.getName());
 //    }
 //  }
+  
+  public void testEDSAsignature_Draft01() 
+  throws Exception {
+    String signature = "eyJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFtcGxlLmNvbS9pc19yb290Ijp0cnVlfQ.DtEhU3ljbEg8L38VWAfUAqOyKAM6-Xx-F4GawxaepmXFCgfTjDxw5djxLa8ISlSApmWQxfKTUJqPP3-Kg6NU1Q";
+    byte[] x = {127, (byte)205, (byte)206, (byte)39, (byte)112, (byte)246, (byte)196, (byte)93, (byte)65, (byte)131, (byte)203, (byte)238, (byte)111, (byte)219, (byte)75, (byte)123, (byte)88, (byte)7, (byte)51, (byte)53, (byte)123, (byte)233, (byte)239, (byte)19, (byte)186, (byte)207, (byte)110, (byte)60, (byte)123, (byte)209, (byte)84, (byte)69};
+    byte[] y = {(byte)199, (byte)241, (byte)68, (byte)205, (byte)27, (byte)189, (byte)155, (byte)126, (byte)135, (byte)44, (byte)223, (byte)237, (byte)185, (byte)238, (byte)185, (byte)244, (byte)179, (byte)105, (byte)93, (byte)110, (byte)169, (byte)11, (byte)36, (byte)173, (byte)138, (byte)70, (byte)35, (byte)40, (byte)133, (byte)136, (byte)229, (byte)173};
+
+    assertTrue(WebToken.verify(signature, x, y));
+  }
   
   public void testEDSAsignature() 
   throws Exception {

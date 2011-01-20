@@ -19,6 +19,10 @@ import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.sec.SECObjectIdentifiers;
 import org.bouncycastle.asn1.x9.X9ECParameters;
+import org.bouncycastle.crypto.Digest;
+import org.bouncycastle.crypto.digests.SHA256Digest;
+import org.bouncycastle.crypto.digests.SHA384Digest;
+import org.bouncycastle.crypto.digests.SHA512Digest;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
@@ -89,7 +93,25 @@ public class WebToken {
     BigInteger r = new BigInteger(1, rBytes);
     BigInteger s = new BigInteger(1, sBytes);
     
-    DERObjectIdentifier oid = SECObjectIdentifiers.secp256r1;
+    DERObjectIdentifier oid;
+    Digest digest;
+    
+    String header = new String(Base64.decodeUrl(jwtHeaderSegment));
+    JSONObject headerO = new JSONObject(header);
+    String jwtAlgStr = (String) headerO.get("alg");
+    if ("ES256".equals(jwtAlgStr)) {
+      oid = SECObjectIdentifiers.secp256r1;
+      digest = new SHA256Digest();
+    } else if ("ES384".equals(jwtAlgStr)) {
+      oid = SECObjectIdentifiers.secp384r1;
+      digest = new SHA384Digest();
+    } else if ("ES512".equals(jwtAlgStr)) {
+      oid = SECObjectIdentifiers.secp521r1;
+      digest = new SHA512Digest();
+    } else {
+      throw new NoSuchAlgorithmException("JWT algorithm: " + jwtAlgStr);
+    }
+
     X9ECParameters x9ECParameters = SECNamedCurves.getByOID(oid);
 
     ECDSASigner verifier = new ECDSASigner();
@@ -107,8 +129,13 @@ public class WebToken {
     ECPublicKeyParameters ecPublicKeyParameters = new ECPublicKeyParameters(
         q, ecDomainParameters);
     verifier.init(false, ecPublicKeyParameters);
-    String stringToSign = jwtHeaderSegment + "." + jwtPayloadSegment;
-    boolean verified = verifier.verifySignature(stringToSign.getBytes("utf-8"), r, s);
+    String hp = jwtHeaderSegment + "." + jwtPayloadSegment;
+    byte[] bytes = hp.getBytes("utf-8");
+    digest.update(bytes, 0, bytes.length);
+    byte[] out = new byte[digest.getDigestSize()];
+    int result = digest.doFinal(out, 0);
+    
+    boolean verified = verifier.verifySignature(out, r, s);
     return verified;
   }
   
@@ -116,7 +143,23 @@ public class WebToken {
    public String serialize(BigInteger D) 
     throws NoSuchAlgorithmException, JSONException, InvalidKeyException, SignatureException, IOException, InvalidKeySpecException {
     
-    DERObjectIdentifier oid = SECObjectIdentifiers.secp256r1;
+    DERObjectIdentifier oid;
+    Digest digest;
+    JSONObject header = new JSONObject(mPKAlgorithm);
+    String jwtAlgStr = (String) header.get("alg");
+    if ("ES256".equals(jwtAlgStr)) {
+      oid = SECObjectIdentifiers.secp256r1;
+      digest = new SHA256Digest();
+    } else if ("ES384".equals(jwtAlgStr)) {
+      oid = SECObjectIdentifiers.secp384r1;
+      digest = new SHA384Digest();
+    } else if ("ES512".equals(jwtAlgStr)) {
+      oid = SECObjectIdentifiers.secp521r1;
+      digest = new SHA512Digest();
+    } else {
+      throw new NoSuchAlgorithmException("JWT algorithm: " + jwtAlgStr);
+    }
+
     X9ECParameters x9ECParameters = SECNamedCurves.getByOID(oid);
     ECDomainParameters ecParameterSpec = new ECDomainParameters(
         x9ECParameters.getCurve(), 
@@ -137,18 +180,15 @@ public class WebToken {
     sb.append(b64);
     
     String stringToSign = sb.toString();
-    
-    sb.append('.');
-    String signed;
-    
-    JSONObject algO = new JSONObject(mPKAlgorithm);
-    String jwtAlgStr = algO.getString("alg");
+    byte[] bytes = stringToSign.getBytes("utf-8");
+    digest.update(bytes, 0, bytes.length);
+    byte[] out = new byte[digest.getDigestSize()];
+    int result = digest.doFinal(out, 0);
 
-    if (("ES256".equals(jwtAlgStr)) || ("ES384".equals(jwtAlgStr)) || ("ES512".equals(jwtAlgStr))) {
-      signed = signECDSA(ecPrivateKeyParameters, stringToSign.getBytes("utf-8"));
-    } else {
-      throw new NoSuchAlgorithmException("JWT privatekey " + jwtAlgStr);
-    }
+    sb.append('.');
+    
+    String signed = signECDSA(ecPrivateKeyParameters, out);
+
     sb.append(signed);
     return sb.toString();
   }
