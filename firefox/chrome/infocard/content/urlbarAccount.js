@@ -194,32 +194,32 @@ var InformationCardUrlbar = {
     },
     
     urlbarClick : function() {
-        var doc = gBrowser.selectedBrowser.contentDocument;
-        if( doc.wrappedJSObject !== undefined) {
-            doc = doc.wrappedJSObject;
-        }
-        IdentitySelectorDiag.logMessage( "urlbarClick", "clicked doc.location.href=" + doc.location.href);
-        if (!(doc instanceof HTMLDocument)) { return; }
+      var doc = gBrowser.selectedBrowser.contentDocument;
+      if( doc.wrappedJSObject !== undefined) {
+          doc = doc.wrappedJSObject;
+      }
+      IdentitySelectorDiag.logMessage( "urlbarClick", "clicked doc.location.href=" + doc.location.href);
+      if (!(doc instanceof HTMLDocument)) { return; }
 
-        if( !(doc.__identityselector__ === undefined)) {
-           if ((doc.__identityselector__.icLoginService !== undefined) && (doc.__identityselector__.icLoginPolicy !== undefined)) {
-             InformationCardHelper.callIdentitySelector(doc);
-              }
-           else {
-              if (InformationCardUrlbar._findInformationCardObjectAndClick(doc) === true) { return; }
-              
-              if (doc.__identityselector__.openidReturnToUri !== undefined) {
-                InformationCardHelper.callIdentitySelector(doc);
-              } else {
-                var policy = null;
-                var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"].getService(Components.interfaces.nsIWindowMediator);
-                var win = wm.getMostRecentWindow("navigator:browser");
-                var cardManager = win.openDialog("chrome://infocard/content/cardManager.xul",
-                  "Card Management", 
-                  "modal,chrome,resizable,width=800,height=640,centerscreen");
-                }
+      if( !(doc.__identityselector__ === undefined)) {
+         if ((doc.__identityselector__.icLoginService !== undefined) && (doc.__identityselector__.icLoginPolicy !== undefined)) {
+           InformationCardHelper.callIdentitySelector(gBrowser.selectedBrowser);
             }
-        } else {
+         else {
+            if (InformationCardUrlbar._findInformationCardObjectAndClick(doc) === true) { return; }
+            
+            if (doc.__identityselector__.openidReturnToUri !== undefined) {
+              InformationCardHelper.callIdentitySelector(gBrowser.selectedBrowser);
+            } else {
+              var policy = null;
+              var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"].getService(Components.interfaces.nsIWindowMediator);
+              var win = wm.getMostRecentWindow("navigator:browser");
+              var cardManager = win.openDialog("chrome://infocard/content/cardManager.xul",
+                "Card Management", 
+                "modal,chrome,resizable,width=800,height=640,centerscreen");
+              }
+          }
+      } else {
 //           if (doc.location !== undefined) {
 //              IdentitySelectorDiag.logMessage( "urlbarClick", 
 //                  "The site " + doc.location.href + " does not support Information Cards on this page. " + 
@@ -237,11 +237,11 @@ var InformationCardUrlbar = {
 //                  "https://informationcard.net/");
 //              }
 //           }
-            var policy = null;
-            var cardManager = win.openDialog("chrome://infocard/content/cardManager.xul",
-              "Card Management", 
-              "modal,chrome,resizable,width=800,height=640,centerscreen");
-            }
+          var policy = null;
+          var cardManager = win.openDialog("chrome://infocard/content/cardManager.xul",
+            "Card Management", 
+            "modal,chrome,resizable,width=800,height=640,centerscreen");
+          }
         }, 
         
         onProgress : function(doc, e) {

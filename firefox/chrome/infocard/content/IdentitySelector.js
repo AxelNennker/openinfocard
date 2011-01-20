@@ -606,6 +606,69 @@ var IdentitySelector =
           }
         },
         
+        _openIdStore : function(doc) {
+          IdentitySelectorDiag.logMessage( "_openIdStore", "start");
+          if( doc.wrappedJSObject)
+          {
+            doc = doc.wrappedJSObject;
+          }
+          IdentitySelectorDiag.logMessage( "_openIdStore", "doc.location.href=" + doc.location.href);
+          IdentitySelectorDiag.logMessage( "_openIdStore", "doc.__identityselector__.openid=" + 
+              doc.__identityselector__.openid);
+        },
+        
+        _openIdLoaded : {
+          _pwmgr : null,
+
+          QueryInterface : XPCOMUtils.generateQI([Ci.nsIDOMEventListener,
+                                                  Ci.nsISupportsWeakReference]),
+
+
+          handleEvent : function (event) {
+              if (!event.isTrusted)
+                  return;
+
+              IdentitySelectorDiag.logMessage( "domEventListener", "got event " + event.type);
+
+              switch (event.type) {
+                  case "DOMContentLoaded":
+                    IdentitySelector._openIdStore(event.target);
+                      //this._pwmgr._fillDocument(event.target);
+                      return;
+
+//                  case "DOMAutoComplete":
+//                  case "blur":
+//                      var acInputField = event.target;
+//                      var acForm = acInputField.form;
+//
+//                      // If the username is blank, bail out now -- we don't want
+//                      // fillForm() to try filling in a login without a username
+//                      // to filter on (bug 471906).
+//                      if (!acInputField.value)
+//                          return;
+//
+//                      // Make sure the username field fillForm will use is the
+//                      // same field as the autocomplete was activated on. If
+//                      // not, the DOM has been altered and we'll just give up.
+//                      var [usernameField, passwordField, ignored] =
+//                          this._pwmgr._getFormFields(acForm, false);
+//                      if (usernameField == acInputField && passwordField) {
+//                          // This shouldn't trigger a master password prompt,
+//                          // because we don't attach to the input until after we
+//                          // successfully obtain logins for the form.
+//                          this._pwmgr._fillForm(acForm, true, true, true, null);
+//                      } else {
+//                          this._pwmgr.log("Oops, form changed before AC invoked");
+//                      }
+//                      return;
+
+                  default:
+                    IdentitySelectorDiag.logMessage( "domEventListener", "Oops! This event unexpected.");
+                    return;
+              }
+          }
+      },
+        
         // ***********************************************************************
         // Method: onEarlyFormSubmit
         // ***********************************************************************
@@ -670,7 +733,15 @@ var IdentitySelector =
                 } 
 
               } else {
-                IdentitySelectorDiag.logMessage( "onEarlyFormSubmit", "Intercepted submit of standard form");
+                var openidElement = IdentitySelector.getEmbeddedOpenidElement( formElement);
+                if(openidElement) {
+                  IdentitySelectorDiag.logMessage( "onEarlyFormSubmit", "Intercepted submit of OPENID form openid=" + 
+                      openidElement.value);
+                  doc.__identityselector__.openid = openidElement.value;
+                  aWindow.addEventListener("DOMContentLoaded", IdentitySelector._openIdLoaded, false);
+                } else {
+                  IdentitySelectorDiag.logMessage( "onEarlyFormSubmit", "Intercepted submit of standard form");
+                }
               }
           }
           return true;
@@ -913,7 +984,58 @@ var IdentitySelector =
                         IdentitySelectorDiag.debugReportError( "onDOMChanged", e);
                 }
         },
-                               
+        
+        ondrop : function(event)
+        {
+          var data = event.dataTransfer.getData("application/x-informationcard+id");
+          if (data) {
+            var target = event.target;
+            var doc = target.ownerDocument;
+            if( doc.wrappedJSObject)
+            {
+              doc = doc.wrappedJSObject;
+            }
+            doc.__identityselector__.cardId = data;
+
+            IdentitySelectorDiag.logMessage( "onDrop",
+                "id=" + data );
+            IdentitySelectorDiag.logMessage( "onDrop",
+                "target.tagName=" + target.tagName );
+            var form = target;
+            var theForm;
+            while (form) {
+              if (form.tagName != undefined && form.tagName == "FORM") {
+                theForm = form;
+                break;
+              }
+              form = form.parentNode;
+            }
+            if (!theForm) { return; }
+            // we know that this form contains an object because otherwise
+            // we would not be in this event handler
+            event.preventDefault();
+            // submit the form
+            var evnt = doc.createEvent("Event");
+            evnt.initEvent("submit", true, true);
+            theForm.dispatchEvent(evnt);
+          }
+        }, 
+        
+        ondragover : function(event)
+        {
+          var forMe = event.dataTransfer.types.contains("application/x-informationcard+id");
+          IdentitySelectorDiag.logMessage( "onDragOver", "forMe=" + forMe );
+          if (forMe) {
+            event.preventDefault();
+          }
+        },
+        
+        getSupportedFlavours : function () {
+          var flavours = new FlavourSet();
+          flavours.appendFlavour("application/x-informationcard+id");
+          return flavours;
+        },
+        
         // ***********************************************************************
         // Method: onICardObjectLoaded
         // ***********************************************************************
@@ -957,7 +1079,10 @@ var IdentitySelector =
                             // Override the value getter
                            
                             delete objElem.value;
-                           
+                            
+                            objElem.addEventListener("dragover", IdentitySelector.ondragover, false);
+                            objElem.addEventListener("drop", IdentitySelector.ondrop, false);
+                            
                             objElem.__defineGetter__( "value",
                                     doc.__identityselector__.valueGetter);
                                    
@@ -986,6 +1111,9 @@ var IdentitySelector =
                                            
                                             form.addEventListener( "submit",
                                                     IdentitySelector.onFormSubmit, false);
+                                            
+                                            form.addEventListener("dragover", IdentitySelector.ondragover, false);
+                                            form.addEventListener("drop", IdentitySelector.ondrop, false);
                                             break;
                                     }
                                    
@@ -1094,130 +1222,6 @@ var IdentitySelector =
                         IdentitySelectorDiag.debugReportError( "onICardElementLoaded", e);
                 }
         },
-        
-        // ***********************************************************************
-        // Method: _getSelectorClass
-        // ***********************************************************************
-       
-        _getCardstore : function _getCardstore()
-        {
-          var prefClasz = IdentitySelectorPrefs.getStringPref("identityselector", "selector_class");
-          IdentitySelectorDiag.logMessage( "_getCardstore", "prefClasz=" + prefClasz );
-
-          var categoryManager = XPCOMUtils.categoryManager;
-          var enumerator = categoryManager.enumerateCategory("information-card-storage");
-          while (enumerator.hasMoreElements()) {
-            var item = enumerator.getNext();
-            var entry = item.QueryInterface(Ci.nsISupportsCString);
-            IdentitySelectorDiag.logMessage( "_getCardstore", "entry=" + entry );
-            var clasz = Cc[entry];
-            var cardstore = clasz.getService(Ci.IInformationCardStore);
-            var name = cardstore.getCardStoreName();
-            IdentitySelectorDiag.logMessage( "_getCardstore", "name=" + name );
-            if (entry == prefClasz) {
-              IdentitySelectorDiag.logMessage( "_getCardstore", "using=" + name );
-              return cardstore;
-            }
-          }
-          IdentitySelectorDiag.logMessage("_getCardstore", "no matching cardstore found");
-          enumerator = categoryManager.enumerateCategory("information-card-storage");
-          if (enumerator.hasMoreElements()) {
-            var item = enumerator.getNext();
-            var entry = item.QueryInterface(Ci.nsISupportsCString);
-            IdentitySelectorDiag.logMessage( "_getCardstore", "entry=" + entry );
-            var clasz = Cc[entry];
-            var cardstore = clasz.getService(Ci.IInformationCardStore);
-            var name = cardstore.getCardStoreName();
-            IdentitySelectorDiag.logMessage( "_getCardstore", "using:" + name );
-            return cardstore;
-          }
-        },
-        
-        // ***********************************************************************
-        // Method: _getSelectorClass
-        // ***********************************************************************
-       
-        _getSelectorClass : function _getSelectorClass()
-        {
-          var prefClasz = IdentitySelectorPrefs.getStringPref("identityselector", "selector_class");
-          IdentitySelectorDiag.logMessage( "_getSelectorClass", "prefClasz=" + prefClasz );
-          
-          var nsICategoryManager = Components.interfaces.nsICategoryManager;
-          var CATMAN_CONTRACTID = "@mozilla.org/categorymanager;1";
-          var catman = Components.classes[CATMAN_CONTRACTID].getService(nsICategoryManager);
-          var IIDENTITYSELECTOR_IID_STR = "ddd9bc02-c964-4bd5-b5bc-943e483c6c57";
-          var selectors = catman.enumerateCategory ( IIDENTITYSELECTOR_IID_STR );
-          
-          var clasz;
-          for (;selectors.hasMoreElements(); ) {
-            clasz = selectors.getNext().QueryInterface(Components.interfaces.nsISupportsCString).data;
-            IdentitySelectorDiag.logMessage( "_getSelectorClass", "clasz=" + clasz);
-
-            var categoryEntry = catman.getCategoryEntry(IIDENTITYSELECTOR_IID_STR, clasz);
-            IdentitySelectorDiag.logMessage( "_getSelectorClass", "categoryEntry=" + categoryEntry);
-            var j = categoryEntry.indexOf(':');
-            if (j === -1) {
-              IdentitySelectorDiag.reportError("_getSelectorClass", "Internal Error: no colon in " + categoryEntry);
-              return null;
-            }
-            var selectorClass = categoryEntry.substring(0,j);
-            var contractid = categoryEntry.substring(j+1);
-            IdentitySelectorDiag.logMessage( "_getSelectorClass", "contractid=" + contractid);
-            IdentitySelectorDiag.logMessage( "_getSelectorClass", "selectorClass=" + selectorClass);
-            if ((selectorClass !== null) && (selectorClass === prefClasz)) {
-              try {
-                var cidclass = Components.classes[contractid];
-                var obj = cidclass.createInstance();
-                obj = obj.QueryInterface(Components.interfaces.IIdentitySelector);
-                return obj;
-              } catch(e) {
-                IdentitySelectorDiag.debugReportError("_getSelectorClass", 
-                    "contractid=" + contractid + " is not defined. " + e);
-                return null;
-              }
-            }
-          }
-          return null;
-        },
-        
-//        // ***********************************************************************
-//        // Method: _getSelectorClass
-//        // ***********************************************************************
-//       
-//        _getSelectorClass : function()
-//        {
-//            if( gSelectorRegistry.length > 1)
-//            {
-//              var selectorGuid = IdentitySelectorPrefs.getStringPref("identityselector", "selector_guid");
-//              IdentitySelectorDiag.logMessage( "_getSelectorClass", 
-//                  "selectorGuid=" + selectorGuid );
-//              if( (selectorGuid !== null) && (selectorGuid !== undefined))
-//              {
-//                      for(var iLoop = 0; iLoop < gSelectorRegistry.length; iLoop++)
-//                      {
-//                        var aSelectorClasz = gSelectorRegistry[ iLoop];
-//                              if( aSelectorClasz.guid() === selectorGuid)
-//                              {
-//                                IdentitySelectorDiag.logMessage( "_getSelectorClass", 
-//                                    "using class " + aSelectorClasz.guid() );
-//                                      return aSelectorClasz;
-//                              }
-//                      }
-//              } else {
-//                IdentitySelectorDiag.reportError( "_getSelectorClass",
-//                          "selector_guid === " + selector_guid);
-//                return null;
-//              }
-//            } else {
-//              if( gSelectorRegistry.length < 1) {
-//                IdentitySelectorDiag.reportError( "_getSelectorClass",
-//                        "gSelectorRegistry.length = " + gSelectorRegistry.length);
-//                return null;
-//              }
-//            }
-//            // guid did not match return the first on -- internal error???
-//            return gSelectorRegistry[0];
-//        },
         
         getDer : function(cert,win){
 
@@ -1412,8 +1416,8 @@ var IdentitySelector =
                         }
                        
                         // Get the selector 
-//                        var aSelectorClasz = IdentitySelector._getSelectorClass();
-                        var aSelectorClasz = IdentitySelector._getCardstore();
+//                        var aSelectorClasz = InformationCardHelper.getSelectorClass();
+                        var aSelectorClasz = InformationCardHelper.getCardstore();
                         if (!aSelectorClasz) {
                           IdentitySelectorDiag.reportError( "onCallIdentitySelector",
                                     "Unable to locate an identity selector.  " +
@@ -1679,6 +1683,56 @@ var IdentitySelector =
         },
        
         // ***********************************************************************
+        // Method: getEmbeddedOpenidElement
+        // ***********************************************************************
+       
+        getEmbeddedOpenidElement : function(targetElem)
+        {
+//          IdentitySelectorDiag.logMessage("getEmbeddedOpenidElement", "start");
+          var elts = targetElem.getElementsByTagName( "INPUT");
+          if (!elts) return null;
+          
+          if (elts.length<1) return null;
+          
+          for (var i=0; i<elts.length; i++) {
+            var elt = elts[i];
+            if (!elt) continue;
+//            IdentitySelectorDiag.logMessage("getEmbeddedOpenidElement", "elt.name: " + elt.name);
+//            IdentitySelectorDiag.logMessage("getEmbeddedOpenidElement", "elt.id: " + elt.id);
+//            IdentitySelectorDiag.logMessage("getEmbeddedOpenidElement", "elt.value: " + elt.value);
+            if (!elt.value) continue;
+            if (elt.value == "") continue;
+            var type = elt.type;
+//            IdentitySelectorDiag.logMessage("getEmbeddedOpenidElement", "type: " + type);
+            if ("text" != type) continue;
+            var name = elt.name;
+            if (name) {
+              var lcname = name.toLowerCase();
+//              IdentitySelectorDiag.logMessage("getEmbeddedOpenidElement", "name: " + name);
+              if ("openid_identifier" == lcname) {
+                return elt;
+              }
+              if ("rawOpenId" == name) { // blogger.com
+                return elt;
+              }
+            }
+            var id = elt.id;
+            if (id) {
+              var lcid = id.toLowerCase();
+//              IdentitySelectorDiag.logMessage("getEmbeddedOpenidElement", "id: " + id);
+              if ("openid_identifier" == lcid) {
+                return elt;
+              }
+              if ("rawOpenId" == id) { // blogger.com
+                return elt;
+              }
+            }
+          }
+
+          return null;
+        },
+       
+        // ***********************************************************************
         // Method: getTrustedCertList
         // ***********************************************************************
        
@@ -1839,18 +1893,6 @@ var ICProgressListener =
                                         {
                                           IdentitySelectorDiag.reportError("onStateChange",  ""+e);
                                         }
-//                                        var aSelectorClasz = IdentitySelector._getSelectorClass();
-//                                        if (aSelectorClasz !== null) {
-//                                          IdentitySelectorDiag.logMessage( "onStateChange", "aSelectorClasz.guid=" + aSelectorClasz.guid()); 
-//                                          if (aSelectorClasz.onStateStop) {
-//                                            aSelectorClasz.onStateStop(aProgress.DOMWindow.document);
-//                                          } else {
-//                                              IdentitySelectorDiag.logMessage( "onStateChange", 
-//                                                  "aSelectorClasz has no onStateStop function"); 
-//                                          }
-//                                        } else {
-//                                          IdentitySelectorDiag.logMessage( "onStateChange", "aSelectorClasz === null");
-//                                        }
                                 }
                         }
                 }

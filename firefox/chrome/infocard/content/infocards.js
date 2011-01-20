@@ -32,7 +32,6 @@ var tokenIssuerInitialized = false;
 
 var gOpenIdManager = null;
 
-Components.utils.import("resource://infocard/CardstoreToolkit.jsm");
 Components.utils.import("resource://infocard/OICCrypto.jsm");
 Components.utils.import("resource://infocard/tokenissuer.jsm");
 Components.utils.import("resource://infocard/IdentitySelectorDiag.jsm");
@@ -986,7 +985,7 @@ function cardManagerLoad(policyParam){
 
   var cardFile;
   try {
-    cardFile = CardstoreToolkit.readCardStore();
+    cardFile = readCardStore();
     //icDebug("cardManagerLoad cardFile = " + cardFile)
   } catch (eee) {
     icDebug("cardManagerLoad = exception" + eee);
@@ -1662,7 +1661,7 @@ function newCard(){
 }
 
 function validateSignature(callback) {
-  var cardFile = CardstoreToolkit.readCardStore();
+  var cardFile = readCardStore();
   
   var importedCardJSONStr = null;
   try {
@@ -1726,8 +1725,9 @@ function validateSignature(callback) {
       }
   }
 }
+
 function digestNewCard(callback) {
-  icDebug("digestNewCard");
+  icDebug("digestNewCard callback=" + callback);
   if (callback === undefined) {
    InformationCardHelper.alert("no new card was imported");
    return;
@@ -1753,6 +1753,7 @@ function digestNewCard(callback) {
     }
   
     if ( type === "selfAsserted") {
+      icDebug("digestNewCard selfAsserted");
       
         card = newSelfIssuedCard(callback);
         if (card === null) {
@@ -1765,14 +1766,21 @@ function digestNewCard(callback) {
     }
 
     if ( type === "managedCard") {
-      validateSignature(callback);
+      icDebug("digestNewCard managedCard");
+      try {
+        validateSignature(callback);
+      } catch(e) {
+        icDebug("digestNewCard threw " + e);
+      }
+      icDebug("digestNewCard managedCard callback=" + callback);
       card = newManagedCard(callback);
-        if (card === null) {
-          icDebug("digestNewCard: card is null. callback = " + callback);
-          InformationCardHelper.alert("This card is null. This might be an internal error");
-          return;
-        }
-        saveCard(card);
+      if (card === null) {
+        icDebug("digestNewCard: card is null. callback = " + callback);
+        InformationCardHelper.alert("This card is null. This might be an internal error");
+        return;
+      }
+      icDebug("digestNewCard managedCard saving card=" + card);
+      saveCard(card);
     }
 
 

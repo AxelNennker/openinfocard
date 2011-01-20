@@ -108,8 +108,6 @@ import org.xmldap.xml.XmlUtils;
 import org.xmldap.xmldsig.Jsr105Signatur;
 import org.xmldap.xmlenc.EncryptedData;
 
-import de.dtag.tlabs.mwallet.card.CardManager;
-
 public class TokenIssuer {
 
   static final String defaultSubjectConfirmationMethod = Subject.BEARER;

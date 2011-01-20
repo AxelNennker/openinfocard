@@ -102,10 +102,32 @@ function mWalletUnload(){
     Components.utils.reportError("mWalletUnload:phoneFini " + e);
   }
   try {
+    TokenIssuer.stopChannelDetectionBT();
+  } catch (e) {
+    
+  }
+  try {
     TokenIssuer.finalize();
   } catch (e) {
     Components.utils.reportError("mWalletUnload:finalize " + e);
   }
+}
+
+function pollForBTChannelAvailableCallback(policy){
+  mwDebug("pollForBTChannelAvailableCallback " + Date());
+  if (!policy.startedChannelDetectionBT) {
+    mwDebug("pollForBTChannelAvailableCallback startChannelDetectionBT");
+    var serializedPolicy = JSON.stringify(policy);
+    TokenIssuer.startChannelDetectionBT(serializedPolicy);
+    policy.startedChannelDetectionBT = true;
+  } else {
+    var jsonArrayChannelNames = TokenIssuer.getChannelNamesAsJson();
+    policy.jsonArrayChannelNames = jsonArrayChannelNames;
+    mwDebug("pollForBTChannelAvailableCallback jsonArrayChannelNames=" + jsonArrayChannelNames);
+    var ja = JSON.parse(jsonArrayChannelNames);
+    // FIXME hier geht es weiter
+  }
+  
 }
 
 function pollForPhoneAvailableCallback(policy){
@@ -442,13 +464,15 @@ function mWalletLoad(policyParam){
       cancelselector.addEventListener("click", cancel, false);
     }
     
-    var phoneAvailable = isPhoneAvailable();
-    if (phoneAvailable) {
-      TokenIssuer.beginCardSelection();
-      policy.timeoutId = window.setInterval(function(){pollForSelectedCardCallback(policy);}, 1000, true);
-    } else {
-      policy.timeoutId = window.setInterval(function(){pollForPhoneAvailableCallback(policy);}, 1000, true);
-    }
+    policy.timeoutId = window.setInterval(function(){pollForBTChannelAvailableCallback(policy);}, 1000, true);
+    
+//    var phoneAvailable = isPhoneAvailable();
+//    if (phoneAvailable) {
+//      TokenIssuer.beginCardSelection();
+//      policy.timeoutId = window.setInterval(function(){pollForSelectedCardCallback(policy);}, 1000, true);
+//    } else {
+//      policy.timeoutId = window.setInterval(function(){pollForPhoneAvailableCallback(policy);}, 1000, true);
+//    }
   } catch (e) {
     mwDebug("mWalletLoad exception: " + e );
     throw e;

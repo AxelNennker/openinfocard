@@ -37,3 +37,24 @@ if (typeof(missingPluginInstaller) !== "undefined") {
         true);
   }
 }
+if (gPluginHandler) {
+  if (gBrowser) {
+    gBrowser.removeEventListener("PluginNotFound", gPluginHandler, true);
+    gBrowser.addEventListener("PluginNotFound", 
+        function(aEvent){
+          var pluginInfo = getPluginInfo(aEvent.target);
+          if ("application/x-informationcard" == pluginInfo.mimetype) {
+            var doc = aEvent.target.ownerDocument;
+            var objElem = aEvent.target;
+            // send event
+            var event = doc.createEvent( "Event");
+            event.initEvent( "ICObjectLoaded", true, true);
+            objElem.dispatchEvent( event);
+            return;
+          } else {
+            gPluginHandler.handleEvent(aEvent);
+          }
+        }, 
+        true);
+  }
+}

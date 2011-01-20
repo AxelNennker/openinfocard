@@ -101,6 +101,87 @@ var OpeninfocardSidebar = {
 
 };
 
+var ddObserver = {
+  onDragStart: function (event, transferData, action) {
+  var id = event.target.getAttribute("id");
+  transferData.data = new TransferData();
+  transferData.data.addDataForFlavour("text/html",id);
+  }
+};
+
+var nsICardObjTypeStr = "application/x-informationcard";
+
+function forEachICardItems( doc, callback)
+{
+        try
+        {
+                var iLoop;
+                var itemCount = 0;
+               
+                // Process all of the information card objects in the document
+                               
+                var objElems = doc.getElementsByTagName( "OBJECT");
+                var icardObjectCount = 0;
+               
+                IdentitySelectorDiag.logMessage( "processICardItems", "Found " +
+                        objElems.length + " object(s) on " + doc.location);
+                       
+                for( iLoop = 0; iLoop < objElems.length; iLoop++)
+                {
+                        var objElem = objElems[ iLoop];
+                        var objTypeStr = objElem.getAttribute( "TYPE");
+                       
+                        if( (objTypeStr !== null &&
+                                        objTypeStr.toLowerCase() == nsICardObjTypeStr) ||
+                                objElem._type == nsICardObjTypeStr)
+                        {
+                                callback(objElem, doc, "ICObjectLoaded");
+                               
+                                icardObjectCount++;
+                        }
+                }
+               
+                IdentitySelectorDiag.logMessage( "processICardItems", "Found " +
+                        icardObjectCount + " ICard object(s) on " + doc.location);
+                       
+                // Process all of the information card elements in the document
+               
+                var icardElems = doc.getElementsByTagName( "IC:INFORMATIONCARD");
+                var icardElementCount = icardElems.length;
+               
+                for( iLoop = 0; iLoop < icardElems.length; iLoop++)
+                {
+                        var icardElem = icardElems[ iLoop];
+                        
+                        callback(icardElem, doc, "ICElementLoaded");
+                }
+               
+                IdentitySelectorDiag.logMessage( "processICardItems", "Found " +
+                        icardElementCount + " ICard element(s) on " + doc.location);
+                       
+                return( icardObjectCount + icardElementCount);
+        }
+        catch( e)
+        {
+                IdentitySelectorDiag.debugReportError( "processICardItems", e);
+        }
+}
+
+// this doc should be the doc of the main window (selected tab)
+function getData(doc) {
+  var data;
+  if (doc.__identityselector__) {
+    data = doc.__identityselector__.data;
+  } else {
+    data = {}
+  }
+  return data;
+}
+
+function createPolicy(doc, data) {
+  var policy = {};
+  return policy;
+}
 function sidebarLoad(){
   // infocard: sidebarLoad start. href=chrome://infocard/content/cardSidebar.xul
   IdentitySelectorDiag.logMessage("sidebar", "sidebarLoad start");
@@ -115,7 +196,9 @@ function sidebarLoad(){
     IdentitySelectorDiag.logMessage("sidebar", "objElem.name=" + objElem.name);
     objects.push(objElem);
   };
-  IdentitySelector.forEachICardItems(doc, f);
+  
+  forEachICardItems(doc, f);
+  
   var data = getData(doc);
   if (!data) { return; }
   OpeninfocardSidebar.sbDebugObject("sidebarLoad data: ", data,0);
@@ -147,7 +230,14 @@ function sidebarLoad(){
   }
   IdentitySelectorDiag.logMessage("sidebar", "rpIdentifier=" + rpIdentifier);
 
-  var cardFile = CardstoreToolkit.readCardStore();
+  var cardFile;
+  var cf = readCardStore();
+  if (typeof(cf) == "string") {
+    cardFile = new XML(cf);
+  } else {
+    cardFile = cf;
+  }
+  
   IdentitySelectorDiag.logMessage("sidebar", "cardFile=" + cardFile);
   
   var cardArea = document.getElementById("cardselection");
@@ -156,7 +246,14 @@ function sidebarLoad(){
   var beenThere = false;
   var count = 0;
   var scrolledIntoView = false;
-  for each (c in cardFile.infocard) {
+  
+  IdentitySelectorDiag.logMessage("sidebar", "typeof(cardFile):" + typeof(cardFile));
+  IdentitySelectorDiag.logMessage("sidebar", "cardFile.infocard.length():" + cardFile.infocard.length());
+  
+  var cardXmllist = cardFile.infocard;
+  for (var i=0; i<cardXmllist.length(); i++) {
+    var c = cardXmllist[i];
+    IdentitySelectorDiag.logMessage("sidebar", "c.id=" + c.id);
     var cardClass = "contact";
     if (policy != null) {
       cardClass = computeCardClass(c, policy);

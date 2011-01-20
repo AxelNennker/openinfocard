@@ -47,8 +47,8 @@
     <script src="chrome://infocard/content/cmManagedCardWSStar.js"/>
     <script src="chrome://infocard/content/cmManagedCard.js"/>
     <script src="chrome://infocard/content/cmSelfIssued.js"/>
-    <script src="chrome://infocard/content/infocards.js"/>
     <script src="chrome://infocard/content/cardstore.js"/>
+    <script src="chrome://infocard/content/infocards.js"/>
     
     <keyset>
   		<key id="cancel-key" keycode="VK_ESCAPE" oncommand="cancel();"/>

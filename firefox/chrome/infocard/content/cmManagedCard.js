@@ -1,17 +1,15 @@
 Components.utils.import("resource://infocard/cmCommon.jsm");
 Components.utils.import("resource://infocard/IdentitySelectorDiag.jsm");
 
-function findBackingCard(managedCard, icUserCredential, tsEndpointAddressStr, tsIdentityX509CertificateStr) {
-  var ic = new Namespace("ic", "http://schemas.xmlsoap.org/ws/2005/05/identity");
-  if (icUserCredential.ic::SelfIssuedCredential.toString() === "") {
-    icDebug("findBackingCard not selfIssuedCredential:" + icUserCredential);
+function findBackingCard(managedCard, rpPPID, tsEndpointAddressStr, tsIdentityX509CertificateStr) {
+  var aCardstore = InformationCardHelper.getCardstore();
+  if (!aCardstore) {
+    IdentitySelectorDiag.reportError( "cmManagedCard.js findBackingCard",
+              "Unable to locate a card store.  " +
+              "Please make sure one is installed.");
     return null;
   }
-  var rpPPID = icUserCredential.ic::SelfIssuedCredential.ic::PrivatePersonalIdentifier.toString();
-  icDebug("findBackingCard expectedPpid:" + rpPPID);
-  rpPPID = window.atob(rpPPID);
-  icDebug("findBackingCard expectedPpid(decoded):" + rpPPID);
-  var cardFile = CardstoreToolkit.readCardStore();
+  var cardFile = aCardstore.readCardStore();
   var cardXmllist = cardFile.infocard;
   icDebug("findBackingCard cardXmllist.length()=" + cardXmllist.length());
   for (var i=0; i<cardXmllist.length(); i++) {
@@ -32,37 +30,6 @@ function findBackingCard(managedCard, icUserCredential, tsEndpointAddressStr, ts
   }
   return null;
 }
-
-//function findBackingCard(managedCard, icUserCredential, tsEndpointAddressStr, tsIdentityX509CertificateStr) {
-//  var ic = new Namespace("ic", "http://schemas.xmlsoap.org/ws/2005/05/identity");
-//  if (icUserCredential.ic::SelfIssuedCredential.toString() === "") {
-//    icDebug("findBackingCard not selfIssuedCredential:" + icUserCredential);
-//    return null;
-//  }
-//  var expectedPpid = icUserCredential.ic::SelfIssuedCredential.ic::PrivatePersonalIdentifier;
-//  icDebug("findBackingCard expectedPpid:" + expectedPpid);
-//  if (TokenIssuer.initialize() === false) {
-//    icDebug("findBackingCard could not initialize TokenIssuer");
-//    return null;
-//  }
-//  
-//  var policy = {};
-//  policy.cert = tsIdentityX509CertificateStr;
-//  policy.chainLength = 0; // FIXME
-////  for (var i=0; i<rpPolicy.chainLength; i++) {
-////    policy["certChain"+i] = rpPolicy["certChain"+i];    
-////  }
-//  policy.cardId = managedCard.id;
-//  policy.url = tsEndpointAddressStr;
-//  
-//  var serializedPolicy = JSON.stringify(policy);
-//  icDebug("findBackingCard serializedPolicy=" + serializedPolicy);
-//  
-//  var cardPpid = TokenIssuer.generateRPPPID(serializedPolicy);
-//  icDebug("findBackingCard cardPpid=" + cardPpid);
-//  
-//  return null;
-//}
 
 function processManagedCard(
     managedCard, requiredClaims, optionalClaims, tokenType, clientPseudonym, 
@@ -226,7 +193,16 @@ function processManagedCard(
                       try {
                         var backingCard;
                         try { 
-                          backingCard = findBackingCard(managedCard, icUserCredential, tsEndpointAddressStr, 
+                          var ic = new Namespace("ic", "http://schemas.xmlsoap.org/ws/2005/05/identity");
+                          if (icUserCredential.ic::SelfIssuedCredential.toString() === "") {
+                            icDebug("findBackingCard not selfIssuedCredential:" + icUserCredential);
+                            return null;
+                          }
+                          var rpPPID = icUserCredential.ic::SelfIssuedCredential.ic::PrivatePersonalIdentifier.toString();
+                          icDebug("findBackingCard expectedPpid:" + rpPPID);
+                          rpPPID = window.atob(rpPPID);
+                          icDebug("findBackingCard expectedPpid(decoded):" + rpPPID);
+                          backingCard = findBackingCard(managedCard, rpPPID, tsEndpointAddressStr, 
                               tsIdentityX509Certificate.toString());
                         } catch (findBackingCardException) {
                           icDebug("processManagedCard: findBackingCard threw: " + findBackingCardException);
