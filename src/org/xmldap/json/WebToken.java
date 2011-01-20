@@ -4,36 +4,18 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
-import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
-import java.security.Security;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.interfaces.RSAPrivateKey;
-import java.security.spec.ECPrivateKeySpec;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Enumeration;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.DERInteger;
-import org.bouncycastle.asn1.DERObject;
-import org.bouncycastle.asn1.pkcs.RSAPrivateKeyStructure;
-import org.bouncycastle.crypto.AsymmetricBlockCipher;
-import org.bouncycastle.crypto.CryptoException;
-import org.bouncycastle.crypto.DataLengthException;
-import org.bouncycastle.crypto.Digest;
-import org.bouncycastle.crypto.digests.SHA256Digest;
-import org.bouncycastle.crypto.engines.RSAEngine;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
-import org.bouncycastle.crypto.params.RSAKeyParameters;
 import org.bouncycastle.crypto.signers.ECDSASigner;
-import org.bouncycastle.crypto.signers.RSADigestSigner;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.xmldap.util.Base64;
@@ -57,6 +39,9 @@ public class WebToken {
     b64 = Base64.encodeBytes(mJsonStr.getBytes("utf-8"), 
         org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
     sb.append(b64);
+    
+    String stringToSign = sb.toString();
+    
     sb.append('.');
     String signed;
     
@@ -64,7 +49,7 @@ public class WebToken {
     String jwtAlgStr = algO.getString("alg");
 
     if ("ES256".equals(jwtAlgStr)) {
-      signed = signES256a(ecPrivateKeyParameters);
+      signed = signES256a(ecPrivateKeyParameters, stringToSign.getBytes("utf-8"));
     } else {
       throw new NoSuchAlgorithmException("JWT privatekey " + jwtAlgStr);
     }
@@ -72,10 +57,10 @@ public class WebToken {
     return sb.toString();
   }
 
-  private String signES256a(ECPrivateKeyParameters ecPrivateKeyParameters) throws UnsupportedEncodingException {
+  private String signES256a(ECPrivateKeyParameters ecPrivateKeyParameters, byte[] bytes) throws UnsupportedEncodingException {
     ECDSASigner signer = new ECDSASigner();
     signer.init(true, ecPrivateKeyParameters);
-    BigInteger[] res = signer.generateSignature(mJsonStr.getBytes("utf-8"));
+    BigInteger[] res = signer.generateSignature(bytes);
     BigInteger r = res[0];
     BigInteger s = res[1];
     
@@ -122,32 +107,7 @@ public class WebToken {
     return signed;
   }
 
-  private String signES256(ECPrivateKeySpec ecPrivateKeySpec)
-      throws NoSuchAlgorithmException, InvalidKeyException, SignatureException,
-      UnsupportedEncodingException, IOException, InvalidKeySpecException {
-    Signature signature = Signature.getInstance("SHA256withECDSA");
-    
-    Security.addProvider(new BouncyCastleProvider());
-    KeyFactory kf = KeyFactory.getInstance("EC");
-    PrivateKey privateKey = kf.generatePrivate(ecPrivateKeySpec);
-    
-    signature.initSign(privateKey);
-    signature.update(mJsonStr.getBytes("utf-8"));
-    byte[] bytes = signature.sign();
-
-    ASN1InputStream aIn = new ASN1InputStream(bytes);
-    DERObject o = aIn.readObject();
-
-    ASN1Sequence encodedSeq = (ASN1Sequence) o;
-    Enumeration e = encodedSeq.getObjects();
-    BigInteger r = DERInteger.getInstance(e.nextElement()).getValue();
-    BigInteger s = DERInteger.getInstance(e.nextElement()).getValue();
-    
-    String signed = rs2jwt(r, s);
-    return signed;
-  }
-
-  public String serialize(RSAPrivateKey privateKey) throws UnsupportedEncodingException, JSONException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+  public String serialize(RSAPrivateKey privateKey) throws JSONException, NoSuchAlgorithmException, InvalidKeyException, SignatureException, IOException {
     String b64 = Base64.encodeBytes(mPKAlgorithm.getBytes("utf-8"), 
         org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
     StringBuffer sb = new StringBuffer(b64);
@@ -155,6 +115,9 @@ public class WebToken {
     b64 = Base64.encodeBytes(mJsonStr.getBytes("utf-8"), 
         org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
     sb.append(b64);
+    
+    String stringToSign = sb.toString();
+    
     sb.append('.');
     
     JSONObject algO = new JSONObject(mPKAlgorithm);
@@ -162,13 +125,15 @@ public class WebToken {
     Signature signature;
     if ("RS256".equals(jwtAlgStr)) {
       String algorithm = "SHA256withRSA";
+      
       signature = Signature.getInstance(algorithm);
     } else {
       throw new NoSuchAlgorithmException("JWT algorithm: " + jwtAlgStr);
     }
     signature.initSign(privateKey);
-    signature.update(mJsonStr.getBytes("utf-8"));
+    signature.update(stringToSign.getBytes("utf-8"));
     byte[] bytes = signature.sign();
+
     b64 = Base64.encodeBytes(bytes, 
         org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
     sb.append(b64);
