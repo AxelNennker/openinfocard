@@ -9,13 +9,22 @@ import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.bouncycastle.asn1.DERObjectIdentifier;
+import org.bouncycastle.asn1.sec.SECNamedCurves;
+import org.bouncycastle.asn1.sec.SECObjectIdentifiers;
+import org.bouncycastle.asn1.x9.X9ECParameters;
+import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
+import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.crypto.signers.ECDSASigner;
+import org.bouncycastle.math.ec.ECCurve;
+import org.bouncycastle.math.ec.ECPoint;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.xmldap.util.Base64;
@@ -30,8 +39,95 @@ public class WebToken {
     mPKAlgorithm = algorithm;
   }
   
-  public String serialize(ECPrivateKeyParameters ecPrivateKeyParameters) 
+  static public boolean verify(String jwt, RSAPublicKey pubkey) throws Exception {
+    String jwtHeaderSegment;
+    String jwtPayloadSegment;
+    String jwtCryptoSegment;
+    String[] split = jwt.split("\\.");
+    jwtHeaderSegment = split[0];
+    jwtPayloadSegment = split[1];
+    jwtCryptoSegment = split[2];
+    
+    String algorithm;
+    JSONObject header = new JSONObject(jwtHeaderSegment);
+    String jwtAlgStr = (String) header.get("alg");
+    if ("RS256".equals(jwtAlgStr)) {
+      algorithm = "SHA256withRSA";
+    } else if ("RS384".equals(jwtAlgStr)) {
+      algorithm = "SHA384withRSA";
+    } else if ("RS512".equals(jwtAlgStr)) {
+      algorithm = "SHA512withRSA";
+    } else {
+      throw new NoSuchAlgorithmException("JWT algorithm: " + jwtAlgStr);
+    }
+    
+    String stringToSign = jwtHeaderSegment + "." + jwtPayloadSegment;
+    Signature signature = Signature.getInstance(algorithm);
+    signature.initVerify(pubkey);
+    signature.update(stringToSign.getBytes("utf-8"));
+
+    byte[] signatureBytes = Base64.decodeUrl(jwtCryptoSegment);
+
+    return signature.verify(signatureBytes);
+  }
+  
+  static public boolean verify(String jwt, byte[] x, byte[] y) throws Exception {
+    String jwtHeaderSegment;
+    String jwtPayloadSegment;
+    String jwtCryptoSegment;
+    String[] split = jwt.split("\\.");
+    jwtHeaderSegment = split[0];
+    jwtPayloadSegment = split[1];
+    jwtCryptoSegment = split[2];
+
+    byte[] signatureBytes = Base64.decodeUrl(jwtCryptoSegment);
+    byte[] rBytes = new byte[32];
+    System.arraycopy(signatureBytes, 0, rBytes, 0, 32);
+    byte[] sBytes = new byte[32];
+    System.arraycopy(signatureBytes, 32, sBytes, 0, 32);
+    
+    BigInteger r = new BigInteger(1, rBytes);
+    BigInteger s = new BigInteger(1, sBytes);
+    
+    DERObjectIdentifier oid = SECObjectIdentifiers.secp256r1;
+    X9ECParameters x9ECParameters = SECNamedCurves.getByOID(oid);
+
+    ECDSASigner verifier = new ECDSASigner();
+    BigInteger xB = new BigInteger(1, x);
+    BigInteger yB = new BigInteger(1, y);
+    ECCurve curve = x9ECParameters.getCurve();
+    ECPoint qB = curve.createPoint(xB, yB, false);
+    ECPoint q = new ECPoint.Fp(curve, qB.getX(), qB.getY());
+    ECDomainParameters ecDomainParameters = new ECDomainParameters(
+        curve, 
+        x9ECParameters.getG(), 
+        x9ECParameters.getN(), 
+        x9ECParameters.getH(),
+        x9ECParameters.getSeed());
+    ECPublicKeyParameters ecPublicKeyParameters = new ECPublicKeyParameters(
+        q, ecDomainParameters);
+    verifier.init(false, ecPublicKeyParameters);
+    String stringToSign = jwtHeaderSegment + "." + jwtPayloadSegment;
+    boolean verified = verifier.verifySignature(stringToSign.getBytes("utf-8"), r, s);
+    return verified;
+  }
+  
+  
+   public String serialize(BigInteger D) 
     throws NoSuchAlgorithmException, JSONException, InvalidKeyException, SignatureException, IOException, InvalidKeySpecException {
+    
+    DERObjectIdentifier oid = SECObjectIdentifiers.secp256r1;
+    X9ECParameters x9ECParameters = SECNamedCurves.getByOID(oid);
+    ECDomainParameters ecParameterSpec = new ECDomainParameters(
+        x9ECParameters.getCurve(), 
+        x9ECParameters.getG(), 
+        x9ECParameters.getN(), 
+        x9ECParameters.getH(), 
+        x9ECParameters.getSeed());
+    ECPrivateKeyParameters ecPrivateKeyParameters = new ECPrivateKeyParameters(
+        D, ecParameterSpec);
+
+    
     String b64 = Base64.encodeBytes(mPKAlgorithm.getBytes("utf-8"), 
         org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
     StringBuffer sb = new StringBuffer(b64);
@@ -48,8 +144,8 @@ public class WebToken {
     JSONObject algO = new JSONObject(mPKAlgorithm);
     String jwtAlgStr = algO.getString("alg");
 
-    if ("ES256".equals(jwtAlgStr)) {
-      signed = signES256a(ecPrivateKeyParameters, stringToSign.getBytes("utf-8"));
+    if (("ES256".equals(jwtAlgStr)) || ("ES384".equals(jwtAlgStr)) || ("ES512".equals(jwtAlgStr))) {
+      signed = signECDSA(ecPrivateKeyParameters, stringToSign.getBytes("utf-8"));
     } else {
       throw new NoSuchAlgorithmException("JWT privatekey " + jwtAlgStr);
     }
@@ -57,7 +153,7 @@ public class WebToken {
     return sb.toString();
   }
 
-  private String signES256a(ECPrivateKeyParameters ecPrivateKeyParameters, byte[] bytes) throws UnsupportedEncodingException {
+  private String signECDSA(ECPrivateKeyParameters ecPrivateKeyParameters, byte[] bytes) throws UnsupportedEncodingException {
     ECDSASigner signer = new ECDSASigner();
     signer.init(true, ecPrivateKeyParameters);
     BigInteger[] res = signer.generateSignature(bytes);
@@ -123,13 +219,17 @@ public class WebToken {
     JSONObject algO = new JSONObject(mPKAlgorithm);
     String jwtAlgStr = algO.getString("alg");
     Signature signature;
+    String algorithm;
     if ("RS256".equals(jwtAlgStr)) {
-      String algorithm = "SHA256withRSA";
-      
-      signature = Signature.getInstance(algorithm);
+      algorithm = "SHA256withRSA";
+    } else if ("RS384".equals(jwtAlgStr)) {
+      algorithm = "SHA384withRSA";
+    } else if ("RS512".equals(jwtAlgStr)) {
+      algorithm = "SHA512withRSA";
     } else {
       throw new NoSuchAlgorithmException("JWT algorithm: " + jwtAlgStr);
     }
+    signature = Signature.getInstance(algorithm);
     signature.initSign(privateKey);
     signature.update(stringToSign.getBytes("utf-8"));
     byte[] bytes = signature.sign();
@@ -140,30 +240,30 @@ public class WebToken {
     return sb.toString();
   }
 
-  public String serialize(PrivateKey privateKey) 
-    throws UnsupportedEncodingException, JSONException, 
-    NoSuchAlgorithmException, InvalidKeyException, SignatureException 
-  {
-    String b64 = Base64.encodeBytes(mPKAlgorithm.getBytes("utf-8"), 
-        org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
-    StringBuffer sb = new StringBuffer(b64);
-    sb.append('.');
-    b64 = Base64.encodeBytes(mJsonStr.getBytes("utf-8"), 
-        org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
-    sb.append(b64);
-    sb.append('.');
-    
-    JSONObject algO = new JSONObject(mPKAlgorithm);
-    String jwtAlgStr = algO.getString("alg");
-
-    Signature signature = Signature.getInstance(jwtAlgStr);
-    signature.initSign(privateKey);
-    signature.update(mJsonStr.getBytes("utf-8"));
-    byte[] bytes = signature.sign();
-    String signed = new String(bytes);
-    sb.append(signed);
-    return sb.toString();
-  }
+//  public String serialize(PrivateKey privateKey) 
+//    throws UnsupportedEncodingException, JSONException, 
+//    NoSuchAlgorithmException, InvalidKeyException, SignatureException 
+//  {
+//    String b64 = Base64.encodeBytes(mPKAlgorithm.getBytes("utf-8"), 
+//        org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
+//    StringBuffer sb = new StringBuffer(b64);
+//    sb.append('.');
+//    b64 = Base64.encodeBytes(mJsonStr.getBytes("utf-8"), 
+//        org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
+//    sb.append(b64);
+//    sb.append('.');
+//    
+//    JSONObject algO = new JSONObject(mPKAlgorithm);
+//    String jwtAlgStr = algO.getString("alg");
+//
+//    Signature signature = Signature.getInstance(jwtAlgStr);
+//    signature.initSign(privateKey);
+//    signature.update(mJsonStr.getBytes("utf-8"));
+//    byte[] bytes = signature.sign();
+//    String signed = new String(bytes);
+//    sb.append(signed);
+//    return sb.toString();
+//  }
 
 public String serialize(byte[] passphraseBytes) 
     throws JSONException, NoSuchAlgorithmException, InvalidKeyException, IllegalStateException, UnsupportedEncodingException {
@@ -182,16 +282,22 @@ public String serialize(byte[] passphraseBytes)
     
     JSONObject algO = new JSONObject(mPKAlgorithm);
     String jwtAlgStr = algO.getString("alg");
+    String algorithm;
     if ("HS256".equals(jwtAlgStr)) { // HMAC SHA-256
-      Mac mac = Mac.getInstance("HMACSHA256");
-      mac.init(new SecretKeySpec(passphraseBytes, mac.getAlgorithm()));
-      mac.update(stringToSign.getBytes("utf-8"));
-      byte[] bytes = mac.doFinal();
-      signed = Base64.encodeBytes(bytes, 
-          org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
+      algorithm = "HMACSHA256";
+    } else if ("HS384".equals(jwtAlgStr)) { // HMAC SHA-384
+      algorithm = "HMACSHA384";
+    } else if ("HS512".equals(jwtAlgStr)) { // HMAC SHA-512
+      algorithm = "HMACSHA512";
     } else {
       throw new NoSuchAlgorithmException("JWT shared secret" + jwtAlgStr);
     }
+    Mac mac = Mac.getInstance(algorithm);
+    mac.init(new SecretKeySpec(passphraseBytes, mac.getAlgorithm()));
+    mac.update(stringToSign.getBytes("utf-8"));
+    byte[] bytes = mac.doFinal();
+    signed = Base64.encodeBytes(bytes, 
+        org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
     sb.append(signed);
     return sb.toString();
   }
