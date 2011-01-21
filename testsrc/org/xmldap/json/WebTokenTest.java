@@ -252,7 +252,7 @@ public class WebTokenTest extends TestCase {
     assertEquals(jwtHeaderSegment, split[0]);
 
     System.out.println("jwtSymmetricKeySegment base64: " + split[1]);
-    System.out.println("jwtPayloadSegment base64: " + split[2]);
+    System.out.println("jwtCryptoSegment base64: " + split[2]);
 
     String cleartext = WebToken.decrypt(encrypted, rsaPrivKey);
     assertEquals(payload, cleartext);
