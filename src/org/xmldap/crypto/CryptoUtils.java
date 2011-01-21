@@ -244,7 +244,7 @@ public class CryptoUtils {
      * @return the base64 encoded cipher text
      * @throws CryptoException
      */
-    public static String rsaoaepEncrypt(byte[] input, RSAPublicKey rsaPublicKey) throws CryptoException {
+    public static byte[] rsaoaepEncryptBytes(byte[] input, RSAPublicKey rsaPublicKey) throws CryptoException {
 
 
 
@@ -275,11 +275,14 @@ public class CryptoUtils {
             throw new CryptoException(e);
         }
 
-        return Base64.encodeBytesNoBreaks(cipherText);
+        return cipherText;
 
     }
 
-
+    public static String rsaoaepEncrypt(byte[] input, RSAPublicKey rsaPublicKey) throws CryptoException {
+      byte[] cipherText = rsaoaepEncryptBytes(input, rsaPublicKey);
+      return Base64.encodeBytesNoBreaks(cipherText);
+    }
 
     /**
      * Decrypts base 64 encoded data using RSA OAEP and the provided Key
@@ -289,10 +292,7 @@ public class CryptoUtils {
      * @return a byte[] of clear text
      * @throws CryptoException
      */
-    public static byte[] decryptRSAOAEP(String b64EncodedData, PrivateKey inputKey) throws CryptoException {
-
-        byte[] cipherText = Base64.decode(b64EncodedData);
-
+    public static byte[] decryptRSAOAEP(byte[] cipherText, PrivateKey inputKey) throws CryptoException {
 
         RSAPrivateKey key =  (RSAPrivateKey) inputKey;
         RSAEngine engine = new RSAEngine();
@@ -316,6 +316,11 @@ public class CryptoUtils {
 
     }
 
+    public static byte[] decryptRSAOAEP(String b64EncodedData, PrivateKey inputKey) throws CryptoException {
+      byte[] cipherText = Base64.decode(b64EncodedData);
+      return decryptRSAOAEP(cipherText, inputKey);
+    }
+    
     /**
      * Generates a SecretKey of a specified bit length
      *
