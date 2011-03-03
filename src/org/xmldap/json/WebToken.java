@@ -28,22 +28,27 @@
 
 package org.xmldap.json;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.PBEParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import net.sourceforge.lightcrypto.SafeObject;
@@ -65,11 +70,32 @@ import org.bouncycastle.math.ec.ECPoint;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.xmldap.crypto.CryptoUtils;
-import org.xmldap.exceptions.CryptoException;
-import org.xmldap.exceptions.SerializationException;
 import org.xmldap.util.Base64;
 
 public class WebToken {
+  
+  public static final String SIGN_ALG_HS256 = "HS256";
+  public static final String SIGN_ALG_HS383 = "HS384";
+  public static final String SIGN_ALG_HS512 = "HS512";
+  
+  public static final String SIGN_ALG_ES256 = "ES256";
+  public static final String SIGN_ALG_ES383 = "ES384";
+  public static final String SIGN_ALG_ES512 = "ES512";
+  
+  public static final String SIGN_ALG_RS256 = "RS256";
+  public static final String SIGN_ALG_RS383 = "RS384";
+  public static final String SIGN_ALG_RS512 = "RS512";
+  
+  public static final String ENC_ALG_RE128 = "RE128"; // RSA-OAEP encrypted AES-CBC key with 128 bits
+  public static final String ENC_ALG_RE192 = "RE192"; // RSA-OAEP encrypted AES-CBC key with 192 bits
+  public static final String ENC_ALG_RE256 = "RE256"; // RSA-OAEP encrypted AES-CBC key with 256 bits
+  
+  public static final String ENC_ALG_AE128 = "AE128"; // AES-CBC with 128 bit key size
+  public static final String ENC_ALG_AE192 = "AE192"; // AES-CBC with 192 bit key size
+  public static final String ENC_ALG_AE256 = "AE256"; // AES-CBC with 256 bit key size
+  
+  public static final String ENC_ALG_PE820 = "PE820"; // Password based encryption with 8 byte salt and 20 rounds
+
   String mJsonStr = null;
   PrivateKey mPrivateKey = null;
   String mPKAlgorithm = null; 
@@ -169,7 +195,7 @@ public class WebToken {
     byte[] bytes = hp.getBytes("utf-8");
     digest.update(bytes, 0, bytes.length);
     byte[] out = new byte[digest.getDigestSize()];
-    int result = digest.doFinal(out, 0);
+    /*int result =*/ digest.doFinal(out, 0);
     
     boolean verified = verifier.verifySignature(out, r, s);
     return verified;
@@ -219,7 +245,7 @@ public class WebToken {
     byte[] bytes = stringToSign.getBytes("utf-8");
     digest.update(bytes, 0, bytes.length);
     byte[] out = new byte[digest.getDigestSize()];
-    int result = digest.doFinal(out, 0);
+    /*int result =*/ digest.doFinal(out, 0);
 
     sb.append('.');
     
@@ -376,9 +402,150 @@ public String serialize(byte[] passphraseBytes)
         org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
     sb.append(signed);
     return sb.toString();
-  }
+}
 
-  public String encrypt(RSAPublicKey rsaPublicKey) throws Exception {
+public static String decrypt(String encrypted, String password) throws Exception {
+  String[] split = encrypted.split("\\.");
+  String headerB64 = split[0];
+  String jwtKeySegmentB64 = split[1];
+  String jwtCryptoSegmentB64 = split[2];
+
+  String jwtHeaderSegment = new String(Base64.decodeUrl(headerB64));
+  JSONObject jwtHeaderJSON = new JSONObject(jwtHeaderSegment);
+  String alg = jwtHeaderJSON.getString("alg");
+  if ("PE20".equals(alg)) {
+    
+  }
+  String jwtKeySegment = new String(Base64.decodeUrl(jwtKeySegmentB64));
+  JSONObject jwtKeyJSON = new JSONObject(jwtKeySegment);
+  String wrappedKeyB64 = jwtKeyJSON.getString("wrp");
+  byte[] wrappedKey = Base64.decodeUrl(wrappedKeyB64);
+  String saltB64 = jwtKeyJSON.getString("slt");
+  byte[] salt = Base64.decodeUrl(saltB64);
+  
+  final String algorithm = "PBEWithMD5AndDES";
+  
+  PBEParameterSpec paramSpec = new PBEParameterSpec(salt, 20);
+  PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray());
+  SecretKeyFactory kf = SecretKeyFactory.getInstance(algorithm);
+  SecretKey passwordKey = kf.generateSecret(keySpec);
+
+  Cipher c = Cipher.getInstance("PBEWithMD5AndDES");
+
+  c.init(Cipher.UNWRAP_MODE, passwordKey, paramSpec);
+  Key unwrappedKey = c.unwrap(wrappedKey, "DESede", Cipher.SECRET_KEY);
+
+  c = Cipher.getInstance("DESede");
+  c.init(Cipher.DECRYPT_MODE, unwrappedKey);
+
+  byte[] jwtCryptoSegment = Base64.decodeUrl(jwtCryptoSegmentB64);
+  return new String(c.doFinal(jwtCryptoSegment));
+}
+
+public String encrypt(SecretKey key) throws Exception {
+  String b64 = Base64.encodeBytes(mPKAlgorithm.getBytes("utf-8"), 
+      org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
+  StringBuffer sb = new StringBuffer(b64);
+  sb.append('.');
+
+  SafeObject keyBytes = new SafeObject();
+  byte[] secretKey = key.getEncoded();
+  keyBytes.setText(secretKey);
+
+  StringBuffer clearTextBuffer = new StringBuffer(mJsonStr);
+  String cipherText = CryptoUtils.encryptAESCBC(clearTextBuffer, keyBytes).toString();
+  b64 = Base64.encodeBytes(cipherText.getBytes("utf-8"), 
+      org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
+  sb.append(b64);
+//  System.out.println("AES jwtCryptoSegment base64:" + b64);
+  
+  return sb.toString();
+
+}
+
+public static String decrypt(String encrypted, SecretKey key) throws Exception {
+  String[] split = encrypted.split("\\.");
+  String headerB64 = split[0];
+  String jwtCryptoSegmentB64 = split[1];
+
+  String jwtHeaderSegment = new String(Base64.decodeUrl(headerB64));
+  
+  String algorithm = key.getAlgorithm();
+  if (!"AES".equals(algorithm)) {
+    throw new NoSuchAlgorithmException("unsupported JWT AES algorithm: " + algorithm);
+  }
+  
+  int keylength;
+  JSONObject header = new JSONObject(jwtHeaderSegment);
+  String jwtAlgStr = (String) header.get("alg");
+  if (ENC_ALG_AE128.equals(jwtAlgStr)) {
+    keylength = 128;
+  } else if (ENC_ALG_AE192.equals(jwtAlgStr)) {
+    keylength = 192;
+  } else if (ENC_ALG_AE256.equals(jwtAlgStr)) {
+    keylength = 256;
+  } else {
+    throw new NoSuchAlgorithmException("unsupported keylength JWT AES algorithm: " + jwtAlgStr);
+  }
+  
+  SafeObject keyBytes = new SafeObject();
+  byte[] secretKey = key.getEncoded();
+  keyBytes.setText(secretKey);
+  
+  byte[] jwtCryptoSegmentBytes = Base64.decodeUrl(jwtCryptoSegmentB64);
+  StringBuffer clearTextBuffer = CryptoUtils.decryptAESCBC(new StringBuffer(new String(jwtCryptoSegmentBytes)), keyBytes);
+
+  return clearTextBuffer.toString();
+}
+
+public String encrypt(String password) throws Exception {
+  final String algorithm = "PBEWithMD5AndDES";
+  String b64 = Base64.encodeBytes(mPKAlgorithm.getBytes("utf-8"), 
+      org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
+  StringBuffer sb = new StringBuffer(b64);
+  sb.append('.');
+
+  KeyGenerator kg = KeyGenerator.getInstance("DESede");
+  Key sharedKey = kg.generateKey();
+
+  byte[] salt = new byte[8];
+  SecureRandom random = new SecureRandom();
+  random.nextBytes(salt);
+
+  PBEParameterSpec paramSpec = new PBEParameterSpec(salt, 20);
+  PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray());
+  SecretKeyFactory kf = SecretKeyFactory.getInstance(algorithm);
+  SecretKey passwordKey = kf.generateSecret(keySpec);
+  Cipher c = Cipher.getInstance(algorithm);
+  c.init(Cipher.WRAP_MODE, passwordKey, paramSpec);
+  byte[] wrappedKey = c.wrap(sharedKey);
+
+  JSONObject keyInfoO = new JSONObject();
+  b64 = Base64.encodeBytes(wrappedKey, 
+      org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
+  keyInfoO.put("wrp", b64);
+  b64 = Base64.encodeBytes(salt, 
+      org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
+  keyInfoO.put("slt", b64);
+  String keyInfoString = keyInfoO.toString();
+  
+  b64 = Base64.encodeBytes(keyInfoString.getBytes("utf-8"), 
+      org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
+  sb.append(b64);
+  sb.append('.');
+
+  c = Cipher.getInstance("DESede");
+  c.init(Cipher.ENCRYPT_MODE, sharedKey);
+  byte[] encrypted = c.doFinal(mJsonStr.getBytes());
+
+  b64 = Base64.encodeBytes(encrypted, 
+      org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
+  sb.append(b64);
+
+  return sb.toString();
+}
+
+public String encrypt(RSAPublicKey rsaPublicKey) throws Exception {
     String b64 = Base64.encodeBytes(mPKAlgorithm.getBytes("utf-8"), 
         org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
     StringBuffer sb = new StringBuffer(b64);
@@ -387,21 +554,34 @@ public String serialize(byte[] passphraseBytes)
     int keylength;
     JSONObject header = new JSONObject(mPKAlgorithm);
     String jwtAlgStr = (String) header.get("alg");
-    if ("RE256".equals(jwtAlgStr)) {
+    if (ENC_ALG_RE256.equals(jwtAlgStr)) {
       keylength = 256;
-    } else if ("RE384".equals(jwtAlgStr)) {
-      keylength = 384;
-    } else if ("RE512".equals(jwtAlgStr)) {
-      keylength = 512;
+    } else if (ENC_ALG_RE192.equals(jwtAlgStr)) {
+      keylength = 192;
+    } else if (ENC_ALG_RE128.equals(jwtAlgStr)) {
+      keylength = 128;
     } else {
       throw new NoSuchAlgorithmException("JWT algorithm: " + jwtAlgStr);
     }
   
     byte[] secretKey = CryptoUtils.genKey(keylength);
+//    System.out.print("keybytes\n[");
+//    for (int i=0; i<(keylength/8)-1; i++) {
+//      System.out.print(Integer.toString(secretKey[i]) + ", ");
+//    }
+//    System.out.println(Integer.toString(secretKey[(keylength/8)-1]) + "]");
+
     byte[] cipheredKeyBytes = CryptoUtils.rsaoaepEncryptBytes(secretKey, rsaPublicKey);
+//    System.out.print("ciphered keybytes\n[");
+//    for (int i=0; i<(cipheredKeyBytes.length/8)-1; i++) {
+//      System.out.print(Integer.toString(cipheredKeyBytes[i]) + ", ");
+//    }
+//    System.out.println(Integer.toString(cipheredKeyBytes[(cipheredKeyBytes.length/8)-1]) + "]");
+
     b64 = Base64.encodeBytes(cipheredKeyBytes, 
         org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
     sb.append(b64);
+//    System.out.println("jwtSymmetricKeySegment base64:" + b64);
     sb.append('.');
     
     SafeObject keyBytes = new SafeObject();
@@ -412,6 +592,7 @@ public String serialize(byte[] passphraseBytes)
     b64 = Base64.encodeBytes(cipherText.getBytes("utf-8"), 
         org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
     sb.append(b64);
+//    System.out.println("jwtCryptoSegment base64:" + b64);
     
     return sb.toString();
   }
@@ -427,12 +608,12 @@ public String serialize(byte[] passphraseBytes)
     int keylength;
     JSONObject header = new JSONObject(jwtHeaderSegment);
     String jwtAlgStr = (String) header.get("alg");
-    if ("RE256".equals(jwtAlgStr)) {
+    if (ENC_ALG_RE128.equals(jwtAlgStr)) {
+      keylength = 128;
+    } else if (ENC_ALG_RE192.equals(jwtAlgStr)) {
+      keylength = 192;
+    } else if (ENC_ALG_RE256.equals(jwtAlgStr)) {
       keylength = 256;
-    } else if ("RE384".equals(jwtAlgStr)) {
-      keylength = 384;
-    } else if ("RE512".equals(jwtAlgStr)) {
-      keylength = 512;
     } else {
       throw new NoSuchAlgorithmException("JWT algorithm: " + jwtAlgStr);
     }
