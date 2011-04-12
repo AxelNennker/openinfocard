@@ -28,28 +28,31 @@
 
 package org.xmldap.rp;
 
-import nu.xom.*;
-
-import java.util.Calendar;
-import java.util.Map;
-import java.util.HashMap;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.cert.X509Certificate;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
-import java.security.interfaces.RSAPublicKey;
+import java.security.cert.X509Certificate;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
+
+import nu.xom.Attribute;
+import nu.xom.Document;
+import nu.xom.Element;
+import nu.xom.Elements;
+import nu.xom.Nodes;
+import nu.xom.ParsingException;
+import nu.xom.XPathContext;
 
 import org.xmldap.crypto.CryptoUtils;
-import org.xmldap.exceptions.InfoCardProcessingException;
 import org.xmldap.exceptions.CryptoException;
-import org.xmldap.xmldsig.ParsedSignature;
-import org.xmldap.xmldsig.ValidatingBaseEnvelopedSignature;
-import org.xmldap.ws.WSConstants;
+import org.xmldap.exceptions.InfoCardProcessingException;
 import org.xmldap.saml.Conditions;
 import org.xmldap.util.XSDDateTime;
+import org.xmldap.ws.WSConstants;
+import org.xmldap.xmldsig.ValidatingBaseEnvelopedSignature;
 
 
 

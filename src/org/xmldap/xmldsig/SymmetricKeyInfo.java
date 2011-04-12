@@ -28,14 +28,15 @@
 
 package org.xmldap.xmldsig;
 
+import java.security.PublicKey;
+import java.security.interfaces.RSAPublicKey;
+
 import nu.xom.Attribute;
 import nu.xom.Element;
+
 import org.xmldap.crypto.CryptoUtils;
 import org.xmldap.exceptions.SerializationException;
 import org.xmldap.ws.WSConstants;
-
-import java.security.PublicKey;
-import java.security.interfaces.RSAPublicKey;
 
 /**
  * Created by IntelliJ IDEA.

@@ -1,12 +1,21 @@
 package org.xmldap.util;
 
-import org.bouncycastle.asn1.*;
-import org.bouncycastle.asn1.x509.Attribute;
-
 import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.SimpleTimeZone;
+
+import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.DEREncodableVector;
+import org.bouncycastle.asn1.DERGeneralizedTime;
+import org.bouncycastle.asn1.DERObject;
+import org.bouncycastle.asn1.DERObjectIdentifier;
+import org.bouncycastle.asn1.DERPrintableString;
+import org.bouncycastle.asn1.DERSequence;
+import org.bouncycastle.asn1.DERSet;
+import org.bouncycastle.asn1.x509.Attribute;
 
 public class SubjectDirectoryAttributes extends ASN1Encodable {
 	// http://asn1.elibel.tm.fr/cgi-bin/oid/display?oid=1.3.6.1.5.5.7.9&action=display

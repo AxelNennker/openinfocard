@@ -28,16 +28,17 @@
 
 package org.xmldap.xmldsig;
 
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
+import java.util.Vector;
+
 import nu.xom.Attribute;
 import nu.xom.Element;
+
 import org.xmldap.exceptions.SerializationException;
 import org.xmldap.exceptions.SigningException;
 import org.xmldap.util.RandomGUID;
 import org.xmldap.ws.WSConstants;
-
-import java.security.PrivateKey;
-import java.security.cert.X509Certificate;
-import java.util.Vector;
 
 
 public class InfoCardSignature {

@@ -28,6 +28,10 @@
 
 package org.xmldap.infocard.policy;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import nu.xom.Element;
 import nu.xom.Elements;
 
@@ -35,10 +39,6 @@ import org.xmldap.exceptions.ParsingException;
 import org.xmldap.exceptions.SerializationException;
 import org.xmldap.ws.WSConstants;
 import org.xmldap.xml.Serializable;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 
 public class SupportedClaimTypeList implements Serializable {

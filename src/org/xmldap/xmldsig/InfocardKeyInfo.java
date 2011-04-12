@@ -28,13 +28,14 @@
 
 package org.xmldap.xmldsig;
 
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
+
 import nu.xom.Element;
+
 import org.xmldap.exceptions.SerializationException;
 import org.xmldap.util.Base64;
 import org.xmldap.ws.WSConstants;
-
-import java.security.cert.CertificateEncodingException;
-import java.security.cert.X509Certificate;
 
 
 public class InfocardKeyInfo implements KeyInfo {

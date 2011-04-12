@@ -1,10 +1,10 @@
 package org.xmldap.infocard.roaming;
 
-import org.xmldap.exceptions.ParsingException;
-import org.xmldap.ws.WSConstants;
-
 import nu.xom.Element;
 import nu.xom.Elements;
+
+import org.xmldap.exceptions.ParsingException;
+import org.xmldap.ws.WSConstants;
 
 public class InformationCardReference implements Comparable<InformationCardReference>{
 	String cardId = null;

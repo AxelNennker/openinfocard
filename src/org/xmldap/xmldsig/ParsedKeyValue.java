@@ -2,9 +2,9 @@ package org.xmldap.xmldsig;
 
 import java.security.InvalidParameterException;
 
-import org.xmldap.ws.WSConstants;
-
 import nu.xom.Element;
+
+import org.xmldap.ws.WSConstants;
 
 public class ParsedKeyValue {
 //  <dsig:KeyValue>

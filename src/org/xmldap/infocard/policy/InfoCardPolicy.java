@@ -28,14 +28,15 @@
 
 package org.xmldap.infocard.policy;
 
-import nu.xom.Element;
-import org.xmldap.exceptions.SerializationException;
-import org.xmldap.ws.WSConstants;
-import org.xmldap.xml.Serializable;
-
 import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
+
+import nu.xom.Element;
+
+import org.xmldap.exceptions.SerializationException;
+import org.xmldap.ws.WSConstants;
+import org.xmldap.xml.Serializable;
 
 public class InfoCardPolicy implements Serializable {
 

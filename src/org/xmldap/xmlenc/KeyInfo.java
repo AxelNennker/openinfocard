@@ -28,19 +28,19 @@
 
 package org.xmldap.xmlenc;
 
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPublicKey;
+
 import nu.xom.Attribute;
 import nu.xom.Element;
+
 import org.xmldap.crypto.CryptoUtils;
 import org.xmldap.exceptions.KeyStoreException;
 import org.xmldap.exceptions.SerializationException;
 import org.xmldap.util.KeystoreUtil;
 import org.xmldap.ws.WSConstants;
 import org.xmldap.xml.Serializable;
-
-import java.security.PublicKey;
-import java.security.cert.CertificateEncodingException;
-import java.security.cert.X509Certificate;
-import java.security.interfaces.RSAPublicKey;
 
 /**
  * <AsymmetricKeyInfo xmlns="http://www.w3.org/2000/09/xmldsig#">

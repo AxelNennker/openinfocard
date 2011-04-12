@@ -1,15 +1,12 @@
 package org.xmldap.xmldsig;
 
 import java.security.InvalidParameterException;
-
-import nu.xom.Element;
-import nu.xom.Elements;
-
-import java.security.cert.CertificateExpiredException;
-import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
+
+import nu.xom.Element;
+import nu.xom.Elements;
 
 import org.xmldap.crypto.CryptoUtils;
 import org.xmldap.exceptions.CryptoException;

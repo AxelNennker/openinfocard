@@ -1,14 +1,14 @@
 package org.xmldap.infocard;
 
+import nu.xom.Attribute;
+import nu.xom.Element;
+import nu.xom.Elements;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.xmldap.exceptions.ParsingException;
 import org.xmldap.exceptions.SerializationException;
 import org.xmldap.ws.WSConstants;
-
-import nu.xom.Attribute;
-import nu.xom.Element;
-import nu.xom.Elements;
 
 public class UserCredential {
     public static final String USERNAME = "UserNamePasswordAuthenticate";

@@ -29,6 +29,21 @@
 
 package org.xmldap.sts.servlet;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
 import org.xmldap.exceptions.KeyStoreException;
 import org.xmldap.infocard.InfoCard;
 import org.xmldap.infocard.TokenServiceReference;
@@ -39,9 +54,9 @@ import org.xmldap.infocard.policy.SupportedToken;
 import org.xmldap.infocard.policy.SupportedTokenList;
 import org.xmldap.infocard.roaming.EncryptedStore;
 import org.xmldap.infocard.roaming.InformationCardMetaData;
-import org.xmldap.infocard.roaming.SelfIssuedInformationCardPrivateData;
 import org.xmldap.infocard.roaming.RoamingInformationCard;
 import org.xmldap.infocard.roaming.RoamingStore;
+import org.xmldap.infocard.roaming.SelfIssuedInformationCardPrivateData;
 import org.xmldap.sts.db.CardStorage;
 import org.xmldap.sts.db.DbSupportedClaim;
 import org.xmldap.sts.db.ManagedCard;
@@ -52,20 +67,6 @@ import org.xmldap.util.KeystoreUtil;
 import org.xmldap.util.PropertiesManager;
 import org.xmldap.util.XSDDateTime;
 import org.xmldap.ws.WSConstants;
-
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.List;
 
 
 public class BackupServlet extends HttpServlet {

@@ -3,9 +3,9 @@ package org.xmldap.infocard.roaming;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import org.xmldap.exceptions.ParsingException;
-
 import nu.xom.Element;
+
+import org.xmldap.exceptions.ParsingException;
 
 public class PrivacyNotice {
 	long version = -1;

@@ -2,10 +2,10 @@ package org.xmldap.xmldsig;
 
 import java.io.IOException;
 
+import nu.xom.Element;
+
 import org.xmldap.exceptions.ParsingException;
 import org.xmldap.ws.WSConstants;
-
-import nu.xom.Element;
 
 public class ParsedSignature {
 	ParsedSignedInfo parsedSignedInfo = null;

@@ -1,8 +1,8 @@
 package org.xmldap.sts.db;
 
-import org.xmldap.exceptions.StorageException;
-
 import java.util.List;
+
+import org.xmldap.exceptions.StorageException;
 
 
 public interface CardStorage {

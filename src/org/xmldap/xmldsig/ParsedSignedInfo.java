@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.xmldap.ws.WSConstants;
-import org.xmldap.xml.XmlUtils;
-
 import nu.xom.Element;
 import nu.xom.Elements;
+
+import org.xmldap.ws.WSConstants;
+import org.xmldap.xml.XmlUtils;
 
 public class ParsedSignedInfo extends SignedInfo {
 	String canonicalizationAlgorithm = null;

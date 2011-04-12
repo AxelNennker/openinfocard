@@ -28,9 +28,11 @@
 
 package org.xmldap.infocard.roaming;
 
-import org.xmldap.exceptions.SerializationException;
-import org.xmldap.util.XmlFileUtil;
-import org.xmldap.ws.WSConstants;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import nu.xom.Document;
 import nu.xom.Element;
@@ -38,13 +40,9 @@ import nu.xom.Elements;
 import nu.xom.ParsingException;
 import nu.xom.ValidityException;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.Vector;
-import java.util.Iterator;
+import org.xmldap.exceptions.SerializationException;
+import org.xmldap.util.XmlFileUtil;
+import org.xmldap.ws.WSConstants;
 
 //<ic:RoamingStore>
 //<ic:RoamingInformationCard> +

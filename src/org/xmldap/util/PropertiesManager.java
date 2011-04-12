@@ -1,9 +1,10 @@
 package org.xmldap.util;
 
-import javax.servlet.ServletContext;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
+
+import javax.servlet.ServletContext;
 
 
 public class PropertiesManager {

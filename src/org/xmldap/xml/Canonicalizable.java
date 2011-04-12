@@ -29,6 +29,7 @@
 package org.xmldap.xml;
 
 import nu.xom.canonical.Canonicalizer;
+
 import org.xmldap.exceptions.SerializationException;
 
 

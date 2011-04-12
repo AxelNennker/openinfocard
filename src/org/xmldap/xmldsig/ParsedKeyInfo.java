@@ -6,12 +6,11 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.util.List;
 
-import org.xmldap.exceptions.CryptoException;
+import nu.xom.Element;
+
 import org.xmldap.exceptions.ParsingException;
 import org.xmldap.util.Base64;
 import org.xmldap.ws.WSConstants;
-
-import nu.xom.Element;
 
 // <dsig:KeyInfo>
 //  <dsig:KeyName>Public Key for C=US, ST=California, L=San Francisco, O=xmldap, OU=infocard selector, CN=firefox</dsig:KeyName>

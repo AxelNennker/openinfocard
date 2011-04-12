@@ -28,9 +28,6 @@
 
 package org.xmldap.util;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.xmldap.exceptions.KeyStoreException;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -39,15 +36,16 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.Provider;
-import java.security.Security;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.xmldap.exceptions.KeyStoreException;
 
 
 public class KeystoreUtil {

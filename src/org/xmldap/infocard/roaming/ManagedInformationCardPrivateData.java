@@ -2,12 +2,12 @@ package org.xmldap.infocard.roaming;
 
 import java.util.Random;
 
+import nu.xom.Element;
+import nu.xom.Elements;
+
 import org.xmldap.exceptions.ParsingException;
 import org.xmldap.util.Base64;
 import org.xmldap.ws.WSConstants;
-
-import nu.xom.Element;
-import nu.xom.Elements;
 
 public class ManagedInformationCardPrivateData 
 		extends InformationCardPrivateData implements Comparable<InformationCardPrivateData>  {

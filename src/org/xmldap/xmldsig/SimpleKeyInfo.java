@@ -28,12 +28,13 @@
 
 package org.xmldap.xmldsig;
 
-import nu.xom.Element;
-import org.xmldap.exceptions.SerializationException;
-import org.xmldap.util.Base64;
-
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+
+import nu.xom.Element;
+
+import org.xmldap.exceptions.SerializationException;
+import org.xmldap.util.Base64;
 
 public class SimpleKeyInfo implements KeyInfo {
 

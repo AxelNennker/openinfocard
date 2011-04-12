@@ -1,11 +1,12 @@
 package org.xmldap.transport;
 
-import com.sun.slamd.example.BlindTrustSocketFactory;
-
-import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
 import java.net.URL;
 import java.security.cert.Certificate;
+
+import javax.net.ssl.HttpsURLConnection;
+
+import com.sun.slamd.example.BlindTrustSocketFactory;
 
 /**
  * Blind trust SSL negotiation to retrieve (server) certs used in handshake. Uses Neil Wilson's

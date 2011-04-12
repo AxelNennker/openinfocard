@@ -28,11 +28,12 @@
 
 package org.xmldap.ws.soap;
 
+import java.util.List;
+
 import nu.xom.Element;
+
 import org.xmldap.exceptions.MessageException;
 import org.xmldap.xml.Serializable;
-
-import java.util.List;
 
 public interface Message extends Serializable {
 

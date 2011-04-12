@@ -2,11 +2,12 @@ package org.xmldap.infocard.roaming;
 
 import java.io.IOException;
 
+import nu.xom.Element;
+import nu.xom.ValidityException;
+
 import org.xmldap.exceptions.ParsingException;
 import org.xmldap.exceptions.SerializationException;
 import org.xmldap.ws.WSConstants;
-
-import nu.xom.*;
 
 public class RoamingInformationCard implements org.xmldap.xml.Serializable, Comparable<RoamingInformationCard> {
 //	  <ic:RoamingInformationCard> +

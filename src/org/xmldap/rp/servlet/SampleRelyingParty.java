@@ -28,22 +28,23 @@
 
 package org.xmldap.rp.servlet;
 
-import org.xmldap.exceptions.InfoCardProcessingException;
-import org.xmldap.exceptions.KeyStoreException;
-import org.xmldap.rp.Token;
-import org.xmldap.util.KeystoreUtil;
-
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.security.PrivateKey;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.xmldap.exceptions.InfoCardProcessingException;
+import org.xmldap.exceptions.KeyStoreException;
+import org.xmldap.rp.Token;
+import org.xmldap.util.KeystoreUtil;
 
 public class SampleRelyingParty extends HttpServlet {
 

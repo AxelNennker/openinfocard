@@ -28,6 +28,10 @@
 
 package org.xmldap.infocard;
 
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.List;
+
 import nu.xom.Element;
 import nu.xom.Elements;
 
@@ -39,10 +43,6 @@ import org.xmldap.ws.WSConstants;
 import org.xmldap.ws.soap.headers.addressing.EndpointReference;
 import org.xmldap.ws.soap.headers.addressing.IdentityEnabledEndpointReference;
 import org.xmldap.xml.Serializable;
-
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.List;
 
 
 public class TokenServiceReference implements Serializable {

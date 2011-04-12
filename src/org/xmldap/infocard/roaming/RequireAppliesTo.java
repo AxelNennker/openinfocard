@@ -1,9 +1,9 @@
 package org.xmldap.infocard.roaming;
 
-import org.xmldap.exceptions.ParsingException;
-
 import nu.xom.Attribute;
 import nu.xom.Element;
+
+import org.xmldap.exceptions.ParsingException;
 
 public class RequireAppliesTo {
 // <ic:RequireAppliesTo Optional=”xs:boolean” /> ?

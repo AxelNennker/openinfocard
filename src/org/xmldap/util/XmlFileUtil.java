@@ -5,16 +5,16 @@
  */
 package org.xmldap.util;
 
-import nu.xom.Builder;
-import nu.xom.Document;
-import nu.xom.ParsingException;
-import nu.xom.ValidityException;
-
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+
+import nu.xom.Builder;
+import nu.xom.Document;
+import nu.xom.ParsingException;
+import nu.xom.ValidityException;
 
 public class XmlFileUtil {
 	public static int getBomLength(byte[] b) {

@@ -28,25 +28,29 @@
 
 package org.xmldap.infocard;
 
-import nu.xom.Element;
-import org.xmldap.crypto.CryptoUtils;
-import org.xmldap.exceptions.SerializationException;
-import org.xmldap.exceptions.SigningException;
-import org.xmldap.infocard.roaming.SelfIssuedInformationCardPrivateData;
-import org.xmldap.saml.*;
-import org.xmldap.xml.Serializable;
-import org.xmldap.xmldsig.BaseEnvelopedSignature;
-import org.xmldap.xmldsig.KeyInfo;
-import org.xmldap.xmldsig.RsaPublicKeyInfo;
-import org.xmldap.xmldsig.SymmetricKeyInfo;
-
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Vector;
+
+import nu.xom.Element;
+
+import org.xmldap.crypto.CryptoUtils;
+import org.xmldap.exceptions.SerializationException;
+import org.xmldap.exceptions.SigningException;
+import org.xmldap.saml.Attribute;
+import org.xmldap.saml.AttributeStatement;
+import org.xmldap.saml.AudienceRestrictionCondition;
+import org.xmldap.saml.Conditions;
+import org.xmldap.saml.SAMLAssertion;
+import org.xmldap.saml.Subject;
+import org.xmldap.xml.Serializable;
+import org.xmldap.xmldsig.BaseEnvelopedSignature;
+import org.xmldap.xmldsig.KeyInfo;
+import org.xmldap.xmldsig.RsaPublicKeyInfo;
+import org.xmldap.xmldsig.SymmetricKeyInfo;
 
 /**
  * SelfIssuedToken allows you to create Self issued tokens for passing to an RP

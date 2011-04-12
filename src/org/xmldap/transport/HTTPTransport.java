@@ -28,7 +28,8 @@
 
 package org.xmldap.transport;
 
-import com.sun.slamd.example.BlindTrustSocketFactory;
+import java.io.InputStreamReader;
+
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
@@ -36,7 +37,7 @@ import org.apache.commons.httpclient.protocol.Protocol;
 import org.xmldap.exceptions.SerializationException;
 import org.xmldap.ws.soap.Message;
 
-import java.io.InputStreamReader;
+import com.sun.slamd.example.BlindTrustSocketFactory;
 
 public class HTTPTransport implements SOAPTransport {
 

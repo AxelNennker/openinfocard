@@ -29,6 +29,23 @@
 
 package org.xmldap.sts.servlet;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.net.URISyntaxException;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
 import org.xmldap.exceptions.KeyStoreException;
 import org.xmldap.exceptions.SerializationException;
 import org.xmldap.infocard.InfoCard;
@@ -38,29 +55,15 @@ import org.xmldap.infocard.policy.SupportedClaim;
 import org.xmldap.infocard.policy.SupportedClaimTypeList;
 import org.xmldap.infocard.policy.SupportedToken;
 import org.xmldap.infocard.policy.SupportedTokenList;
+import org.xmldap.sts.db.CardStorage;
 import org.xmldap.sts.db.DbSupportedClaim;
 import org.xmldap.sts.db.ManagedCard;
-import org.xmldap.sts.db.CardStorage;
 import org.xmldap.sts.db.SupportedClaims;
 import org.xmldap.sts.db.impl.CardStorageEmbeddedDBImpl;
-import org.xmldap.util.*;
+import org.xmldap.util.Base64;
+import org.xmldap.util.KeystoreUtil;
+import org.xmldap.util.PropertiesManager;
 import org.xmldap.ws.WSConstants;
-
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
-import javax.servlet.ServletConfig;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.net.URISyntaxException;
-import java.security.PrivateKey;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.List;
 
 
 public class CardServlet extends HttpServlet {
@@ -200,11 +203,70 @@ public class CardServlet extends HttpServlet {
         	card.setRequireStrongRecipientIdentity(true);
         }
         
-        // set card logo/image if available . . . 
-        if (base64ImageFile != null) {
-            card.setBase64BinaryCardImage(base64ImageFile, "image/png"); // FIXME hardcoded mimeType
+        {
+	        String frontImageStr = managedCard.getCardfrontimage();
+	        if (frontImageStr != null) {
+	        	// String value = "data:" + contentType + ";base64," + Base64.encodeBytesNoBreaks(buffer);
+	        	if (frontImageStr.startsWith("data:")) {
+	        		frontImageStr = frontImageStr.substring(5);
+	        		int i = frontImageStr.indexOf(';');
+	        		if (i < 1) {
+	        			System.err.println("CardServlet: wrong format ; cardId = " + cardId + " frontImageString = " + frontImageStr);
+	        		} else {
+	        			String contentType = frontImageStr.substring(0, i);
+	        			String base64 = frontImageStr.substring(i+1);
+	        			card.setBase64BinaryCardImage(base64, contentType, "front");
+	        		}
+	        	} else {
+	        		System.err.println("CardServlet: wrong format for cardId = " + cardId + " frontImageString = " + frontImageStr);
+	        	}
+	        } else {
+	        	System.out.println("CardServlet: front image is not set. cardId = " + cardId);
+	            // set card logo/image if available . . . 
+	            if (base64ImageFile != null) {
+	                card.setBase64BinaryCardImage(base64ImageFile, "image/png", "front"); // FIXME hardcoded mimeType
+	            }
+	        }
         }
+        {
+	        String backImageStr = managedCard.getCardbackimage();
+	        if (backImageStr != null) {
+	        	// String value = "data:" + contentType + ";base64," + Base64.encodeBytesNoBreaks(buffer);
+	        	if (backImageStr.startsWith("data:")) {
+	        		backImageStr = backImageStr.substring(5);
+	        		int i = backImageStr.indexOf(';');
+	        		if (i < 1) {
+	        			System.err.println("CardServlet: wrong format ; cardId = " + cardId + " backImageStr = " + backImageStr);
+	        		} else {
+	        			String contentType = backImageStr.substring(0, i);
+	        			String base64 = backImageStr.substring(i+1);
+	        			card.setBase64BinaryCardImage(base64, contentType, "back");
+	        		}
+	        	} else {
+	        		System.err.println("CardServlet: wrong format for cardId = " + cardId + " backImageStr = " + backImageStr);
+	        	}
+	        } else {
+	        	System.out.println("CardServlet: back image is not set. cardId = " + cardId);
+	
+	        }
+        }        
 
+        {
+        	String frontHtml = managedCard.getFrontHtml();
+        	if (frontHtml != null) {
+        		card.setFrontHtml(frontHtml);
+        	} else {
+        		System.out.println("CardServlet: front html is not set. cardId = " + cardId);
+        	}
+        }
+        {
+        	String backHtml = managedCard.getBackHtml();
+        	if (backHtml != null) {
+        		card.setBackHtml(backHtml);
+        	} else {
+        		System.out.println("CardServlet: back html is not set. cardId = " + cardId);
+        	}
+        }
 //		The next line made no sense since the dates are in the database and 
 //        are in the card already
 //        XSDDateTime issued = new XSDDateTime();

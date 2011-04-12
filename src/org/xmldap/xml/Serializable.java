@@ -29,6 +29,7 @@
 package org.xmldap.xml;
 
 import nu.xom.Element;
+
 import org.xmldap.exceptions.SerializationException;
 
 public interface Serializable {

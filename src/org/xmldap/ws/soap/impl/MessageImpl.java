@@ -28,20 +28,21 @@
 
 package org.xmldap.ws.soap.impl;
 
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Vector;
+
 import nu.xom.Builder;
 import nu.xom.Document;
 import nu.xom.Element;
 import nu.xom.ParsingException;
+
 import org.xmldap.exceptions.MessageException;
 import org.xmldap.exceptions.SerializationException;
 import org.xmldap.ws.WSConstants;
 import org.xmldap.ws.soap.Message;
 import org.xmldap.xml.Serializable;
-
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Vector;
 
 
 public class MessageImpl implements Message {

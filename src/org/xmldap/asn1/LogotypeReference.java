@@ -27,10 +27,15 @@
  */
 package org.xmldap.asn1;
 
-import org.bouncycastle.asn1.*;
-import org.bouncycastle.asn1.x509.DigestInfo;
-
 import java.util.Vector;
+
+import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.DERIA5String;
+import org.bouncycastle.asn1.DERObject;
+import org.bouncycastle.asn1.DERSequence;
+import org.bouncycastle.asn1.x509.DigestInfo;
 
 public class LogotypeReference extends ASN1Encodable {
 	// LogotypeReference ::= SEQUENCE {

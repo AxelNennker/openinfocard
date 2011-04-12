@@ -34,7 +34,9 @@ import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -81,11 +83,7 @@ public class InfoCard implements Serializable,  Comparable<InfoCard> {
     InformationCardReference informationCardReference = null; // required
     private String cardName = null;
     
-    // This required attribute provides a MIME type specifying the format of the 
-    // included card image. This value MUST be one of the five image formats:  
-    // image/jpeg, image/gif, image/bmp, image/png, or image/tiff.
-    private String base64BinaryCardImage; // optional
-    String mimeType = null; // optional
+    ArrayList<String[]> cardImages = null;
     
     private String issuer = null;
     private String timeIssued = null;
@@ -103,6 +101,9 @@ public class InfoCard implements Serializable,  Comparable<InfoCard> {
 
     String CardType = null;
     String IssuerName = null;
+
+    String frontHtml = null;
+    String backHtml = null;
     
     Map<String, String> issuerInformation = null;
 
@@ -115,8 +116,6 @@ public class InfoCard implements Serializable,  Comparable<InfoCard> {
         
         this.informationCardReference = that.informationCardReference; // required
         this.cardName = that.cardName;
-        this.base64BinaryCardImage = that.base64BinaryCardImage;
-        this.mimeType = that.mimeType;
         this.issuer = that.issuer;
         this.timeIssued = that.timeIssued;
         this.timeExpires = that.timeExpires;
@@ -129,6 +128,10 @@ public class InfoCard implements Serializable,  Comparable<InfoCard> {
         this.CardType = that.CardType;
         this.IssuerName = that.IssuerName;
         this.bastards = that.bastards;
+        this.cardImages = new ArrayList<String[]>(that.cardImages.size());
+        this.frontHtml = that.frontHtml;
+        this.backHtml = that.backHtml;
+        Collections.copy(this.cardImages, that.cardImages);
     }
 
     public InfoCard() {
@@ -146,9 +149,26 @@ public class InfoCard implements Serializable,  Comparable<InfoCard> {
       this.cardName = json.optString("CardName", null);
       this.CardType = json.optString("CardType", null);
       this.IssuerName = json.optString("IssuerName", null);
-      this.base64BinaryCardImage = json.optString("CardImage", null);
-      this.mimeType = json.optString("MimeType", null);
-
+      JSONArray cardImages = json.optJSONArray("CardImages");
+      if (cardImages != null && cardImages.length() > 0) {
+    	  this.cardImages = new ArrayList<String[]>(cardImages.length());
+    	  for (int i=0; i<cardImages.length(); i++) {
+    		  JSONObject ii;
+			try {
+				ii = cardImages.getJSONObject(i);
+				String base64BinaryCardImage = ii.getString("base64BinaryCardImage");
+				String mimeType = ii.getString("mimeType");
+				String hint = ii.optString("hint");
+				String imageInfo[] = new String[3];
+				imageInfo[0] = base64BinaryCardImage;
+				imageInfo[1] = mimeType;
+				imageInfo[2] = hint;
+				this.cardImages.add(imageInfo);
+			} catch (JSONException e) {
+				throw new ParsingException(e);
+			}
+    	  }
+      }
       this.issuer = json.optString("Issuer", null);
 
       this.timeIssued = json.optString("TimeIssued", null);
@@ -236,6 +256,24 @@ public class InfoCard implements Serializable,  Comparable<InfoCard> {
         }
       }
 
+      frontHtml = null;
+      if (json.has("frontHtml")) {
+        try {
+        	frontHtml = json.getString("frontHtml");
+        } catch (JSONException e) {
+          throw new ParsingException(e);
+        }
+      }
+
+      backHtml = null;
+      if (json.has("backHtml")) {
+        try {
+        	backHtml = json.getString("backHtml");
+        } catch (JSONException e) {
+          throw new ParsingException(e);
+        }
+      }
+
       issuerInformation = null;
       if (json.has("IssuerInformation")) {
         try {
@@ -289,9 +327,14 @@ public class InfoCard implements Serializable,  Comparable<InfoCard> {
       InformationCardMetaData metaData = ric.getInformationCardMetaData();
       
       // this.backgroudColor = metaData.getBackgroundColor(); // FIXME
-      this.base64BinaryCardImage = metaData.getBase64BinaryCardImage();
-      this.mimeType = metaData.getMimeType();
+      
+      List<String[]> ci = metaData.getCardImages();
+      this.cardImages = new ArrayList<String[]>(ci.size());
+      Collections.copy(this.cardImages, ci);
 
+      this.frontHtml = metaData.getFrontHtml();
+      this.backHtml = metaData.getBackHtml();
+      
       this.lang = metaData.getLang();
       this.requireStrongRecipientIdentity = metaData.getRequireStrongRecipientIdentity();
       
@@ -416,16 +459,22 @@ public class InfoCard implements Serializable,  Comparable<InfoCard> {
       }
     }
     elts = infoCardElement.getChildElements("CardImage", WSConstants.INFOCARD_NAMESPACE);
-    if (elts.size() == 1) {
-      Element elt = elts.get(0);
+    for (int i=0; i<elts.size(); i++) {
+      Element elt = elts.get(i);
       children.remove(elt);
-      base64BinaryCardImage = elt.getValue();
-      mimeType = elt.getAttributeValue("MimeType");
-    } else {
-      if (elts.size() > 1) {
-        throw new ParsingException("Found " + elts.size() + " elements of CardImage");
+      String base64BinaryCardImage = elt.getValue();
+      String mimeType = elt.getAttributeValue("MimeType");
+      String hint = elt.getAttributeValue("hint"); // openinfocard extension
+	  String imageInfo[] = new String[3];
+	  imageInfo[0] = base64BinaryCardImage;
+	  imageInfo[1] = mimeType;
+	  imageInfo[2] = hint;
+      if (cardImages == null) {
+    	  cardImages = new ArrayList<String[]>();
       }
+	  cardImages.add(imageInfo);
     }
+
     elts = infoCardElement.getChildElements("Issuer", WSConstants.INFOCARD_NAMESPACE);
     if (elts.size() == 1) {
       Element elt = elts.get(0);
@@ -529,6 +578,34 @@ public class InfoCard implements Serializable,  Comparable<InfoCard> {
       } else {
         if (elts.size() > 1) {
           throw new ParsingException("Found " + elts.size() + " elements of RequireStrongRecipientIdentity");
+        }
+      }
+    }
+    elts = infoCardElement.getChildElements("FrontHtml", WSConstants.INFOCARD11_NAMESPACE);
+    if (elts.size() == 1) {
+      Element elt = elts.get(0);
+      children.remove(elt);
+      frontHtml = elt.getValue();
+    } else {
+      if (elts.size() ==0) {
+    	  frontHtml = null;
+      } else {
+        if (elts.size() > 1) {
+          throw new ParsingException("Found " + elts.size() + " elements of FrontHtml");
+        }
+      }
+    }
+    elts = infoCardElement.getChildElements("BackHtml", WSConstants.INFOCARD11_NAMESPACE);
+    if (elts.size() == 1) {
+      Element elt = elts.get(0);
+      children.remove(elt);
+      backHtml = elt.getValue();
+    } else {
+      if (elts.size() ==0) {
+    	  backHtml = null;
+      } else {
+        if (elts.size() > 1) {
+          throw new ParsingException("Found " + elts.size() + " elements of BackHtml");
         }
       }
     }
@@ -661,17 +738,76 @@ public class InfoCard implements Serializable,  Comparable<InfoCard> {
         return informationCardReference.getCardVersion();
     }
 
+    public String getFrontHtml() {
+		return frontHtml;
+	}
+
+	public void setFrontHtml(String frontHtml) {
+		this.frontHtml = frontHtml;
+	}
+
+	public String getBackHtml() {
+		return backHtml;
+	}
+
+	public void setBackHtml(String backHtml) {
+		this.backHtml = backHtml;
+	}
+
+	public List<String[]> getCardImages() {
+    	return cardImages;
+    }
+
     public String getBase64BinaryCardImage() {
-      return base64BinaryCardImage;
+    	if (cardImages != null) {
+    		if (cardImages.size() == 1) {
+    			return cardImages.get(0)[0];
+    		} else {
+    			if (cardImages.size() == 0) { return null; }
+    			for (int i=0; i<cardImages.size(); i++) {
+    				String hint = cardImages.get(i)[2];
+    				if (hint != null && "front".equals(hint)) {
+    					return cardImages.get(i)[0];
+    				}
+    			}
+    			return cardImages.get(0)[0];
+    		}
+    	}
+    	return null;
   }
 
-    public String getMimeType() {
-      return mimeType;
+  public String getMimeType() {
+  	if (cardImages != null) {
+		if (cardImages.size() == 1) {
+			return cardImages.get(0)[1];
+		} else {
+			if (cardImages.size() == 0) { return null; }
+			for (int i=0; i<cardImages.size(); i++) {
+				String hint = cardImages.get(i)[2];
+				if (hint != null && "front".equals(hint)) {
+					return cardImages.get(i)[1];
+				}
+			}
+			return cardImages.get(0)[1];
+		}
+	}
+	return null;
   }
 
     public void setBase64BinaryCardImage(String base64BinaryCardImage, String mimeType) {
-        this.base64BinaryCardImage = base64BinaryCardImage;
-        this.mimeType = mimeType;
+    	setBase64BinaryCardImage(base64BinaryCardImage, mimeType, null);
+    }
+
+    public void setBase64BinaryCardImage(String base64BinaryCardImage, String mimeType, String hint) {
+    	if (cardImages == null) {
+    		cardImages = new ArrayList<String[]>();
+    	}
+		String imageInfo[] = new String[3];
+		imageInfo[0] = base64BinaryCardImage;
+		imageInfo[1] = mimeType;
+		imageInfo[2] = hint;
+
+		cardImages.add(imageInfo);
     }
 
     public String getTimeIssued() {
@@ -785,17 +921,37 @@ public class InfoCard implements Serializable,  Comparable<InfoCard> {
           infoCard.appendChild(cardNameElm);
         }
         if (IssuerName != null) { // optional
-          Element cardNameElm = new Element(WSConstants.INFOCARD09_PREFIX + ":IssuerName", WSConstants.INFOCARD09_NAMESPACE);
-          cardNameElm.appendChild(IssuerName);
-          infoCard.appendChild(cardNameElm);
+            Element cardNameElm = new Element(WSConstants.INFOCARD09_PREFIX + ":IssuerName", WSConstants.INFOCARD09_NAMESPACE);
+            cardNameElm.appendChild(IssuerName);
+            infoCard.appendChild(cardNameElm);
+        }
+        if (frontHtml != null) { // optional
+            Element elt = new Element(WSConstants.INFOCARD11_PREFIX + ":FrontHtml", WSConstants.INFOCARD11_NAMESPACE);
+            elt.appendChild(frontHtml);
+            infoCard.appendChild(elt);
+        }
+        if (backHtml != null) { // optional
+            Element elt = new Element(WSConstants.INFOCARD11_PREFIX + ":BackHtml", WSConstants.INFOCARD11_NAMESPACE);
+            elt.appendChild(backHtml);
+            infoCard.appendChild(elt);
         }
 
-        if (base64BinaryCardImage != null) {
-            Element cardImageElm = new Element(WSConstants.INFOCARD_PREFIX + ":CardImage", WSConstants.INFOCARD_NAMESPACE);
-            cardImageElm.appendChild(base64BinaryCardImage);
-            Attribute mime = new Attribute("MimeType", mimeType);
-            cardImageElm.addAttribute(mime);
-            infoCard.appendChild(cardImageElm);
+        if (cardImages != null) {
+        	for (int i=0; i<cardImages.size(); i++) {
+        		String imageInfo[] = cardImages.get(i);
+        		String base64BinaryCardImage = imageInfo[0];
+        		String mimeType = imageInfo[1];
+        		String hint = imageInfo[2];
+	            Element cardImageElm = new Element(WSConstants.INFOCARD_PREFIX + ":CardImage", WSConstants.INFOCARD_NAMESPACE);
+	            cardImageElm.appendChild(base64BinaryCardImage);
+	            Attribute mime = new Attribute("MimeType", mimeType);
+	            cardImageElm.addAttribute(mime);
+	            if (hint != null && !"".equals(hint)) {
+		            Attribute hintAttr = new Attribute("hint", hint);
+		            cardImageElm.addAttribute(hintAttr);
+	            }
+	            infoCard.appendChild(cardImageElm);
+        	}
         }
 
         if (issuer != null) {
@@ -911,9 +1067,19 @@ public class InfoCard implements Serializable,  Comparable<InfoCard> {
           json.put("IssuerName", IssuerName);
         }
 
-        if (base64BinaryCardImage != null) {
-          json.put("CardImage", base64BinaryCardImage);
-          json.put("MimeType", mimeType);
+        if (cardImages != null) {
+        	JSONArray ja = new JSONArray();
+        	for (int i=0; i<cardImages.size(); i++) {
+        		JSONObject jo = new JSONObject();
+        		String[] imageInfo = cardImages.get(i);
+        		jo.put("base64BinaryCardImage", imageInfo[0]);
+        		jo.put("mimeType", imageInfo[1]);
+        		if (imageInfo[2] != null) {
+        			jo.put("hint", imageInfo[2]);
+        		}
+        		ja.put(i, jo);
+        	}
+        	json.put("CardImages", ja);
         }
 
         if (issuer != null) {

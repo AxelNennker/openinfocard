@@ -1,16 +1,22 @@
 package org.xmldap.sts.db.impl;
 
-import org.xmldap.sts.db.CardStorage;
-import org.xmldap.sts.db.DbSupportedClaim;
-import org.xmldap.sts.db.ManagedCard;
-import org.xmldap.sts.db.SupportedClaims;
-import org.xmldap.exceptions.StorageException;
-
-import java.sql.*;
+import java.io.ByteArrayInputStream;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Properties;
 import java.util.Vector;
 import java.util.logging.Logger;
+
+import org.xmldap.exceptions.StorageException;
+import org.xmldap.sts.db.CardStorage;
+import org.xmldap.sts.db.DbSupportedClaim;
+import org.xmldap.sts.db.ManagedCard;
+import org.xmldap.sts.db.SupportedClaims;
 
 public class CardStorageEmbeddedDBImpl implements CardStorage {
 
@@ -28,7 +34,7 @@ public class CardStorageEmbeddedDBImpl implements CardStorage {
 
 	private boolean initialized = false;
 
-	static final int defaultVersion = 2; // since 200809
+	static final int defaultVersion = 3; // since 201104
 	int version = 0;
 
 	SupportedClaims supportedClaimsImpl = null;
@@ -83,9 +89,19 @@ public class CardStorageEmbeddedDBImpl implements CardStorage {
 				+ " cardName varchar(48) NOT NULL," + " cardVersion int,"
 				+ " timeIssued varChar(50) NOT NULL," + " timeExpires varChar(50),"
 				+ " requireStrongRecipientIdentity int,"
-				+ " requireAppliesTo int" + claimsDefinition + ")";
+				+ " requireAppliesTo int,"
+				+ " cardfrontimage varChar(32672),"
+				+ " fronthtml varChar(32672),"
+				+ " cardbackimage varChar(32672),"
+				+ " backhtml varChar(32672)"
+				+ claimsDefinition + ")";
 		System.out.println(query);
-		s.execute(query);
+		try {
+			s.execute(query);
+		} catch (SQLException e) {
+			System.err.println("createTableCards threw Exception: " + e.getMessage());
+			throw e;
+		}
 		System.out.println("Created table cards");
 	}
 
@@ -116,6 +132,9 @@ public class CardStorageEmbeddedDBImpl implements CardStorage {
 					System.out.println(supportedClaimsImpl.getClass().getName()
 							+ "cardDB is already initialized. Version="
 							+ version);
+					if (version < defaultVersion) {
+						throw new SQLException("need to recreate tables. All data will be lost!");
+					}
 					initialized = true;
 				} else {
 					System.err.println("ERROR: 'SELECT init,version FROM initialized' failed!!!");
@@ -309,6 +328,9 @@ public class CardStorageEmbeddedDBImpl implements CardStorage {
 			if (version > 1) {
 				statement += ",?,?";
 			}
+			if (version > 2) {
+				statement += ",?,?,?,?";
+			}
 			for (int i = 0; i < dbSupportedClaims.size(); i++) {
 				statement += ",?";
 			}
@@ -353,6 +375,32 @@ public class CardStorageEmbeddedDBImpl implements CardStorage {
 					pstmt.setInt(parameterIndex++, (card
 							.getRequireAppliesTo()) ? 1 : 0);
 				}
+				if (version > 2) {
+					String cardfrontimage = card.getCardfrontimage();
+					if (cardfrontimage != null) {
+						pstmt.setString(parameterIndex++, cardfrontimage);
+					} else {
+						pstmt.setNull(parameterIndex++, java.sql.Types.VARCHAR);
+					}
+					String cardbackimage = card.getCardbackimage();
+					if (cardbackimage != null) {
+						pstmt.setString(parameterIndex++, cardbackimage);
+					} else {
+						pstmt.setNull(parameterIndex++, java.sql.Types.VARCHAR);
+					}
+					String frontHtml = card.getFrontHtml();
+					if (frontHtml != null) {
+						pstmt.setString(parameterIndex++, frontHtml);
+					} else {
+						pstmt.setNull(parameterIndex++, java.sql.Types.VARCHAR);
+					}
+					String backHtml = card.getBackHtml();
+					if (backHtml != null) {
+						pstmt.setString(parameterIndex++, backHtml);
+					} else {
+						pstmt.setNull(parameterIndex++, java.sql.Types.VARCHAR);
+					}
+				}
 				for (int i = 0; i < dbSupportedClaims.size(); i++) {
 					DbSupportedClaim claim = dbSupportedClaims.get(i);
 					int sqlType = java.sql.Types.OTHER;
@@ -361,12 +409,12 @@ public class CardStorageEmbeddedDBImpl implements CardStorage {
 					} else if (claim.columnType.indexOf("int") > -1) {
 						sqlType = java.sql.Types.INTEGER;
 					}
-					String uri = card.getClaim(claim.uri);
-					if (uri != null) {
+					String valueStr = card.getClaim(claim.uri);
+					if (valueStr != null) {
 						if (sqlType == java.sql.Types.VARCHAR) {
-							pstmt.setString(parameterIndex++, uri);
+							pstmt.setString(parameterIndex++, valueStr);
 						} else if (sqlType == java.sql.Types.INTEGER) {
-							pstmt.setInt(parameterIndex++, Integer.valueOf(uri));
+							pstmt.setInt(parameterIndex++, Integer.valueOf(valueStr));
 						} else {
 							throw new StorageException("database type " + claim.columnType + " is not supported by the current implementation");
 						}
@@ -498,11 +546,23 @@ public class CardStorageEmbeddedDBImpl implements CardStorage {
 						card.setRequireAppliesTo(requireAppliesTo != 0);
 					}
 
+					if (version > 2) {
+						String cardfrontimage = rs.getString(columnIndex++);
+						card.setCardfrontimage(cardfrontimage);
+						String cardbackimage = rs.getString(columnIndex++);
+						card.setCardbackimage(cardbackimage);
+						String frontHtml = rs.getString(columnIndex++);
+						card.setFrontHtml(frontHtml);
+						String backHtml = rs.getString(columnIndex++);
+						card.setBackHtml(backHtml);
+					}
+
 					List<DbSupportedClaim> dbSupportedClaims = supportedClaimsImpl
 							.dbSupportedClaims();
 					for (int i = 0; i < dbSupportedClaims.size(); i++) {
-						String uri = dbSupportedClaims.get(i).uri;
+						DbSupportedClaim claim = dbSupportedClaims.get(i);
 						String value = rs.getString(columnIndex++);
+						String uri = claim.uri;
 						if (uri.indexOf('?') > 0) {
 							System.out.println("cardId:" + cardid
 									+ " dynamic claim:" + value);

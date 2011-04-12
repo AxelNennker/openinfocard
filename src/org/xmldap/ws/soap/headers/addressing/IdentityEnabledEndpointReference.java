@@ -28,18 +28,17 @@
 
 package org.xmldap.ws.soap.headers.addressing;
 
+import java.security.cert.X509Certificate;
+
 import nu.xom.Element;
 import nu.xom.Elements;
 
-import org.xmldap.exceptions.KeyStoreException;
 import org.xmldap.exceptions.ParsingException;
 import org.xmldap.exceptions.SerializationException;
 import org.xmldap.ws.WSConstants;
 import org.xmldap.xml.Serializable;
 import org.xmldap.xmldsig.InfocardKeyInfo;
 import org.xmldap.xmldsig.ParsedKeyInfo;
-
-import java.security.cert.X509Certificate;
 
 /**
  * Created by IntelliJ IDEA.

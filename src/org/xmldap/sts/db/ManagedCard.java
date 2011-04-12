@@ -48,7 +48,14 @@ public class ManagedCard {
     boolean requireAppliesTo = false;
     boolean requireStrongRecipientIdentity = true;
     
-    private Map<String,String> supportedClaims = new HashMap<String,String>();
+    private String cardfrontimage = null;
+	private String cardbackimage = null;
+    private String icon = null;
+    
+	private String frontHtml = null;
+	private String backHtml = null;
+	
+    private Map<String,Object> supportedClaims = new HashMap<String,Object>();
 
     public ManagedCard() {
         RandomGUID guid = new RandomGUID();
@@ -113,7 +120,7 @@ public class ManagedCard {
     }
 
     public String getClaim(String uri) {
-    	return supportedClaims.get(uri);
+    	return (String)supportedClaims.get(uri);
     }
     
     public void setClaim(String uri, String value) {
@@ -145,4 +152,53 @@ public class ManagedCard {
 		this.requireStrongRecipientIdentity = requireStrongRecipientIdentity;
 	}
     
+    public String getCardfrontimage() {
+		return cardfrontimage;
+	}
+
+
+	public void setCardfrontimage(String cardfrontimage) {
+		this.cardfrontimage = cardfrontimage;
+	}
+
+
+	public String getCardbackimage() {
+		return cardbackimage;
+	}
+
+
+	public void setCardbackimage(String cardbackimage) {
+		this.cardbackimage = cardbackimage;
+	}
+
+
+	public String getIcon() {
+		return icon;
+	}
+
+
+	public void setIcon(String icon) {
+		this.icon = icon;
+	}
+
+
+	public String getFrontHtml() {
+		return frontHtml;
+	}
+
+
+	public void setFrontHtml(String frontHtml) {
+		this.frontHtml = frontHtml;
+	}
+
+
+	public String getBackHtml() {
+		return backHtml;
+	}
+
+
+	public void setBackHtml(String backHtml) {
+		this.backHtml = backHtml;
+	}
+
 }

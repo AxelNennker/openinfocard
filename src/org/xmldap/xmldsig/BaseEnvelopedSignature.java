@@ -28,7 +28,17 @@
 
 package org.xmldap.xmldsig;
 
-import nu.xom.*;
+import java.io.IOException;
+import java.security.PrivateKey;
+import java.util.List;
+import java.util.Vector;
+
+import nu.xom.Attribute;
+import nu.xom.Document;
+import nu.xom.Element;
+import nu.xom.Nodes;
+import nu.xom.ParentNode;
+
 import org.xmldap.crypto.CryptoUtils;
 import org.xmldap.exceptions.CryptoException;
 import org.xmldap.exceptions.SerializationException;
@@ -36,11 +46,6 @@ import org.xmldap.exceptions.SigningException;
 import org.xmldap.ws.WSConstants;
 import org.xmldap.xml.Canonicalizable;
 import org.xmldap.xml.XmlUtils;
-
-import java.io.IOException;
-import java.security.PrivateKey;
-import java.util.List;
-import java.util.Vector;
 
 
 public class BaseEnvelopedSignature {

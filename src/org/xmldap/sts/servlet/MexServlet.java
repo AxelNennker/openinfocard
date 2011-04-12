@@ -28,6 +28,23 @@
 
 package org.xmldap.sts.servlet;
 
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
+import java.text.MessageFormat;
+
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import nu.xom.Builder;
 import nu.xom.Document;
 import nu.xom.Element;
@@ -36,23 +53,11 @@ import nu.xom.ParsingException;
 import nu.xom.XPathContext;
 
 import org.xmldap.exceptions.KeyStoreException;
-import org.xmldap.infocard.TokenServiceReference;
 import org.xmldap.infocard.UserCredential;
 import org.xmldap.util.Base64;
 import org.xmldap.util.KeystoreUtil;
 import org.xmldap.util.PropertiesManager;
 import org.xmldap.ws.WSConstants;
-
-import javax.servlet.ServletException;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.*;
-import java.security.cert.CertificateEncodingException;
-import java.security.cert.X509Certificate;
-import java.text.MessageFormat;
 
 
 public class MexServlet extends HttpServlet {

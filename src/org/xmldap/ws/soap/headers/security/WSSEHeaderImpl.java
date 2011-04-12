@@ -28,12 +28,13 @@
 
 package org.xmldap.ws.soap.headers.security;
 
-import nu.xom.Element;
-import org.xmldap.exceptions.SerializationException;
-import org.xmldap.ws.WSConstants;
-
 import java.util.Iterator;
 import java.util.Vector;
+
+import nu.xom.Element;
+
+import org.xmldap.exceptions.SerializationException;
+import org.xmldap.ws.WSConstants;
 
 /**
  * Created by IntelliJ IDEA.

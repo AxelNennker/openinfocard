@@ -28,13 +28,14 @@
 
 package org.xmldap.xmldsig;
 
+import java.security.PrivateKey;
+
 import nu.xom.Element;
+
 import org.xmldap.crypto.CryptoUtils;
 import org.xmldap.exceptions.CryptoException;
 import org.xmldap.exceptions.SerializationException;
 import org.xmldap.xml.Serializable;
-
-import java.security.PrivateKey;
 
 public class SignatureValue implements Serializable {
 

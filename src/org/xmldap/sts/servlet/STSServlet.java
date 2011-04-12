@@ -28,25 +28,6 @@
 
 package org.xmldap.sts.servlet;
 
-import nu.xom.*;
-
-import org.xmldap.exceptions.CryptoException;
-import org.xmldap.exceptions.KeyStoreException;
-import org.xmldap.exceptions.ParsingException;
-import org.xmldap.exceptions.TokenIssuanceException;
-import org.xmldap.util.*;
-import org.xmldap.sts.db.CardStorage;
-import org.xmldap.sts.db.ManagedCard;
-import org.xmldap.sts.db.SupportedClaims;
-import org.xmldap.sts.db.impl.CardStorageEmbeddedDBImpl;
-
-import javax.servlet.ServletException;
-import javax.servlet.ServletConfig;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -54,6 +35,31 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.util.Locale;
 import java.util.logging.Logger;
+
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import nu.xom.Builder;
+import nu.xom.Document;
+import nu.xom.Element;
+import nu.xom.Nodes;
+import nu.xom.XPathContext;
+
+import org.xmldap.exceptions.CryptoException;
+import org.xmldap.exceptions.KeyStoreException;
+import org.xmldap.exceptions.ParsingException;
+import org.xmldap.exceptions.TokenIssuanceException;
+import org.xmldap.sts.db.CardStorage;
+import org.xmldap.sts.db.ManagedCard;
+import org.xmldap.sts.db.SupportedClaims;
+import org.xmldap.sts.db.impl.CardStorageEmbeddedDBImpl;
+import org.xmldap.util.Bag;
+import org.xmldap.util.KeystoreUtil;
+import org.xmldap.util.PropertiesManager;
 
 public class STSServlet  extends HttpServlet {
 

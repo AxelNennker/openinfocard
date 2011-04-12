@@ -28,15 +28,16 @@
 
 package org.xmldap.xmldsig;
 
+import java.io.IOException;
+
 import nu.xom.Attribute;
 import nu.xom.Element;
 import nu.xom.canonical.Canonicalizer;
+
 import org.xmldap.crypto.CryptoUtils;
 import org.xmldap.exceptions.SerializationException;
 import org.xmldap.xml.Serializable;
 import org.xmldap.xml.XmlUtils;
-
-import java.io.IOException;
 
 public class Reference implements Serializable {
 

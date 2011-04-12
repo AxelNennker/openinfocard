@@ -28,16 +28,17 @@
 
 package org.xmldap.xmldsig;
 
-import nu.xom.Element;
-import org.xmldap.exceptions.SerializationException;
-import org.xmldap.util.Base64;
-import org.xmldap.ws.WSConstants;
-
 import java.math.BigInteger;
 import java.security.Principal;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
+
+import nu.xom.Element;
+
+import org.xmldap.exceptions.SerializationException;
+import org.xmldap.util.Base64;
+import org.xmldap.ws.WSConstants;
 
 
 public class AsymmetricKeyInfo implements KeyInfo {

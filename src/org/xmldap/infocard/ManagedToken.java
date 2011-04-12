@@ -28,21 +28,27 @@
 
 package org.xmldap.infocard;
 
-import nu.xom.Element;
-import org.xmldap.exceptions.SerializationException;
-import org.xmldap.exceptions.SigningException;
-import org.xmldap.saml.*;
-import org.xmldap.util.RandomGUID;
-import org.xmldap.xml.Serializable;
-import org.xmldap.xmldsig.BaseEnvelopedSignature;
-import org.xmldap.xmldsig.KeyInfo;
-
 import java.security.PrivateKey;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
+
+import nu.xom.Element;
+
+import org.xmldap.exceptions.SerializationException;
+import org.xmldap.exceptions.SigningException;
+import org.xmldap.saml.Attribute;
+import org.xmldap.saml.AttributeStatement;
+import org.xmldap.saml.AudienceRestrictionCondition;
+import org.xmldap.saml.Conditions;
+import org.xmldap.saml.SAMLAssertion;
+import org.xmldap.saml.Subject;
+import org.xmldap.util.RandomGUID;
+import org.xmldap.xml.Serializable;
+import org.xmldap.xmldsig.BaseEnvelopedSignature;
+import org.xmldap.xmldsig.KeyInfo;
 
 public class ManagedToken implements Serializable {
 	String mAlgorithm;

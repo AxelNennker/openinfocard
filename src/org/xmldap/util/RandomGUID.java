@@ -20,7 +20,6 @@ package org.xmldap.util;
  */
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;

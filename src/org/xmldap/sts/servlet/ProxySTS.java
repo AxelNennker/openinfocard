@@ -29,7 +29,32 @@
 
 package org.xmldap.sts.servlet;
 
-import nu.xom.*;
+import java.io.DataInputStream;
+import java.io.EOFException;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.URISyntaxException;
+import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPrivateKey;
+import java.util.ArrayList;
+import java.util.logging.Logger;
+
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import nu.xom.Builder;
+import nu.xom.Document;
+import nu.xom.Element;
+import nu.xom.Elements;
+import nu.xom.Nodes;
+import nu.xom.XPathContext;
 
 import org.xmldap.exceptions.CryptoException;
 import org.xmldap.exceptions.KeyStoreException;
@@ -42,30 +67,12 @@ import org.xmldap.infocard.policy.SupportedClaim;
 import org.xmldap.infocard.policy.SupportedClaimTypeList;
 import org.xmldap.infocard.policy.SupportedToken;
 import org.xmldap.infocard.policy.SupportedTokenList;
-import org.xmldap.util.*;
 import org.xmldap.sts.db.CardStorage;
 import org.xmldap.sts.db.SupportedClaims;
 import org.xmldap.sts.db.impl.CardStorageEmbeddedDBImpl;
-
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletConfig;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
-import java.io.DataInputStream;
-import java.io.EOFException;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.URISyntaxException;
-import java.security.cert.X509Certificate;
-import java.security.interfaces.RSAPrivateKey;
-import java.util.ArrayList;
-import java.util.logging.Logger;
+import org.xmldap.util.KeystoreUtil;
+import org.xmldap.util.PropertiesManager;
+import org.xmldap.util.XSDDateTime;
 
 public class ProxySTS  extends HttpServlet {
 

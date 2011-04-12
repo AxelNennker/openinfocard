@@ -4,6 +4,9 @@ import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.List;
 
+import nu.xom.Attribute;
+import nu.xom.Element;
+
 import org.xmldap.exceptions.SerializationException;
 import org.xmldap.exceptions.SigningException;
 import org.xmldap.util.RandomGUID;
@@ -15,9 +18,6 @@ import org.xmldap.xmldsig.BaseEnvelopedSignature;
 import org.xmldap.xmldsig.Reference;
 import org.xmldap.xmldsig.SAMLTokenKeyInfo;
 import org.xmldap.xmldsig.Signature;
-
-import nu.xom.Attribute;
-import nu.xom.Element;
 
 public class RequestSecurityToken implements Serializable{
 	Element soapEnvelope = null;

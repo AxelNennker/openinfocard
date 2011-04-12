@@ -28,15 +28,20 @@
 
 package org.xmldap.rp;
 
-import net.sourceforge.lightcrypto.SafeObject;
-import nu.xom.*;
-import org.xmldap.crypto.CryptoUtils;
-import org.xmldap.ws.WSConstants;
-import org.xmldap.xml.XmlUtils;
-import org.xmldap.exceptions.CryptoException;
-
 import java.io.IOException;
 import java.security.PrivateKey;
+
+import net.sourceforge.lightcrypto.SafeObject;
+import nu.xom.Document;
+import nu.xom.Element;
+import nu.xom.Nodes;
+import nu.xom.ParsingException;
+import nu.xom.XPathContext;
+
+import org.xmldap.crypto.CryptoUtils;
+import org.xmldap.exceptions.CryptoException;
+import org.xmldap.ws.WSConstants;
+import org.xmldap.xml.XmlUtils;
 
 
 public class DecryptUtil {
