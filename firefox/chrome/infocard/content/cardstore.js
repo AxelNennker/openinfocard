@@ -189,11 +189,6 @@ function getContents(aURL){
 function getDir(){
     var path;
 
-    try {
-        netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
-    } catch (e) {
-        IdentitySelectorDiag.reportError("cardstore.js", "Permission to save file was denied." + e);
-    }
     // get the path to the user's home (profile) directory
     const DIR_SERVICE = new Components.Constructor("@mozilla.org/file/directory_service;1","nsIProperties");
     try {

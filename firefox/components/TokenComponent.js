@@ -40,13 +40,6 @@ function _printToJSConsole(msg) {
 }
 
 function loadClassData(fileName) {
-    try {
-		netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
-	} catch (e) {
-		_printToJSConsole("Permission to read file was denied." + e);
-		return null;
-	}
-
 	var file = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
 	_printToJSConsole("loadClassData: " + fileName );
 	file.initWithPath( fileName );

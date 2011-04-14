@@ -119,7 +119,6 @@
         var button = document.getElementById('cardbutton');
         textbox.thefile = null;
 
-       netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
        var nsIFilePicker = Components.interfaces.nsIFilePicker;
        var fp = Components.classes["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker);
        fp.init(window, "Select a File", nsIFilePicker.modeOpen);
@@ -144,7 +143,6 @@
 
          if (file != null) {
 
-             netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
              var is = Components.classes["@mozilla.org/network/file-input-stream;1"].createInstance( Components.interfaces.nsIFileInputStream );
              var sstream = Components.classes["@mozilla.org/scriptableinputstream;1"].createInstance(Components.interfaces.nsIScriptableInputStream);
 
