@@ -12,6 +12,8 @@ interface IInformationCardStore : nsISupports
 
   void   clearCardStore();
 
+  boolean isCardInStore(in string cardid);
+  
   // the informationCardXml is defined in ISIP 1.5
   void addCard(in string informationCardXml);
   void removeCard(in string cardId);
