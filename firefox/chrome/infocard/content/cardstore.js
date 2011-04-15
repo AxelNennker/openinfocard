@@ -53,16 +53,16 @@ function readRoamingStore() {
 }
 
 function getCard(cardid){
-//  cardstoreDebug("storeCard: cardid=" + cardid);
-//  cardstoreDebug("storeCard: typeof(cardid)=" + typeof(cardid));
+//  cardstoreDebug("getCard: cardid=" + cardid);
+//  cardstoreDebug("getCard: typeof(cardid)=" + typeof(cardid));
   var cardFile = readCardStore();
   cardstoreDebug("getCard: typeof(cardFile)=" + typeof(cardFile));
   if (typeof(cardFile) == "string") {
     cardFile = new XML(cardFile);
   }
-//  cardstoreDebug("storeCard: cardFile=" + cardFile);
-//  cardstoreDebug("storeCard: typeof(cardFile)=" + typeof(cardFile));
-//  cardstoreDebug("storeCard: typeof(cardFile.infocard)=" + typeof(cardFile.infocard));
+//  cardstoreDebug("getCard: cardFile=" + cardFile);
+//  cardstoreDebug("getCard: typeof(cardFile)=" + typeof(cardFile));
+//  cardstoreDebug("getCard: typeof(cardFile.infocard)=" + typeof(cardFile.infocard));
     
     for each (c in cardFile.infocard) {
       if (c.id == cardid) {
@@ -90,13 +90,19 @@ cardstoreDebug(card);
               "Unable to locate a card store.  " +
               "Please make sure one is installed.");
   }
-  aCardstore.storeCard(card);
+  cardstoreDebug("typeof(card)=" + typeof(card));
+  if (typeof(card) == "xml") {
+    var aString = card.toXMLString();
+    aCardstore.addCard(aString);
+  } else {
+    aCardstore.addCard(card);
+  }
 }
 
 function removeCard(selectedCardId) {
   var aCardstore = InformationCardHelper.getCardstore();
   if (!aCardstore) {
-    IdentitySelectorDiag.reportError( "cardstore.js storeCard",
+    IdentitySelectorDiag.reportError( "cardstore.js removeCard",
               "Unable to locate a card store.  " +
               "Please make sure one is installed.");
   }
@@ -107,7 +113,7 @@ function removeCard(selectedCardId) {
 function updateCard(card) {
   var aCardstore = InformationCardHelper.getCardstore();
   if (!aCardstore) {
-    IdentitySelectorDiag.reportError( "cardstore.js storeCard",
+    IdentitySelectorDiag.reportError( "cardstore.js updateCard",
               "Unable to locate a card store.  " +
               "Please make sure one is installed.");
   }

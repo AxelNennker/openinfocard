@@ -60,10 +60,13 @@
 	}
 
 %>
+<!DOCTYPE HTML><html>
+<!--
 <!DOCTYPE html 
      PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
+-->
 <head>
 	<title>XMLDAP Card Manager</title>
 
@@ -195,16 +198,20 @@
 
         String cardId = (String)iter.next();
         ManagedCard thisCard = storage.getCard(cardId);
+        String cardImageStr = thisCard.getClaim("http://schemas.tlabs.de/2011/04/identity/claims/cardfrontimage");
+        if (cardImageStr == null) {
+            cardImageStr = "../img/click_me_card.png";
+        }
         String href = "/" + servletPath + "/card/" + thisCard.getCardId() + ".crd";
         out.println("<tr><td><a href=\"" + href + "\">" + thisCard.getCardName() + "</a></td><td>");
         out.println("<form method='post' action='' id='form" + thisCard.getCardId() + "' enctype='application/x-www-form-urlencoded'>");
         %>
 		<p>
-		<img src="../img/click_me_card.png" alt="" width="72" height="37"
-		     onmouseover="this.src='../img/card.png';"
-		     onmouseout="this.src='../img/click_me_card.png';"
+		<img width="72" height="37"
 		     <%
-		     out.println("onclick='var pf = document.getElementById(\"form" + thisCard.getCardId() + "\"); pf.submit();'/>");
+             out.println(" alt=\"" + cardId + "\"");
+             out.println(" src=\"" + cardImageStr + "\"");
+             out.println(" onclick='var pf = document.getElementById(\"form" + thisCard.getCardId() + "\"); pf.submit();'/>");
 		     %>
         <object type="application/x-informationcard" name="xmlToken">
 		<%

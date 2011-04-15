@@ -1,10 +1,16 @@
 var EXPORTED_SYMBOLS = ["InformationCardHelper"]; 
 
-Components.utils.import("resource://infocard/IdentitySelectorDiag.jsm");
-Components.utils.import("resource://infocard/IdentitySelectorPrefs.jsm");
+const Cc = Components.classes;
+const Ci = Components.interfaces;
+const Cr = Components.results;
+const Cu = Components.utils;
+
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://infocard/IdentitySelectorDiag.jsm");
+Cu.import("resource://infocard/IdentitySelectorPrefs.jsm");
 
 var InformationCardHelper = {
-  alert : function(msg) {
+  alert : function _alert(msg) {
     var data = {};
     data.msg = msg;
     var ww = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
@@ -13,7 +19,7 @@ var InformationCardHelper = {
       "Openinfocard", "chrome,centerscreen", data);
   },
   
-  isSslCertEV : function(doc) {
+  isSslCertEV : function _isSslCertEV(doc) {
     var browser = doc.defaultView.getBrowser();
     if (browser !== null) {
       if (browser.securityUI !== undefined) {
@@ -24,7 +30,7 @@ var InformationCardHelper = {
     return false;
   },
   
-  getBrowserForUrl : function(url) {
+  getBrowserForUrl : function _getBrowserForUrl(url) {
       IdentitySelectorDiag.logMessage("InformationCardHelper.getBrowserForUrl", "url=" + url);
       var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
                          .getService(Components.interfaces.nsIWindowMediator);
@@ -47,7 +53,7 @@ var InformationCardHelper = {
       return null;
   },
   
-  getBrowserForDoc : function(doc) {
+  getBrowserForDoc : function _getBrowserForDoc(doc) {
     IdentitySelectorDiag.logMessage("InformationCardHelper.getBrowserForDoc", "doc.location.href=" + doc.location.href);
     var browser = null;
     
@@ -68,12 +74,12 @@ var InformationCardHelper = {
     return browser;
   },
   
-  getSSLCertFromDocument : function(doc) {
+  getSSLCertFromDocument : function _getSSLCertFromDocument(doc) {
     var browser = InformationCardHelper.getBrowserForDoc(doc);
     return InformationCardHelper.getSSLCertFromBrowser(browser);
   },
   
-  getSSLCertFromBrowser : function(browser) {
+  getSSLCertFromBrowser : function _getSSLCertFromBrowser(browser) {
     var sslCert = null;
 
     if (browser.securityUI) {
@@ -97,7 +103,7 @@ var InformationCardHelper = {
     return sslCert;
   },
   
-  parseRpPolicy: function(icLoginPolicy) {
+  parseRpPolicy: function _parseRpPolicy(icLoginPolicy) {
         // IdentitySelectorDiag.logMessage("parseRpPolicy",
         // "typeof(icLoginPolicy)=" +
         // typeof(icLoginPolicy)); // xml
@@ -160,7 +166,7 @@ var InformationCardHelper = {
         return data;
   },
     
-  getCidFromPrefs: function() {
+  getCidFromPrefs: function _getCidFromPrefs() {
         var cid = null;
         // lookup class id from config.
         var prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefBranch);
@@ -169,7 +175,7 @@ var InformationCardHelper = {
         return cid;
   },
   
-  getObjectForClassId: function(cid) {
+  getObjectForClassId: function _getObjectForClassId(cid) {
         var obj = null;
         try {
             var cidClass = Components.classes[cid];
@@ -187,7 +193,7 @@ var InformationCardHelper = {
         return obj;
   },
 
-  prepareDataForCallIdentitySelector: function(doc) {
+  prepareDataForCallIdentitySelector: function _prepareDataForCallIdentitySelector(doc) {
       var data;
       var icLoginPolicy = doc.__identityselector__.icLoginPolicy;
       if (icLoginPolicy !== undefined) {
@@ -230,7 +236,7 @@ var InformationCardHelper = {
       return data;
   },
 
-  callIdentitySelector: function(doc) {
+  callIdentitySelector: function _callIdentitySelector(doc) {
         IdentitySelectorDiag.logMessage("IdentitySelector.callIdentitySelector", "doc.location.href=" + doc.location.href);
 
         var selectorClass;
@@ -288,7 +294,7 @@ var InformationCardHelper = {
   // loop through the objects in the doc to find the one that has targetId
   // as the value of icDropTargetId
   // ***********************************************************************
-  findRelatedObject: function(doc, targetId) {
+  findRelatedObject: function _findRelatedObject(doc, targetId) {
     var objElem;
     var objTypeStr;
     var itemCount = 0;
@@ -323,7 +329,7 @@ var InformationCardHelper = {
     return null;
   },
 
-  sameSchemeAndDomain: function(ownerDocument, htmlDoc) {
+  sameSchemeAndDomain: function _sameSchemeAndDomain(ownerDocument, htmlDoc) {
     var i;
     IdentitySelectorDiag.logMessage("sameSchemeAndDomain", "ownerDocument.location.href=" + ownerDocument.location.href);
     var topScheme = ownerDocument.location.protocol;
@@ -383,6 +389,50 @@ var InformationCardHelper = {
         IdentitySelectorDiag.logMessage("sameSchemeAndDomain", "schemes do not match. " + subWindowScheme + "!=" + topScheme);
     }
     return false;
+  },
+  
+  getCardstore : function _getCardstore() {
+    var prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefBranch);
+    var pbi = prefs.QueryInterface(Components.interfaces.nsIPrefBranch);
+  
+    cid = pbi.getCharPref("extensions.identityselector.selector_class");
+    if (cid) {
+      try {
+          var clasz = Cc[cid];
+          if (clasz) {
+            var cardstoreService = clasz.getService(Ci.IInformationCardStore);
+            return cardstoreService;
+          } else {
+            IdentitySelectorDiag.logMessage("getCardstore", "class is not defined: " + entry);
+          } 
+      } catch(e) {
+        IdentitySelectorDiag.logMessage("getCardstore", "Exeption: " + e);
+      }
+    } else {
+       IdentitySelectorDiag.logMessage("getCardstore", "cid is not defined");
+    }
+    var catman = XPCOMUtils.categoryManager;  
+    var cardstores = catman.enumerateCategory( "information-card-storage" );
+    while (cardstores.hasMoreElements()) {
+      try {
+        var item = cardstores.getNext();
+        var entry = item.QueryInterface(Ci.nsISupportsCString);
+        if (!entry || (entry == "")) {
+          continue; // can this happen?
+        }
+        var clasz = Cc[entry];
+        if (clasz) {
+          var cardstoreService = clasz.getService(Ci.IInformationCardStore);
+          return cardstoreService;
+        } else {
+          IdentitySelectorDiag.logMessage("getCardstore", "class is not defined: " + entry);
+        } 
+      } catch (ee) {
+        IdentitySelectorDiag.reportError("getCardstore", "" + ee);
+      }
+    }
+    IdentitySelectorDiag.logMessage("getCardstore", "class is not defined: " + entry);
+    return null;
   }
 
 };

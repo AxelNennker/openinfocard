@@ -49,8 +49,25 @@ OicCardstoreFile.prototype = {
 
     // the informationCardXml is defined in ISIP 1.5
     addCard : function addCard(informationCardXml) {
+      try {
+        var card = new XML(informationCardXml); // from xpcom string to xml
+        var cardFile = this.read(this.mDB);
+        cardFile.infocard += card;
+        this.save(this.mDB,cardFile.toXMLString());
+      } catch (e) {
+        this.log("addCard exception: " + e);
+        throw e;
+      }
     },
     removeCard : function removeCard(cardId) {
+      var cardFile = this.read(this.mDB);
+      var count = 0;
+      for each (c in cardFile.infocard) {
+          var latestId = c.id;
+          if (latestId == cardId) delete cardFile.infocard[count];
+          count++;
+      }
+      this.save(this.mDB,cardFile.toXMLString());
     },
 
     // the roamingStoreXml is defined in ISIP 1.5
@@ -59,13 +76,37 @@ OicCardstoreFile.prototype = {
 
     // the informationCardXml is defined in ISIP 1.5
     updateCard : function updateCard(informationCardXml, cardId) {
+      var card = new XML(informationCardXml); // from xpcom string to xml
+      var cardFile = this.read(this.mDB);
+      var nDB = this.newDB();
+      
+      for each (c in cardFile.infocard) {
+          var latestId = c.id;
+          if (latestId == card.id) {
+           nDB.infocard += card;
+          } else {
+           nDB.infocard += c;
+          }
+      }
+      this.save(this.mDB,nDB.toXMLString());
     },
 
     getAllCardIds : function getAllCardIds(count, cardIds) {
+      var cardFile = this.read(this.mDB);
+      for each (c in cardFile.infocard) {
+          var latestId = c.id;
+          cardIds.push(latestId);
+          count++;
+      }
     },
 
     getCardCount : function getCardCount() {
-      return 0;
+      var count = 0;
+      var cardFile = this.read(this.mDB);
+      for each (c in cardFile.infocard) {
+        count++;
+      }
+      return count;
     },
 
     //    nsISimpleEnumerator getInformationCards();
@@ -322,18 +363,71 @@ OicCardstoreFile.prototype = {
            }
     },
     
+    save: function _save(fileName, fileContents) {
+      var prefs = Components.classes["@mozilla.org/preferences-service;1"].
+                  getService(Components.interfaces.nsIPrefService);
+      prefs = prefs.getBranch("extensions.infocard.");
+  
+      var encrypt = prefs.getBoolPref("cardStoreMasterPasswordEncryption");
+      if (encrypt) {
+          var sdr = Components.classes["@mozilla.org/security/sdr;1"]
+                                  .getService(Components.interfaces.nsISecretDecoderRing);
+          fileContents = sdr.encryptString(fileContents);
+      }    
+  
+      var useProfile = prefs.getBoolPref("cardStoreCurrentProfile");
+      if (useProfile) {
+          this.log("saving profile cardstore");
+              fileName = this.getDir() + fileName;
+              this.saveLocalFile(fileName, fileContents);
+              return;
+      }
+  
+      var localFilePath = prefs.getComplexValue("cardStoreLocalFilePath",
+                                  Components.interfaces.nsISupportsString).data;
+      if ((localFilePath != null) && (localFilePath != "")) {
+              this.log("using local file as cardstore: " + localFilePath);
+              try {
+                  this.saveLocalFile(localFilePath, fileContents);
+                  return;
+              } catch(e) {
+                  this.log("cardstore.js writing local file cardstore failed:" + e);
+              } 
+              return;
+      }
+
+      var url = prefs.getComplexValue("cardStoreUrl", Components.interfaces.nsISupportsString).data;
+      if ((url != null) && (url != "")) {
+              this.log("writing url cardstore: " + url);
+              var req = new XMLHttpRequest();
+              req.open('POST', url, false);
+              req.setRequestHeader("Content-type", "application/xml; charset=utf-8");
+              req.setRequestHeader("Cache-Control", "no-cache");
+              req.setRequestHeader("User-Agent", "xmldap infocard stack");
+              req.send(fileContents);
+          this.log("POST request status="+req.status);
+          if(req.status == 200) {
+            return;
+          } else {
+            this.log("cardstore.js" + req.responseText);    
+            return;
+          }
+      }
+      this.log("cardstore.js writing cardstore failed");
+  },
+    
     newDB: function newDB(){
     
       var dbFile = new XML("<infocards/>");
       dbFile.version = "1";
       return dbFile;
-  // cardstoreDebug("newDB start");
+  // this.log("newDB start");
   // if (TokenIssuer.initialize() == true) {
   // var dbFile = TokenIssuer.newCardStore();
-  // cardstoreDebug ( "New DB: " + dbFile.toString());
+  // this.log ( "New DB: " + dbFile.toString());
   // return dbFile;
   // } else {
-  // cardstoreDebug("error initializing the TokenIssuer");
+  // this.log("error initializing the TokenIssuer");
   // return null;
   // }
      },

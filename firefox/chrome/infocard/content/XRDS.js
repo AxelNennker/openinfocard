@@ -238,7 +238,7 @@ var IcXrdsComponent = {
      this.onReady = function(xrds) {
         try {
            var response = new XML(Components.classes['@mozilla.org/xmlextras/xmlserializer;1'].createInstance(Components.interfaces.nsIDOMSerializer).serializeToString(xrds.documentElement));
-           doc.__identityselector__.icLoginPolicy = response;
+           doc.__identityselector__.icLoginPolicy = response.toXMLString();
            IdentitySelectorDiag.logMessage("IcXrdsComponent::icLoginServiceListener:onReady", 
                "response=" + response +
                "\ndoc.location.href=" + doc.location.href);
@@ -338,7 +338,7 @@ var InformationCardXrds = {
            }
            
            var response = new XML(Components.classes['@mozilla.org/xmlextras/xmlserializer;1'].createInstance(Components.interfaces.nsIDOMSerializer).serializeToString(xrds.documentElement));
-           doc.__identityselector__.xrds = response;
+           doc.__identityselector__.xrds = response.toXMLString();
            IdentitySelectorDiag.logMessage("InformationCardXrds::xrdsListener:onReady", 
                "response=" + doc.__identityselector__.xrds +
                "doc.location.href=" + doc.location.href);
