@@ -203,13 +203,13 @@ var InformationCardStatusbar = {
 
         if( !(doc.__identityselector__ === undefined)) {
            if ((doc.__identityselector__.icLoginService !== undefined) && (doc.__identityselector__.icLoginPolicy !== undefined)) {
-         	  InformationCardHelper.callIdentitySelector(gBrowser.selectedBrowser);
+         	  InformationCardHelper.callIdentitySelector(gBrowser.selectedBrowser, doc);
               }
            else {
         	    if (InformationCardStatusbar._findInformationCardObjectAndClick(doc) === true) return;
         	    
 				if (doc.__identityselector__.openidReturnToUri !== undefined) {
-					InformationCardHelper.callIdentitySelector(gBrowser.selectedBrowser);
+					InformationCardHelper.callIdentitySelector(gBrowser.selectedBrowser, doc);
 				} else {
 					var msg = "";
 					if (doc.__identityselector__.icLoginService === undefined) {

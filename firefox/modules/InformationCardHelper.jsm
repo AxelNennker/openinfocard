@@ -236,56 +236,87 @@ var InformationCardHelper = {
       return data;
   },
 
-  callIdentitySelector: function _callIdentitySelector(doc) {
-        IdentitySelectorDiag.logMessage("IdentitySelector.callIdentitySelector", "doc.location.href=" + doc.location.href);
+  callIdentitySelector: function _callIdentitySelector(browser, doc) {
+    IdentitySelectorDiag.logMessage("IdentitySelector.callIdentitySelector", "doc.location.href=" + doc.location.href);
 
-        var selectorClass;
-        // Get the selector class
-        if ((selectorClass = IdentitySelectorPrefs.getStringPref("identityselector", "selector_class")) === null) {
-            selectorClass = "NoIdentitySelector";
-        }
+    var aSelectorClasz = InformationCardHelper.getCardstore();
+    if (!aSelectorClasz) {
+      IdentitySelectorDiag.reportError( "onCallIdentitySelector",
+                "Unable to locate an identity selector.  " +
+                "Please make sure one is installed.");
+      return null;
+    }
+    var dataObj = InformationCardHelper.prepareDataForCallIdentitySelector(doc);
 
-        var data = InformationCardHelper.prepareDataForCallIdentitySelector(doc);
-
-        var getSecurityToken = eval(selectorClass).getSecurityToken;
-
-        if (typeof getSecurityToken != "function") {
-            selectorClass = "NoIdentitySelector";
-            getSecurityToken = eval(selectorClass).getSecurityToken;
-        }
-
-        // call identity selector
-        var token = getSecurityToken(data, doc);
-
-        if (token) {
-          var icLoginService = doc.__identityselector__.icLoginService;
-          
-          IdentitySelectorDiag.logMessage("IdentitySelector.callIdentitySelector", "sending token " + token + " to " + icLoginService);
-          var req = Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"].createInstance();
-          req.open('POST', icLoginService, false);
-          req.setRequestHeader("Content-Length", token.length);
-          try {
-              req.send(token);
-          } catch(e) {
-           IdentitySelectorDiag.reportError("InformationCardHelper.callIdentitySelector", "Exception: " + e);
-           InformationCardHelper.alert("posting the security token to " + icLoginService + " failed" + e);
-           return;
-          }
-          IdentitySelectorDiag.logMessage("IdentitySelector.callIdentitySelector status=" + req.status);
-          if (req.status == 200) {
-              doc.location.href = icLoginService;
-              return;
-              // fine
+    var sslCert = InformationCardHelper.getSSLCertFromBrowser(browser);
+    
+    var extraParams = function(){
+      var extraParams = [];
+      var len = 0;
+      for (var i in dataObj) {
+        if (dataObj.hasOwnProperty(i)) {
+          IdentitySelectorDiag.logMessage("onCallIdentitySelector ", 
+              "data[" + i + "]=" + dataObj[i]); 
+          if (("issuer" !== ""+i) 
+            && ("recipient" !== ""+i)
+            && ("requiredClaims" !== ""+i)
+            && ("optionalClaims" !== ""+i)
+            && ("tokenType" !== ""+i)
+            && ("privacyUrl" !== ""+i)
+            && ("privacyVersion" !== ""+i)
+            && ("issuerPolicy" !== ""+i)) 
+          {
+            var obj = {};
+            obj[i] = dataObj[i];
+            len = extraParams.length;
+            extraParams[len] = JSON.stringify(obj);
+            IdentitySelectorDiag.logMessage("onCallIdentitySelector ",
+                "extraParams[" + len + "] = " + extraParams[len]);
           } else {
-           IdentitySelectorDiag.reportError("InformationCardHelper.callIdentitySelector", 
-            "The service " + icLoginService + " returned an error:\n" + req.responseText);
-           InformationCardHelper.alert("The service " + icLoginService + " returned an error:\n" + req.responseText);
-           return;
+            IdentitySelectorDiag.logMessage("onCallIdentitySelector ",
+                "i=" + i + "; value=" + dataObj[i] + ";");
           }
-      } else {
-          IdentitySelectorDiag.logMessage("IdentitySelector.callIdentitySelector", 
-              "token == null for doc.location.href=" + doc.location.href);
+        }
       }
+      return extraParams;
+    }();
+                          
+    // call identity selector
+    var token = aSelectorClasz.GetBrowserToken(dataObj.issuer,
+                              dataObj.recipient, dataObj.requiredClaims,
+                              dataObj.optionalClaims, dataObj.tokenType, dataObj.privacyUrl,
+                              dataObj.privacyVersion, sslCert, dataObj.issuerPolicy,
+                              extraParams.length, extraParams);
+
+    if (token) {
+      var icLoginService = doc.__identityselector__.icLoginService;
+      
+      IdentitySelectorDiag.logMessage("IdentitySelector.callIdentitySelector", "sending token " + token + " to " + icLoginService);
+      var req = Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"].createInstance();
+      req.open('POST', icLoginService, false);
+      req.setRequestHeader("Content-Length", token.length);
+      try {
+          req.send(token);
+      } catch(e) {
+       IdentitySelectorDiag.reportError("InformationCardHelper.callIdentitySelector", "Exception: " + e);
+       InformationCardHelper.alert("posting the security token to " + icLoginService + " failed" + e);
+       return;
+      }
+      IdentitySelectorDiag.logMessage("IdentitySelector.callIdentitySelector status=" + req.status);
+      if (req.status == 200) {
+          doc.location.href = icLoginService;
+          return;
+          // fine
+      } else {
+       IdentitySelectorDiag.reportError("InformationCardHelper.callIdentitySelector", 
+        "The service " + icLoginService + " returned an error:\n" + req.responseText);
+       InformationCardHelper.alert("The service " + icLoginService + " returned an error:\n" + req.responseText);
+       return;
+      }
+    } else {
+        IdentitySelectorDiag.logMessage("IdentitySelector.callIdentitySelector", 
+            "token == null for doc.location.href=" + doc.location.href);
+    }
 
   },
 
