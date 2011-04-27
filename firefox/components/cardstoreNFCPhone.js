@@ -384,7 +384,8 @@ OicCardstoreNFCPhone.prototype = {
             try {
         //                                               var cardstoreXML = new XML(output);
               
-              var parser = new DOMParser();
+              var parser = Components.classes["@mozilla.org/xmlextras/domparser;1"]
+                                      .createInstance(Components.interfaces.nsIDOMParser);
               var dom = parser.parseFromString(output, "text/xml");
               if (dom.documentElement.nodeName == "parsererror") {
                 throw "parseerror";

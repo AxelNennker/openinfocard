@@ -140,7 +140,7 @@ var components = [OicCardstorePhone];
 * XPCOMUtils.generateNSGetFactory was introduced in Mozilla 2 (Firefox 4).
 * XPCOMUtils.generateNSGetModule is for Mozilla 1.9.2 (Firefox 3.6).
 */
-if (XPCOMUtils.generateNSGetFactory) {}
+if (XPCOMUtils.generateNSGetFactory) {
   var NSGetFactory = XPCOMUtils.generateNSGetFactory([OicCardstorePhone]);
 } else {
   var NSGetModule = XPCOMUtils.generateNSGetModule([OicCardstorePhone]);
