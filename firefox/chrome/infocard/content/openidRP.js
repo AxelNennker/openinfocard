@@ -450,6 +450,9 @@ openidRP.prototype = {
     this.logService.logStringMessage("openidrp registerOpenId: "
         + openid_return_to_url);
 
+    if (!this.aDoc) return; // not initialized
+    // FIXME the code should store the channel in the request and verify it in the response
+    
     var openid_mode = this.getParam(openid_return_to_url, "openid.mode");
     this.logService.logStringMessage("openidrp registerOpenId: openid.mode=" + openid_mode);
 
