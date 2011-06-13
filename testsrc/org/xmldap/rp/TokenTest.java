@@ -152,6 +152,32 @@ public class TokenTest extends TestCase {
 		assertEquals("tAhEE404bgkTVqhLmqf0ZmNpsEE=",digest);
 	}
 	
+	public void testSelfIssuedToken3() throws InfoCardProcessingException, CryptoException {
+		String petitTokenStr = "<root><saml:Assertion xmlns:saml=\"urn:oasis:names:tc:SAML:1.0:assertion\" MajorVersion=\"1\" MinorVersion=\"1\" AssertionID=\"uuid-E94A4623-422A-D4ED-242A-C8893146A338\" Issuer=\"http://schemas.xmlsoap.org/ws/2005/05/identity/issuer/self\" IssueInstant=\"2008-04-02T17:07:15Z\"><saml:Conditions NotBefore=\"2008-04-02T17:02:15Z\" NotOnOrAfter=\"2008-04-02T17:17:15Z\"><saml:AudienceRestrictionCondition><saml:Audience>http://localhost:8080/relyingparty/</saml:Audience></saml:AudienceRestrictionCondition></saml:Conditions>" + 
+			"<saml:AttributeStatement><saml:Subject><saml:SubjectConfirmation><saml:ConfirmationMethod>urn:oasis:names:tc:SAML:1.0:cm:bearer</saml:ConfirmationMethod></saml:SubjectConfirmation></saml:Subject><saml:Attribute AttributeName=\"givenname\" AttributeNamespace=\"http://schemas.xmlsoap.org/ws/2005/05/identity/claims\"><saml:AttributeValue>Patrick</saml:AttributeValue></saml:Attribute><saml:Attribute AttributeName=\"surname\" AttributeNamespace=\"http://schemas.xmlsoap.org/ws/2005/05/identity/claims\"><saml:AttributeValue>Petit</saml:AttributeValue></saml:Attribute><saml:Attribute AttributeName=\"emailaddress\" AttributeNamespace=\"http://schemas.xmlsoap.org/ws/2005/05/identity/claims\"><saml:AttributeValue>Patrick.Michel.Petit@gmail.com</saml:AttributeValue></saml:Attribute><saml:Attribute AttributeName=\"privatepersonalidentifier\" AttributeNamespace=\"http://schemas.xmlsoap.org/ws/2005/05/identity/claims\"><saml:AttributeValue>cG9FbmlTV2dVblQ4dHVRRElqSVpWRU1GdE9JUEUrZS9EcnVMb1ZUdGRrST0=</saml:AttributeValue></saml:Attribute></saml:AttributeStatement>" +
+			"<dsig:Signature xmlns:dsig=\"http://www.w3.org/2000/09/xmldsig#\"><dsig:SignedInfo><dsig:CanonicalizationMethod Algorithm=\"http://www.w3.org/2001/10/xml-exc-c14n#\" /><dsig:SignatureMethod Algorithm=\"http://www.w3.org/2000/09/xmldsig#rsa-sha1\" /><dsig:Reference URI=\"#uuid-E94A4623-422A-D4ED-242A-C8893146A338\"><dsig:Transforms><dsig:Transform Algorithm=\"http://www.w3.org/2000/09/xmldsig#enveloped-signature\" /><dsig:Transform Algorithm=\"http://www.w3.org/2001/10/xml-exc-c14n#\" /></dsig:Transforms><dsig:DigestMethod Algorithm=\"http://www.w3.org/2000/09/xmldsig#sha1\" /><dsig:DigestValue>2ToPlLCRarT6Nda1hoY3kkVJSe0=</dsig:DigestValue></dsig:Reference></dsig:SignedInfo><dsig:SignatureValue>CRkt12uDe1kLxmdty6tugG4Yi3mcbefhVvNBggWKxLUFakTJ/7zz5L6BPmnrU+bs9+o7QhH8wYBt6KidtynbCtKY8SwlxMMc+8Qbu1r0uurS+UxGkN5p30QlomQ1BVjfKd5zmr3mKvNXZpVwqE9FG8343AfGGB3KpoRYAH9Ivk5BH1cF1EYaNNytF4WPmkdwkfXr5/kxyf526564XUFPrSmz86BTyksGZfD6D3UAHenps3IdfgpIzv1Y3wOLJADZdxHJxmBI7qZ31wIMAGUhkKUQGfmoe677ICkHBOPMyQszycIrR9FD87HzRKe6hhSc5h3DmQvuJ111KM7suSRwpA==</dsig:SignatureValue><dsig:KeyInfo><dsig:KeyValue><dsig:RSAKeyValue><dsig:Modulus>l6OIACU8lEN+m6XawDTJRHAZlaMSAcz0pgtxBoqtpxIdl1YjKJ4HyOz3rMlnOMk8n43Y5SLMu4p5G09Pr6gIz25FwOSctFtflvmGEHczScYvtEgjrybBE+nrWcrIORuqpgCJ1mbG0/GSFsClI70k5rgHtL7M9Zha3NyAQUUyUcbvpYrR04+BGkQwyrOP7g/l191laJizLtIuA/OJgjM5dhXt2hjMRUkDImQvW2L9U/UM5SvXp6ecVXkYnwVDtDDdjaV6p5jPY8HjJKtBGsvqCtYfjNWiCZL/Bw90/JMW7blqrAa42BviPl9/wIHpvRM4q2mYEZFL8mbwqRxSz9OYnQ==</dsig:Modulus><dsig:Exponent>AQAB</dsig:Exponent></dsig:RSAKeyValue></dsig:KeyValue></dsig:KeyInfo></dsig:Signature>" + 
+			"</saml:Assertion></root>";
+		//                               "http://www.w3.org/2000/09/xmldsig#"
+		Token token = new Token(petitTokenStr, null);
+		assertFalse(token.isEncrypted());
+		
+		boolean threw = false;
+		try {
+			boolean falsch = token.isSignatureValid();
+		} catch (InfoCardProcessingException e) {
+			threw = true;
+		}
+		assertTrue(threw);
+		threw = false;
+		try {
+			String digest = token.getClientDigest();
+			assertEquals("tAhEE404bgkTVqhLmqf0ZmNpsEE=",digest);
+		} catch (CryptoException e) {
+			threw = true;
+		}
+		assertTrue(threw);
+	}
+	
 	public void testLength() {
 		String sv = "xydYzGbfpdGPA0KIUCVn/UHsekDF67X/a7yAUxaae9T5XeGeiFXv4Mb/GGG41c4JSu7eA1/5Wcz4a0Wl/woArL7z812SFubyVeKqCDDXTOus38Me5CCHfKdAqVNQi2nTDPF4g4plc8JeZNpAF8ATAGaCPU8O4vwr6SfueFILMOBrOUc9DKzi8i0Bc7uJ1niODoUBgBn+OmGAdCX1lZgwGmXpid1WoiCzBkJ+luihF7GZ757Xys7CgH389eBO560fXMG9eHdDy4cw3x71ozq8XglcegJkxfLD5cNolsMIuj7ufxi/x6Wp0fkhRyC3V9OM2tbxH+kIKltMQQrN4OcLVw==";
 		String mo = "ANMnkVA4xfpG0bLos9FOpNBjHAdFahy2cJ7FUwuXd/IShnG+5qF/z1SdPWzRxTtpFFyodtXlBUEIbiT+IbYPZF1vCcBrcFa8Kz/4rBjrpPZgllgA/WSVKjnJvw8q4/tO6CQZSlRlj/ebNK9VyT1kN+MrKV1SGTqaIJ2l+7Rd05WHscwZMPdVWBbRrg76YTfy6H/NlQIArNLZanPvE0Vd5QfD4ZyG2hTh3y7ZlJAUndGJ/kfZw8sKuL9QSrh4eOTc280NQUmPGz6LP5MXNmu0RxEcomod1+ToKll90yEKFAUKuPYFgm9J+vYm4tzRequLy/njteRIkcfAdcAtt6PCYjU=";
