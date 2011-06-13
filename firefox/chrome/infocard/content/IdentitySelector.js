@@ -1804,8 +1804,23 @@ var IdentitySelector =
 
           // nsFormSubmitObserver
           notify : function (formElement, aWindow, actionURI) {
+            try { // submit form if exception
+              if (typeof(IdentitySelectorDiag) == "undefined") {
+                var consoleService = Components.classes[ "@mozilla.org/consoleservice;1"].
+                          getService( Components.interfaces.nsIConsoleService);
+                consoleService.logStringMessage( "IdentitySelector: _formSubmitObserver: " + 
+                  "IdentitySelectorDiag is undefined");
+                consoleService.logStringMessage( "IdentitySelector: _formSubmitObserver: " + 
+                  "actionURI=" + actionURI);
+                var doc = formElement.ownerDocument;
+                if (doc && doc.location) {
+                  consoleService.logStringMessage( "IdentitySelector: _formSubmitObserver: " + 
+                    "doc.location.href=" + doc.location.href);
+                }
+                return true; // submit
+              }
               IdentitySelectorDiag.logMessage("_formSubmitObserver", "observer notified for form submission.");
-
+  
               // We're invoked before the content's |onsubmit| handlers, so we
               // can grab form data before it might be modified (see bug 257781).
               var continueSubmit = true;
@@ -1814,8 +1829,11 @@ var IdentitySelector =
               } catch (e) {
                   IdentitySelectorDiag.logMessage("_formSubmitObserver", "Caught error in onFormSubmit: " + e);
               }
-
+  
               return continueSubmit; // return true, or form submit will be canceled.
+            } catch (ee) {
+              return true;
+            }
           }
       }
 
