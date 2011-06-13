@@ -349,18 +349,26 @@ var InformationCardXrds = {
   },
 
   retrieveXrds : function(doc, hrefStr) {
-        IdentitySelectorDiag.logMessage("InformationCardXrds::retrieveXrds: doc=" + doc.location.href + " href=", hrefStr);
-        IcXrdsRetrieveX.retrieveX(doc, hrefStr, InformationCardXrds.xrdsListener);
-    },
+      IdentitySelectorDiag.logMessage("InformationCardXrds::retrieveXrds: doc=" + doc.location.href + " href=", hrefStr);
+      IcXrdsRetrieveX.retrieveX(doc, hrefStr, InformationCardXrds.xrdsListener);
+  },
 
-    // ***********************************************************************
-    // Method: processHtmlMetaElements
-    // <meta http-equiv="X-XRDS-Location" content="http://pamelaproject.com/wptest091/?xrds" />
-    // ***********************************************************************
+  // ***********************************************************************
+  // Method: processHtmlMetaElements
+  // <meta http-equiv="X-XRDS-Location" content="http://pamelaproject.com/wptest091/?xrds" />
+  // ***********************************************************************
   processHtmlMetaElements : function(event) {
       var browser = gBrowser.selectedTab.linkedBrowser;
       // browser is the XUL element of the browser that's just been selected
       var doc = gBrowser.selectedBrowser.contentDocument;
+      InformationCardXrds.processHtmlMetaElementsOfDocument(doc);
+  },
+
+  // ***********************************************************************
+  // Method: processHtmlMetaElementsOfDocument
+  // <meta http-equiv="X-XRDS-Location" content="http://pamelaproject.com/wptest091/?xrds" />
+  // ***********************************************************************
+  processHtmlMetaElementsOfDocument : function(doc) {
 
       var dispatchEvents = true;
       
@@ -429,6 +437,13 @@ var InformationCardXrds = {
       var browser = gBrowser.selectedTab.linkedBrowser;
       // browser is the XUL element of the browser that's just been selected
       var doc = gBrowser.selectedBrowser.contentDocument;
+      InformationCardXrds.processHtmlLinkElementsOfDocument(doc);
+    },
+
+    // ***********************************************************************
+    // Method: processHtmlLinkElements
+    // ***********************************************************************
+    processHtmlLinkElementsOfDocument : function(doc) {
 
       var dispatchEvents = true;
       
@@ -613,8 +628,8 @@ var InformationCardXrds = {
         } else {
           var target = event.originalTarget;
           if (target instanceof HTMLDocument) {
-            this.processHtmlMetaElements(null);
-            this.processHtmlLinkElements(null);
+            InformationCardXrds.processHtmlMetaElementsOfDocument(target);
+            InformationCardXrds.processHtmlLinkElementsOfDocument(target);
           }
         }
         }
@@ -653,7 +668,7 @@ var XrdsStateChangeListener =
                 if( aStatus === 0) {
                   try {
                     var doc = aWebProgress.DOMWindow.document;
-                    InformationCardXrds.processHtmlMetaElements(doc);
+                    InformationCardXrds.processHtmlMetaElementsOfDocument(doc);
                     } catch(e) {
                       IdentitySelectorDiag.logMessage("XrdsStateChangeListener.onStateChange", "Error: " + e);
                     }
@@ -690,7 +705,7 @@ var IcXrdsStartHelper = {
         gObj = cidClass.createInstance();
         gObj = gObj.QueryInterface(Components.interfaces.IXrdsComponent);
       } else {
-        IdentitySelectorDiag.logMessage("InformationCardXrds", "the class " + CONTRACT_ID + " is not installed");
+        // IdentitySelectorDiag.logMessage("InformationCardXrds", "the class " + CONTRACT_ID + " is not installed");
       }
       } catch(e1) {
         IdentitySelectorDiag.reportError("InformationCardXrds exception:", e1);
@@ -723,7 +738,7 @@ var IcXrdsStartHelper = {
         doc.addEventListener("http://infocardfoundation.org/service/1.0/login", IcXrdsComponent.handleLoginEvent, false);
         doc.addEventListener("http://infocardfoundation.org/policy/1.0/login", IcXrdsComponent.handlePolicyEvent, false);
       } else {
-      IdentitySelectorDiag.logMessage("InformationCardXrds::InformationCardXrds::onLoad", "The class " + CONTRACT_ID + " is not installed");
+      // IdentitySelectorDiag.logMessage("InformationCardXrds::InformationCardXrds::onLoad", "The class " + CONTRACT_ID + " is not installed");
       window.addEventListener("ICDOMChanged",
                     function(evnt) {InformationCardXrds.onDOMChanged(evnt);}, false);
       window.addEventListener("DOMContentLoaded", 
