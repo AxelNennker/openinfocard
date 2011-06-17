@@ -39,9 +39,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 const nsISupports = Components.interfaces.nsISupports;
 const IIdentitySelector = Components.interfaces.IIdentitySelector;
 
-const IIDENTITYSELECTOR_IID_STR = "ddd9bc02-c964-4bd5-b5bc-943e483c6c57";
-
-const CONTRACT_ID = "@laboratories/identityselector;1";
+const CONTRACT_ID = "@openinfocard.org/cardstore-phone;1";
 const CLASS_ID = Components.ID("{72e894fd-0d6c-484d-abe8-5903b5f8bf3c}");
 const CLASS_NAME = "The phone card selector";
 
@@ -100,13 +98,91 @@ mWalletIdentitySelector.prototype = {
   classDescription: CLASS_NAME,
   classID:          CLASS_ID,  
   contractID:       CONTRACT_ID,  
-  _xpcom_categories : [ {
-    category : IIDENTITYSELECTOR_IID_STR,
-    entry : CLASS_NAME,
-    value : SELECTOR_CLASS_NAME + ':' + CONTRACT_ID,
-    service : false
-  } ],
-    
+  _xpcom_categories: [{  
+         category: "information-card-storage",
+         entry: "@openinfocard.org/cardstore-phone;1",
+         service: true  
+  }],  
+  // QueryInterface implementation
+  QueryInterface: XPCOMUtils.generateQI([Ci.IInformationCardStore,
+                                         Ci.nsISupports]),
+  errorstring: "",
+  errornumber: 0,
+
+  /* returns true on success */
+  login : function login(credentials) {
+    return true;
+  },
+  
+  logout : function logout() {
+  },
+
+  loggedIn : function loggedIn() {
+    return true;
+  },
+
+
+  clearCardStore : function clearCardStore() {
+  },
+
+  // the informationCardXml is defined in ISIP 1.5
+  addCard : function addCard(informationCardXml) {
+  },
+  removeCard : function removeCard(cardId) {
+  },
+
+  // the roamingStoreXml is defined in ISIP 1.5
+  addCardsFromRoamingStore : function addCardsFromRoamingStore(roamingStoreXml) {
+  },
+
+  // the informationCardXml is defined in ISIP 1.5
+  updateCard : function updateCard(informationCardXml, cardId) {
+    // Fixme
+  },
+
+  getAllCardIds : function getAllCardIds(count, cardIds) {
+    count = 0;
+    cardIds = []; // FIXME
+  },
+
+  getCardCount : function getCardCount() {
+    var count = 0; // FIXME
+    return count;
+  },
+
+  //    nsISimpleEnumerator getInformationCards();
+  getInformationCards : function getInformationCards() {
+    return new CardEnumerator();
+  },
+  
+  // returns an encrypted card store as defined in ISIP 1.5
+  cardStoreExportAllCards : function cardStoreExportAllCards(password) {
+    return null;
+  },
+  cardStoreExportCards : function cardStoreExportCards(password, count, cardIds) {
+    return null;
+  },
+
+  // this may return null if this cardStore is not willing to reveal the mastersecret
+  getMasterSecretForCard : function getMasterSecretForCard(cardId) {
+    return null;
+  },
+  
+  getRpIdentifier : function getRpIdentifier(cardId, relyingPartyCertificate) {
+    return null;
+  },
+  
+  getCardByPPID : function getCardByPPID(PPID, relyingPartyCertificate) {
+    return null;
+  },
+
+  getCardStoreName : function getCardStoreName() {
+    return "NFC Phone"; //this.mDB;
+  },
+  getCardStoreVersion : function getCardStoreVersion() {
+    return "1.0";
+  },
+
   GetBrowserToken: function (
      issuer , recipientURL, requiredClaims, optionalClaims , tokenType, 
      privacyPolicy, privacyPolicyVersion, serverCert, issuerPolicy, 
@@ -173,17 +249,28 @@ mWalletIdentitySelector.prototype = {
 
         return callback;
 
-    },
-
-    QueryInterface: function(aIID) {
-
-        if ( (!aIID.equals(nsISupports))  && (!aIID.equals(IIdentitySelector))) {
-            throw Components.results.NS_ERROR_NO_INTERFACE;
-        }
-        return this;
-
     }
 
+};
+
+function CardEnumerator() {
+  this.index = 0;
+  this.cardFile = null;
+}
+
+CardEnumerator.prototype.QueryInterface = function(iid) {
+  if (iid.equals(Components.interfaces.nsISupports) ||
+      iid.equals(Components.interfaces.nsISimpleEnumerator))
+    return this;
+  throw Components.results.NS_NOINTERFACE;
+};
+
+CardEnumerator.prototype.getNext = function() {
+  return null;
+};
+
+CardEnumerator.prototype.hasMoreElements = function() {
+  return false;
 };
 
 /**

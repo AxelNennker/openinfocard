@@ -46,4 +46,5 @@ contract @xmldap/httplistener-service;1 {DC7D00A8-CAFE-11DD-8B0A-5D0156D89593}
 category profile-after-change module @xmldap/httplistener-service;1
 
 component {72e894fd-0d6c-484d-abe8-5903b5f8bf3c} components/mWalletCardSelector.js
-contract @laboratories/identityselector;1 {72e894fd-0d6c-484d-abe8-5903b5f8bf3c}
+contract @openinfocard.org/cardstore-phone;1 {72e894fd-0d6c-484d-abe8-5903b5f8bf3c}
+category information-card-storage @openinfocard.org/cardstore-phone;1 @openinfocard.org/cardstore-phone;1

@@ -464,15 +464,15 @@ function mWalletLoad(policyParam){
       cancelselector.addEventListener("click", cancel, false);
     }
     
-    policy.timeoutId = window.setInterval(function(){pollForBTChannelAvailableCallback(policy);}, 1000, true);
+    //policy.timeoutId = window.setInterval(function(){pollForBTChannelAvailableCallback(policy);}, 1000, true);
     
-//    var phoneAvailable = isPhoneAvailable();
-//    if (phoneAvailable) {
-//      TokenIssuer.beginCardSelection();
-//      policy.timeoutId = window.setInterval(function(){pollForSelectedCardCallback(policy);}, 1000, true);
-//    } else {
-//      policy.timeoutId = window.setInterval(function(){pollForPhoneAvailableCallback(policy);}, 1000, true);
-//    }
+    var phoneAvailable = isPhoneAvailable();
+    if (phoneAvailable) {
+      TokenIssuer.beginCardSelection();
+      policy.timeoutId = window.setInterval(function(){pollForSelectedCardCallback(policy);}, 1000, true);
+    } else {
+      policy.timeoutId = window.setInterval(function(){pollForPhoneAvailableCallback(policy);}, 1000, true);
+    }
   } catch (e) {
     mwDebug("mWalletLoad exception: " + e );
     throw e;

@@ -1296,12 +1296,18 @@ public class TokenIssuer {
     try {
       cardmanagerClasz = Class.forName("de.dtag.tlabs.mwallet.card.CardManager");
     } catch (ClassNotFoundException e1) {
+    	System.out.println("startCardSelection ClassNotFoundException: " + e1);
       throw new TokenIssuanceException(e1);
     }
+    Object cardmanager;
     try {
       Method getInstanceMethod = cardmanagerClasz.getDeclaredMethod("getInstance");
-      Object cardmanager = getInstanceMethod.invoke(null, (Object[])null);
-
+      cardmanager = getInstanceMethod.invoke(null, (Object[])null);
+    } catch (Exception e) {
+    	System.out.println("startCardSelection ClassNotFoundException: " + e);
+    	throw new TokenIssuanceException(e);
+    }
+    try {
       Hashtable<String, String>ht = new Hashtable<String, String>();
       try {
         JSONObject policy = new JSONObject(serializedPolicy);
@@ -1320,6 +1326,7 @@ public class TokenIssuer {
           }
         }
       } catch (JSONException e) {
+    	  System.out.println("startCardSelection JSONException: " + e);
           throw new TokenIssuanceException(e);
       }
       
@@ -1329,14 +1336,19 @@ public class TokenIssuer {
       Object args[] = { ht };
       beginCardSelectionMethod.invoke(cardmanager, (Object[])args);
     } catch (SecurityException e) {
+  	  System.out.println("startCardSelection SecurityException: " + e);
       throw new TokenIssuanceException(e);
     } catch (NoSuchMethodException e) {
+  	  System.out.println("startCardSelection NoSuchMethodException: " + e);
       throw new TokenIssuanceException(e);
     } catch (IllegalArgumentException e) {
+  	  System.out.println("startCardSelection IllegalArgumentException: " + e);
       throw new TokenIssuanceException(e);
     } catch (IllegalAccessException e) {
+  	  System.out.println("startCardSelection IllegalAccessException: " + e);
       throw new TokenIssuanceException(e);
     } catch (InvocationTargetException e) {
+  	  System.out.println("startCardSelection InvocationTargetException: " + e);
       throw new TokenIssuanceException(e);
     }
   }
