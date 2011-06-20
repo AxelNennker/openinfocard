@@ -54,10 +54,8 @@
     <unzip src="${lib.dir}/blindtrust.jar"
       dest="${build.jars.dir}"/>
 
-<!--
-    <unjar src="${lib.dir}/wallethost.jar"
+    <unjar src="${lib.dir}/mWalletHostLib.jar"
        dest="${build.jars.dir}"/>
--->
   
     <unzip src="${lib.dir}/lightcrypto.jar"
    dest="${build.jars.dir}"/>

@@ -31,10 +31,8 @@ function OicCardstoreNFCPhone() {
   // If you only need to access your component from Javascript, uncomment the following line:
   this.wrappedJSObject = this;
   try {
-    this.strBundleService =
-      Components.classes["component://netscape/intl/stringbundle"].getService(); 
     this.strBundleService = 
-        this.strBundleService.QueryInterface(Ci.nsIStringBundleService);
+        Cc["@mozilla.org/intl/stringbundle;1"].getService(Ci.nsIStringBundleService);
     this.strBundle = this.strBundleService.createBundle("chrome://infocard/locale/mwallet.properties");
   } catch (e) {
     Cu.reportError("OicCardstoreNFCPhone: " + e);

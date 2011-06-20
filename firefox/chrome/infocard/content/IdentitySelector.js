@@ -150,8 +150,7 @@ var IdentitySelector =
                                        
                                 // Add a progress listener
                                        
-                                window.getBrowser().addProgressListener( ICProgressListener,
-                                        Ci.nsIWebProgress.NOTIFY_ALL);
+                                window.getBrowser().addProgressListener(ICProgressListener);
                                 
                                 var observerService = Cc["@mozilla.org/observer-service;1"].
                                   getService(Ci.nsIObserverService);

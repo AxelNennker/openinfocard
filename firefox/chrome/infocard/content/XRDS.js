@@ -747,8 +747,7 @@ var IcXrdsStartHelper = {
           function(evnt) {InformationCardXrds.processHtmlMetaElements(evnt);}, false );
       window.addEventListener("DOMContentLoaded", 
           function(evnt) {InformationCardXrds.processWellknown(evnt);}, false );
-      window.getBrowser().addProgressListener( XrdsStateChangeListener,
-                  Components.interfaces.nsIWebProgress.NOTIFY_STATE_ALL);
+      window.getBrowser().addProgressListener(XrdsStateChangeListener);
     }
   },
   
