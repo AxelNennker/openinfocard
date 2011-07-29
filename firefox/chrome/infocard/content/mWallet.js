@@ -191,7 +191,9 @@ function pollForPhoneAvailableCallback(policy){
       }
       policy.timestamp = (new Date()).toLocaleString();
       var serializedPolicy = JSON.stringify(policy);
+      mwDebug("pollForPhoneAvailableCallback >>>>>");
       TokenIssuer.startCardSelection(serializedPolicy);
+      mwDebug("pollForPhoneAvailableCallback <<<<");
     } catch (e) {
       Components.utils.reportError("TokenIssuer.startCardSelection " + e);
       return;
