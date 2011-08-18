@@ -269,15 +269,15 @@ var IdentitySelector =
        
         runInterceptScript : function( doc)
         {
+          var unWrappedDoc = doc;
           if( doc.wrappedJSObject)
           {
-                  doc = doc.wrappedJSObject;
+                  unWrappedDoc = doc.wrappedJSObject;
           }
 
-          if( doc.__identityselector__ === undefined)
+          if( unWrappedDoc.__identityselector__ === undefined)
           {
                   // Load and execute the script
-
                   Cc[
                           "@mozilla.org/moz/jssubscript-loader;1"].getService(
                           Ci.mozIJSSubScriptLoader).loadSubScript(

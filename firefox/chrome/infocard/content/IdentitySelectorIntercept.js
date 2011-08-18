@@ -20,34 +20,37 @@
 // ***********************************************************************
 // Function: interceptOnDOMChanged
 // ***********************************************************************
-function interceptOnDOMChanged( event)
+let interceptOnDOMChanged = function( event)
 {
-        var target = event ? event.target : this;
+  var isMutationEvent = (event instanceof MutationEvent);
+  if (!isMutationEvent) return;
+  
+  var target = event ? event.target : this;
 
-        if( target.wrappedJSObject)
-        {
-                target = target.wrappedJSObject;
-        }
+  if( target.wrappedJSObject)
+  {
+    target = target.wrappedJSObject;
+  }
 
-        try
-        {
-          var doc = target.ownerDocument;
-          if(!doc)
-          {
-                  return;
-          }
-
-          var domEvent = doc.createEvent( "Event");
-          domEvent.initEvent( "ICDOMChanged", true, true);
-          target.dispatchEvent( domEvent);
-        }
-        catch( e)
-        {
-          var debug = Components.classes["@mozilla.org/consoleservice;1"].getService(Components.interfaces.nsIConsoleService);
-          debug.logStringMessage("interceptOnDOMChanged: exception=" + e);
-        }
-}
+  try
+  {
+    var doc = target.ownerDocument;
+    if(!doc) return;
+    var isDocument = ((doc instanceof HTMLDocument) || ((doc instanceof XULDocument)));
+    if (!isDocument) return;
+    var domEvent = doc.createEvent( "Event");
+    domEvent.initEvent( "ICDOMChanged", true, true);
+    target.dispatchEvent( domEvent);
+  }
+  catch( e)
+  {
+    var debug = Components.classes["@mozilla.org/consoleservice;1"].getService(Components.interfaces.nsIConsoleService);
+    debug.logStringMessage("interceptOnDOMChanged: exception=" + e);
+  }
+};
        
+       
+
 // **************************************************************************
 // Desc: Configure the identity selector context object
 // **************************************************************************

@@ -48,3 +48,13 @@ category profile-after-change module @xmldap/httplistener-service;1
 component {72e894fd-0d6c-484d-abe8-5903b5f8bf3c} components/mWalletCardSelector.js
 contract @openinfocard.org/cardstore-phone;1 {72e894fd-0d6c-484d-abe8-5903b5f8bf3c}
 category information-card-storage @openinfocard.org/cardstore-phone;1 @openinfocard.org/cardstore-phone;1
+
+component {4ca28096-97b2-49af-a079-2ebaf25d3908} components/cardstoreC2DMPhone.js
+contract @openinfocard.org/cardstore-c2dm;1 {4ca28096-97b2-49af-a079-2ebaf25d3908}
+category information-card-storage @openinfocard.org/cardstore-c2dm;1 @openinfocard.org/cardstore-c2dm;1
+
+#component {787f5c10-b9fa-11e0-962b-0800200c9a66} components/icardProtocolHandler.js
+#contract @mozilla.org/network/protocol;1?name=icard-https {787f5c10-b9fa-11e0-962b-0800200c9a66}
+
+#component {8bc941a0-b9fa-11e0-962b-0800200c9a66} components/icardProtocolHandler.js
+#contract @mozilla.org/uriloader/content-handler;1?type=application/x-informationcard {8bc941a0-b9fa-11e0-962b-0800200c9a66}
