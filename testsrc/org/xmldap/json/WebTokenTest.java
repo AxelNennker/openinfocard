@@ -31,6 +31,7 @@ package org.xmldap.json;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -41,14 +42,20 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPrivateKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.ShortBufferException;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import junit.framework.TestCase;
 
 import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.digests.SHA256Digest;
+import org.bouncycastle.util.encoders.Hex;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.xmldap.exceptions.CryptoException;
@@ -81,6 +88,8 @@ public class WebTokenTest extends TestCase {
   String ae192 = "{\"alg\":\"AE192\"}";
   String ae256 = "{\"alg\":\"AE256\"}";
   
+  String A128GCM = "{\"alg\":\"A128GCM\"}";
+
   String ae128b64;
   String ae192b64;
   String ae256b64;
@@ -100,6 +109,9 @@ public class WebTokenTest extends TestCase {
   final String epbe = "{\"alg\":\"EPBE\",\r\n"+
                 " \"kid\":\"iauxBG<9\"}"; // the userid the password is bound to. This is NOT encrypted.
   String epbeb64;
+  
+  String keybytes128B64 = null;
+  String keybytes256B64 = null;
   
   public void setUp() {
     try {
@@ -152,11 +164,88 @@ public class WebTokenTest extends TestCase {
       ae256b64 = Base64.encodeBytes(ae256.getBytes("utf-8"), 
           org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
 
+//      byte[] keybytes128 = new byte[16];
+//      SecureRandom random = new SecureRandom();
+//      random.nextBytes(keybytes128);
+//      keybytes128B64 = Base64.encodeBytesNoBreaks(keybytes128);
+//      System.out.println("keybytes128B64=" + keybytes128B64);
+//      
+//      byte[] keybytes256 = new byte[32];
+//      random.nextBytes(keybytes256);
+//      keybytes256B64 = Base64.encodeBytesNoBreaks(keybytes256);
+//      System.out.println("keybytes256B64=" + keybytes256B64);
+      
+      keybytes128B64="wkp7v4KkBox9rSwVBXT+aA==";
+   	  keybytes256B64="aRjpB3nhFA7B7B+sKwfM4OhU+6kLeg0W7p6OFbn7AfE=";
+
     } catch (Exception e) {
       assertTrue(false);
     }
   }
 
+  private void testAesGcm(IvParameterSpec ivParamSpec, SecretKey secretKey, byte[] plaintext) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, 
+	InvalidAlgorithmParameterException, ShortBufferException, IllegalBlockSizeException, BadPaddingException 
+  {
+	byte[] ciphertext = WebToken.aesgcmEncrypt(ivParamSpec, secretKey, plaintext);
+	
+	byte[] recoveredplaintext = WebToken.aesgcmDecrypt(ivParamSpec, secretKey, ciphertext);
+	
+	String plaintextB64 = Base64.encodeBytesNoBreaks(plaintext);
+	String recoveredplaintextB64 = Base64.encodeBytesNoBreaks(recoveredplaintext);
+	assertEquals(plaintextB64, recoveredplaintextB64);
+  }
+
+  public void testAesGcm128() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, 
+	InvalidAlgorithmParameterException, ShortBufferException, IllegalBlockSizeException, BadPaddingException 
+  {
+	byte[] plaintext = "plaintext".getBytes();
+	byte[] keyData = Base64.decode(keybytes128B64);
+	SecretKey secretKey = new SecretKeySpec(keyData , "AES128");
+
+	byte[] N = Hex.decode("cafebabefacedbaddecaf888");
+    IvParameterSpec ivParamSpec = new IvParameterSpec(N);
+
+	testAesGcm(ivParamSpec, secretKey, plaintext);
+  }
+
+//  public void testAesGcm256() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, 
+//	InvalidAlgorithmParameterException, ShortBufferException, IllegalBlockSizeException, BadPaddingException 
+//  {
+//	byte[] plaintext = "plaintext".getBytes();
+//	byte[] keyData = Base64.decode(keybytes256B64);
+//	System.out.println("keyData.length=" + keyData.length);
+//	byte[] N = Hex.decode("cafebabefacedbaddecaf888");
+//    IvParameterSpec ivParamSpec = new IvParameterSpec(N);
+//
+//	SecretKey secretKey = new SecretKeySpec(keyData , "AES256");
+//	testAesGcm(ivParamSpec, secretKey, plaintext);
+//  }
+
+  public void testAesGcmJWE() throws Exception {
+	  JSONObject jweHeaderO = new JSONObject();
+	  jweHeaderO.put("alg", "A128GCM");
+	  byte[] ivBytes = Hex.decode("cafebabefacedbaddecaf888");
+	  String base64urlStr = Base64.encodeBytes(ivBytes, 
+		        org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
+	  jweHeaderO.put("iv", base64urlStr);
+	  String jwe = jweHeaderO.toString();
+	  System.out.println("testAesGcmJWE jweB64url=" + jwe);
+	  WebToken jwt = new WebToken(joeStr, jweHeaderO);
+	  
+      byte[] keyData = Base64.decode(keybytes128B64);
+	  System.out.println("keyData.length=" + keyData.length);
+	  byte[] N = Hex.decode("cafebabefacedbaddecaf888");
+	  IvParameterSpec ivParamSpec = new IvParameterSpec(N);
+	  SecretKey secretKey = new SecretKeySpec(keyData , "AES");
+	  
+	  String encryptedJWT = jwt.encrypt(secretKey, ivParamSpec);
+	  String expected = "eyJhbGciOiJBMTI4R0NNIiwiaXYiOiJ5djY2dnZyTzI2M2V5dmlJIn0.H7I-QNvM8VtMylQfBbbqyrT8xiFcVv-7CZTn-dkXr10dpIOmzjMbqjmbqevK2aAoRu4s5DhU8dbeu8SbRJTCDYYAkYfOo_Hc5NY6B5-VwhnOWc0sres";
+	  assertEquals(expected, encryptedJWT);
+	  
+	  String decryptedJWT = WebToken.decrypt(encryptedJWT, secretKey);
+	  assertEquals(joeStr, decryptedJWT);
+  }
+  
   public void testJoeEncoding() throws UnsupportedEncodingException {
     byte[] bytes = joeStr.getBytes("utf-8");
     String base64urlStr = Base64.encodeBytes(bytes, 
@@ -388,7 +477,7 @@ public class WebTokenTest extends TestCase {
     keygen.init(128);
     SecretKey key = keygen.generateKey();
 
-    String encrypted = jwt.encrypt(key);
+    String encrypted = jwt.encrypt(key, null);
     
     String[] split = encrypted.split("\\.");
     
@@ -416,7 +505,7 @@ public class WebTokenTest extends TestCase {
     SecretKey key = new SecretKeySpec(encodedKey, "AES");
     printBytes("fixed AES192 keybytes", key.getEncoded());
     
-    String encrypted = jwt.encrypt(key);
+    String encrypted = jwt.encrypt(key, null);
     
     String[] split = encrypted.split("\\.");
     
@@ -444,7 +533,7 @@ public class WebTokenTest extends TestCase {
     SecretKey key = keygen.generateKey();
     printBytes("AES192 keybytes", key.getEncoded());
     
-    String encrypted = jwt.encrypt(key);
+    String encrypted = jwt.encrypt(key, null);
     
     String[] split = encrypted.split("\\.");
     
@@ -470,7 +559,7 @@ public class WebTokenTest extends TestCase {
     keygen.init(256);
     SecretKey key = keygen.generateKey();
 
-    String encrypted = jwt.encrypt(key);
+    String encrypted = jwt.encrypt(key, null);
     
     String[] split = encrypted.split("\\.");
     
