@@ -322,10 +322,10 @@ public class CryptoUtils {
     }
     
     /**
-     * Generates a SecretKey of a specified bit length
+     * Generates an AES SecretKey of a specified bit length
      *
      * @param bitSize length of key
-     * @return the key as a byte[]
+     * @return the encoded key as a byte[]
      * @throws CryptoException
      */
     public static byte[] genKey(int bitSize) throws CryptoException {
@@ -342,6 +342,29 @@ public class CryptoUtils {
         keygen.init(bitSize);
         SecretKey key = keygen.generateKey();
         return key.getEncoded();
+
+    }
+
+    /**
+     * Generates an AES SecretKey of a specified bit length
+     *
+     * @param bitSize length of key
+     * @return the key as a byte[]
+     * @throws CryptoException
+     */
+    public static SecretKey genAesKey(int bitSize) throws CryptoException {
+
+
+        KeyGenerator keygen;
+        try {
+            keygen = KeyGenerator.getInstance("AES");
+        } catch (NoSuchAlgorithmException e) {
+
+            throw new CryptoException(e);
+        }
+
+        keygen.init(bitSize);
+        return keygen.generateKey();
 
     }
 

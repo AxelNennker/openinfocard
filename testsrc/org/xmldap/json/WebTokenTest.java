@@ -90,18 +90,34 @@ public class WebTokenTest extends TestCase {
   
   String A128GCM = "{\"alg\":\"A128GCM\"}";
 
+  String re256GCM = "{\"alg\":\"RSA1_5\",\r\n"+
+  "\"enc\":\"A256GCM\",\r\n"+
+  "\"iv\":\"__79_Pv6-fg\",\r\n"+
+  "\"x5t\":\"7noOPq-hJ1_hCnvWh6IeYI2w9Q0\"}";
+
+  String re128GCM = "{\"alg\":\"RSA1_5\",\r\n"+
+  "\"enc\":\"A128GCM\",\r\n"+
+  "\"iv\":\"__79_Pv6-fg\",\r\n"+
+  "\"x5t\":\"7noOPq-hJ1_hCnvWh6IeYI2w9Q0\"}";
+
   String ae128b64;
   String ae192b64;
   String ae256b64;
   
-  String re128;
-  String re128b64;
+  String rsa15AesGcm128HeaderStr;
+  String rsa15AesGcm128HeaderStrb64;
   
-  String re192;
-  String re192b64;
+  String rsa15AesGcm256HeaderStr;
+  String rsa15AesGcm256HeaderStrb64;
   
-  String re256;
-  String re256b64;
+  String rsaOaepAesCbc128HeaderStr;
+  String rsaOaepAesCbc128HeaderStrb64;
+  
+  String rsaOaepAesCbc192HeaderStr;
+  String rsaOaepAesCbc192HeaderStrb64;
+  
+  String rsaOaepAesCbc256HeaderStr;
+  String rsaOaepAesCbc256HeaderStrb64;
   
   RSAPublicKey rsaPublicKey;
   RSAPrivateKey rsaPrivKey;
@@ -139,19 +155,34 @@ public class WebTokenTest extends TestCase {
       String thumbprint = Base64.encodeBytes(out, 
           org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
 
-      re128 = "{\"alg\":\"RE128\",\r\n"+
+      rsa15AesGcm128HeaderStr = "{\"alg\":\"" + WebToken.ENC_ALG_RSA1_5 + "\",\r\n"+
+      " \"enc\":\"" + WebToken.ENC_ALG_A128GCM + "\",\r\n"+
       " \"x5t\":\"" + thumbprint + "\"}";
-      re128b64 = Base64.encodeBytes(re128.getBytes("utf-8"), 
+      rsa15AesGcm128HeaderStrb64 = Base64.encodeBytes(rsa15AesGcm128HeaderStr.getBytes("utf-8"), 
           org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
 
-      re192 = "{\"alg\":\"RE192\",\r\n"+
+      rsa15AesGcm256HeaderStr = "{\"alg\":\"" + WebToken.ENC_ALG_RSA1_5 + "\",\r\n"+
+      " \"enc\":\"" + WebToken.ENC_ALG_A256GCM + "\",\r\n"+
       " \"x5t\":\"" + thumbprint + "\"}";
-      re192b64 = Base64.encodeBytes(re192.getBytes("utf-8"), 
+      rsa15AesGcm256HeaderStrb64 = Base64.encodeBytes(rsa15AesGcm256HeaderStr.getBytes("utf-8"), 
           org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
 
-      re256 = "{\"alg\":\"RE256\",\r\n"+
+      rsaOaepAesCbc128HeaderStr = "{\"alg\":\"" + WebToken.ENC_ALG_RSA_OAEP + "\",\r\n"+
+      " \"enc\":\"" + WebToken.ENC_ALG_A128CBC + "\",\r\n"+
       " \"x5t\":\"" + thumbprint + "\"}";
-      re256b64 = Base64.encodeBytes(re256.getBytes("utf-8"), 
+      rsaOaepAesCbc128HeaderStrb64 = Base64.encodeBytes(rsaOaepAesCbc128HeaderStr.getBytes("utf-8"), 
+          org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
+
+      rsaOaepAesCbc192HeaderStr = "{\"alg\":\"" + WebToken.ENC_ALG_RSA_OAEP + "\",\r\n"+
+      " \"enc\":\"" + WebToken.ENC_ALG_A192CBC + "\",\r\n"+
+      " \"x5t\":\"" + thumbprint + "\"}";
+      rsaOaepAesCbc192HeaderStrb64 = Base64.encodeBytes(rsaOaepAesCbc192HeaderStr.getBytes("utf-8"), 
+          org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
+
+      rsaOaepAesCbc256HeaderStr = "{\"alg\":\"" + WebToken.ENC_ALG_RSA_OAEP + "\",\r\n"+
+      " \"enc\":\"" + WebToken.ENC_ALG_A256CBC + "\",\r\n"+
+      " \"x5t\":\"" + thumbprint + "\"}";
+      rsaOaepAesCbc256HeaderStrb64 = Base64.encodeBytes(rsaOaepAesCbc256HeaderStr.getBytes("utf-8"), 
           org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
 
       epbeb64 = Base64.encodeBytes(epbe.getBytes("utf-8"), 
@@ -368,67 +399,44 @@ public class WebTokenTest extends TestCase {
     testRSASHA(rs384, jwtHeaderSegment, jwtCryptoSegment);
   }
   
+  void testRsa(String name, String jwtHeaderSegment, String jwtHeaderSegmentB64) throws Exception {
+	    System.out.println("jwtHeaderSegment: " + name + " " + jwtHeaderSegment);
+	    System.out.println("jwtHeaderSegment: " + name + " " + jwtHeaderSegmentB64);
+	    
+	    WebToken jwt = new WebToken(joeStr, jwtHeaderSegment);
+	    String encrypted = jwt.encrypt(rsaPublicKey);
+	    
+	    String[] split = encrypted.split("\\.");
+	    
+	    assertEquals(3, split.length);
+	    
+	    String newJwtHeaderSegment = new String(Base64.decodeUrl(split[0]));
+	    JSONObject newJwtHeader = new JSONObject(newJwtHeaderSegment);
+	    JSONObject oldJwtHeader = new JSONObject(jwtHeaderSegment);
+	    
+	    assertEquals(oldJwtHeader.get("alg"), newJwtHeader.get("alg"));
+	    assertEquals(oldJwtHeader.get("enc"), newJwtHeader.get("enc"));
+	    String ivB64 = oldJwtHeader.optString("iv", null);
+	    if (ivB64 != null) {
+		    assertEquals(ivB64, newJwtHeader.get("iv"));
+	    }
+	    System.out.println(name + " jwtSymmetricKeySegment base64: " + split[1]);
+	    System.out.println(name + " jwtCryptoSegment base64: " + split[2]);
+
+	    String cleartext = WebToken.decrypt(encrypted, rsaPrivKey);
+	    assertEquals(joeStr, cleartext);
+	  }
+
   public void testRE128() throws Exception {
-    String jwtHeaderSegment = re128b64;
-    
-    System.out.println("jwtHeaderSegment: re128 " + re128);
-    System.out.println("jwtHeaderSegment re128 base64: " + re128b64);
-    
-    WebToken jwt = new WebToken(joeStr, re128);
-    String encrypted = jwt.encrypt(rsaPublicKey);
-    
-    String[] split = encrypted.split("\\.");
-    
-    assertEquals(3, split.length);
-    assertEquals(jwtHeaderSegment, split[0]);
-
-    System.out.println("re128 jwtSymmetricKeySegment base64: " + split[1]);
-    System.out.println("re128 jwtCryptoSegment base64: " + split[2]);
-
-    String cleartext = WebToken.decrypt(encrypted, rsaPrivKey);
-    assertEquals(joeStr, cleartext);
+	testRsa("rsaOaepAesCbc128", rsaOaepAesCbc128HeaderStr, rsaOaepAesCbc128HeaderStrb64);
   }
 
   public void testRE192() throws Exception {
-    String jwtHeaderSegment = re192b64;
-    
-    System.out.println("jwtHeaderSegment re192: " + re192);
-    System.out.println("jwtHeaderSegment re192 base64: " + re192b64);
-    
-    WebToken jwt = new WebToken(joeStr, re192);
-    String encrypted = jwt.encrypt(rsaPublicKey);
-    
-    String[] split = encrypted.split("\\.");
-    
-    assertEquals(3, split.length);
-    assertEquals(jwtHeaderSegment, split[0]);
-
-    System.out.println("re192 jwtSymmetricKeySegment base64: " + split[1]);
-    System.out.println("re192 jwtCryptoSegment base64: " + split[2]);
-
-    String cleartext = WebToken.decrypt(encrypted, rsaPrivKey);
-    assertEquals(joeStr, cleartext);
+	testRsa("rsaOaepAesCbc192", rsaOaepAesCbc192HeaderStr, rsaOaepAesCbc192HeaderStrb64);
   }
 
   public void testRE256() throws Exception {
-    String jwtHeaderSegment = re256b64;
-    
-    System.out.println("jwtHeaderSegment: re256 " + re256);
-    System.out.println("jwtHeaderSegment re256 base64: " + re256b64);
-    
-    WebToken jwt = new WebToken(joeStr, re256);
-    String encrypted = jwt.encrypt(rsaPublicKey);
-    
-    String[] split = encrypted.split("\\.");
-    
-    assertEquals(3, split.length);
-    assertEquals(jwtHeaderSegment, split[0]);
-
-    System.out.println("re256 jwtSymmetricKeySegment base64: " + split[1]);
-    System.out.println("re256 jwtCryptoSegment base64: " + split[2]);
-
-    String cleartext = WebToken.decrypt(encrypted, rsaPrivKey);
-    assertEquals(joeStr, cleartext);
+	testRsa("rsaOaepAesCbc256", rsaOaepAesCbc256HeaderStr, rsaOaepAesCbc256HeaderStrb64);
   }
 
   public void testPBE() throws Exception {
@@ -462,6 +470,31 @@ public class WebTokenTest extends TestCase {
 
     String cleartext = WebToken.decrypt(encrypted, password);
     assertEquals(joeStr, cleartext);
+  }
+
+//  public void testRE256Gcm() throws Exception {
+//	    WebToken jwt = new WebToken(joeStr, ae128);
+//	  }
+
+  public void testRE128Gcm() throws Exception {
+	  testRsa("rsa15AesGcm128", rsa15AesGcm128HeaderStr, rsa15AesGcm128HeaderStrb64);
+  }
+
+  public void testRE256Gcm() throws Exception {
+	  testRsa("rsa15AesGcm256", rsa15AesGcm256HeaderStr, rsa15AesGcm256HeaderStrb64);
+  }
+
+  public void testRE256GcmIV() throws Exception {
+	JSONObject jo = new JSONObject(rsa15AesGcm256HeaderStr);
+	byte[] N = Hex.decode("cafebabefacedbaddecaf888");
+	String ivB64 = Base64.encodeBytes(N, 
+	          org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
+	System.out.println("rsa15AesGcm256 fixed IV = " + ivB64);
+	jo.put("iv", ivB64);
+	String headerStr = jo.toString();
+	String headerStrB64 = Base64.encodeBytes(headerStr.getBytes(), 
+	          org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
+	testRsa("rsa15AesGcm256 fixed IV", headerStr, headerStrB64);
   }
 
   public void testAE128() throws Exception {
