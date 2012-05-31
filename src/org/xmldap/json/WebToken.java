@@ -68,12 +68,9 @@ import org.bouncycastle.crypto.agreement.ECDHBasicAgreement;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.digests.SHA384Digest;
 import org.bouncycastle.crypto.digests.SHA512Digest;
-import org.bouncycastle.crypto.engines.IESEngine;
-import org.bouncycastle.crypto.macs.HMac;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
-import org.bouncycastle.crypto.params.IESParameters;
 import org.bouncycastle.crypto.params.KDFParameters;
 import org.bouncycastle.crypto.signers.ECDSASigner;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.ECUtil;
@@ -544,14 +541,14 @@ public class WebToken {
       if ((ENC_ALG_A128GCM.equals(alg)) || (ENC_ALG_A256GCM.equals(alg))) {
         b64 = Base64.encodeBytes(mHeaderStr.getBytes("utf-8"), org.xmldap.util.Base64.DONT_BREAK_LINES
             | org.xmldap.util.Base64.URL);
-        System.out.println("AESGCM jwtHeaderSegment base64:" + b64);
+//        System.out.println("AESGCM jwtHeaderSegment base64:" + b64);
         sb = new StringBuffer(b64);
         sb.append('.');
 
         byte[] cipherbytes = aesgcmEncrypt(ivParamSpec, key, mJsonStr.getBytes("utf-8"));
         b64 = Base64.encodeBytes(cipherbytes, org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
         sb.append(b64);
-        System.out.println("AESGCM jwtCryptoSegment base64:" + b64);
+//        System.out.println("AESGCM jwtCryptoSegment base64:" + b64);
 
       } else {
         throw new NoSuchAlgorithmException("unsupported JWT AES algorithm: " + alg);
@@ -664,9 +661,9 @@ public class WebToken {
       ECDHBasicAgreement ecdhBasicAgreement = new ECDHBasicAgreement();
       ecdhBasicAgreement.init(ecPrivateKeyParameters);
       BigInteger z = ecdhBasicAgreement.calculateAgreement(ecPublicKeyParameters);
-      System.out.println("ECDH-ES z=" + z.toString());
+//      System.out.println("ECDH-ES z=" + z.toString());
       byte[] zBytes = BigIntegers.asUnsignedByteArray(z);
-      System.out.println("ECDH-ES zBytes.length=" + zBytes.length);
+//      System.out.println("ECDH-ES zBytes.length=" + zBytes.length);
       KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest);
       kdfConcatGenerator.init(new KDFParameters(zBytes, null));
       byte[] out = new byte[12 + (keylength / 8)];
@@ -721,9 +718,9 @@ public class WebToken {
       ECDHBasicAgreement ecdhBasicAgreement = new ECDHBasicAgreement();
       ecdhBasicAgreement.init(ecPrivateKeyParameters);
       BigInteger z = ecdhBasicAgreement.calculateAgreement(ecPublicKeyParameters);
-      System.out.println("ECDH-ES z=" + z.toString());
+//      System.out.println("ECDH-ES z=" + z.toString());
       byte[] zBytes = BigIntegers.asUnsignedByteArray(z);
-      System.out.println("ECDH-ES zBytes.length=" + zBytes.length);
+//      System.out.println("ECDH-ES zBytes.length=" + zBytes.length);
       KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest);
       kdfConcatGenerator.init(new KDFParameters(zBytes, null));
       byte[] out = new byte[12 + (keylength / 8)];
