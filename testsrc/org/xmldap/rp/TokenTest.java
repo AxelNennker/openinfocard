@@ -1,33 +1,18 @@
 package org.xmldap.rp;
 
-import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
 import java.math.BigInteger;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.RSAPrivateCrtKeySpec;
-import java.security.spec.RSAPrivateKeySpec;
 
-import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.DERObject;
-import org.bouncycastle.asn1.pkcs.RSAPrivateKeyStructure;
+import junit.framework.TestCase;
+
 import org.xmldap.exceptions.CryptoException;
 import org.xmldap.exceptions.InfoCardProcessingException;
 import org.xmldap.infocard.SelfIssuedToken;
-import org.xmldap.rp.Token;
 import org.xmldap.util.Base64;
 import org.xmldap.util.XmldapCertsAndKeys;
 import org.xmldap.xmldsig.ValidatingBaseEnvelopedSignature;
-
-import junit.framework.TestCase;
 
 public class TokenTest extends TestCase {
 
@@ -40,7 +25,7 @@ public class TokenTest extends TestCase {
 		X509Certificate xmldapCert = XmldapCertsAndKeys.getXmldapCert();
 		xmldapKey = XmldapCertsAndKeys.getXmldapPrivateKey();
 		
-		X509Certificate relyingPartyCert = xmldapCert;
+//		X509Certificate relyingPartyCert = xmldapCert;
 		RSAPublicKey signingKey = (RSAPublicKey)xmldapCert.getPublicKey();
         String signingAlgorithm = "SHA1withRSA";
 		SelfIssuedToken token = new SelfIssuedToken(signingKey, xmldapKey, signingAlgorithm);
@@ -163,7 +148,7 @@ public class TokenTest extends TestCase {
 		
 		boolean threw = false;
 		try {
-			boolean falsch = token.isSignatureValid();
+			/*boolean falsch =*/ token.isSignatureValid();
 		} catch (InfoCardProcessingException e) {
 			threw = true;
 		}

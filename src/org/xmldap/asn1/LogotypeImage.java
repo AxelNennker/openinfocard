@@ -29,11 +29,11 @@ package org.xmldap.asn1;
 
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DERSequence;
 
-public class LogotypeImage extends ASN1Encodable {
+public class LogotypeImage implements ASN1Encodable {
 //	LogotypeImage ::= SEQUENCE {
 //		   imageDetails    LogotypeDetails,
 //		   imageInfo       LogotypeImageInfo OPTIONAL }
@@ -91,16 +91,16 @@ public class LogotypeImage extends ASN1Encodable {
 	}
 
 	public LogotypeImage(LogotypeDetails imageDetails, LogotypeImageInfo imageInfo) {
-		this.imageDetails = ASN1Sequence.getInstance(imageDetails.toASN1Object());
+		this.imageDetails = ASN1Sequence.getInstance(imageDetails.toASN1Primitive());
 		if (imageInfo != null) {
-			this.imageInfo = ASN1Sequence.getInstance(imageInfo.toASN1Object());
+			this.imageInfo = ASN1Sequence.getInstance(imageInfo.toASN1Primitive());
 		}
 	}
 	
     /**
      * Produce an object suitable for an ASN1OutputStream.
      */
-    public DERObject toASN1Object()
+    public ASN1Primitive toASN1Primitive()
     {
         ASN1EncodableVector  v = new ASN1EncodableVector();
 

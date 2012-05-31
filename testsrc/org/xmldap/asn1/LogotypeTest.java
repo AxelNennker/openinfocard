@@ -27,20 +27,29 @@
  */
 package org.xmldap.asn1;
 
+import java.io.ByteArrayInputStream;
+import java.security.KeyPair;
+import java.security.Provider;
+import java.security.Security;
+import java.security.cert.X509Certificate;
+
 import junit.framework.TestCase;
-import org.bouncycastle.asn1.*;
+
+import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1Primitive;
+import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.DERIA5String;
+import org.bouncycastle.asn1.DERObjectIdentifier;
+import org.bouncycastle.asn1.DEROctetString;
+import org.bouncycastle.asn1.DERSequence;
+import org.bouncycastle.asn1.DERTaggedObject;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.DigestInfo;
 import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.x509.extension.X509ExtensionUtil;
 import org.xmldap.util.CertsAndKeys;
-
-import java.io.ByteArrayInputStream;
-import java.security.KeyPair;
-import java.security.Provider;
-import java.security.Security;
-import java.security.cert.X509Certificate;
 
 public class LogotypeTest extends TestCase {
 
@@ -139,7 +148,7 @@ public class LogotypeTest extends TestCase {
 			assertEquals("http://static.flickr.com/10/buddyicons/18119196@N00.jpg?1115549486", uri);
 		} else if (issuerLogo.getTagNo() == LogotypeInfo.indirect) {
 			LogotypeReference indirect = issuerLogo.getLogotypeReference();
-//			LogotypeReference indirect = LogotypeReference.getInstance((ASN1TaggedObject)issuerLogo.toASN1Object(), false);
+//			LogotypeReference indirect = LogotypeReference.getInstance((ASN1TaggedObject)issuerLogo.toASN1Primitive(), false);
 			assertNotNull(indirect);
 		}
 
@@ -147,10 +156,10 @@ public class LogotypeTest extends TestCase {
 	
 	public void testTOILogotypeExtensionCreation()  throws Exception {
 		Logotype logotype = composeToi();
-		DERObject obj = logotype.toASN1Object();
+		ASN1Primitive obj = logotype.toASN1Primitive();
 //        String str = ASN1Dump.dumpAsString(obj);
 //        assertEquals("", str);
-		byte[] seq = obj.getDEREncoded();
+		byte[] seq = obj.getEncoded();
 		verifyToi(seq);
 	}
 
@@ -233,7 +242,7 @@ public class LogotypeTest extends TestCase {
 			assertEquals("http://logo.verisign.com/vslogo.gif", uri);
 		} else if (issuerLogo.getTagNo() == LogotypeInfo.indirect) {
 			LogotypeReference indirect = issuerLogo.getLogotypeReference();
-//			LogotypeReference indirect = LogotypeReference.getInstance((ASN1TaggedObject)issuerLogo.toASN1Object(), false);
+//			LogotypeReference indirect = LogotypeReference.getInstance((ASN1TaggedObject)issuerLogo.toASN1Primitive(), false);
 			assertNotNull(indirect);
 		}
 	}

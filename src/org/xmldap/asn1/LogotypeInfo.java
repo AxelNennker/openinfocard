@@ -29,12 +29,12 @@ package org.xmldap.asn1;
 
 import org.bouncycastle.asn1.ASN1Choice;
 import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.ASN1TaggedObject;
-import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DERTaggedObject;
 
-public class LogotypeInfo extends ASN1Encodable implements ASN1Choice {
+public class LogotypeInfo implements ASN1Choice,ASN1Encodable {
 	//	LogotypeInfo ::= CHOICE {
 	//	   direct          [0] LogotypeData,
 	//	   indirect        [1] LogotypeReference }
@@ -56,7 +56,7 @@ public class LogotypeInfo extends ASN1Encodable implements ASN1Choice {
 
 	public static LogotypeInfo getInstance(ASN1TaggedObject tagObj) {
 		int tag = tagObj.getTagNo();
-		DERObject object = tagObj.getObject();
+		ASN1Primitive object = tagObj.getObject();
 		if (object instanceof ASN1Sequence) {
 			ASN1Sequence seq = (ASN1Sequence) object;
 			switch (tag) {
@@ -84,12 +84,12 @@ public class LogotypeInfo extends ASN1Encodable implements ASN1Choice {
 	}
 
 	public LogotypeInfo(LogotypeData direct) {
-		this.obj = ASN1Sequence.getInstance(direct.toASN1Object());
+		this.obj = ASN1Sequence.getInstance(direct.toASN1Primitive());
 		tag = LogotypeInfo.direct;
 	}
 
 	public LogotypeInfo(LogotypeReference indirect) {
-		this.obj = ASN1Sequence.getInstance(indirect.toASN1Object());
+		this.obj = ASN1Sequence.getInstance(indirect.toASN1Primitive());
 		tag = LogotypeInfo.indirect;
 	}
 
@@ -118,7 +118,7 @@ public class LogotypeInfo extends ASN1Encodable implements ASN1Choice {
 //	}
 
 	@Override
-	public DERObject toASN1Object() {
+	public ASN1Primitive toASN1Primitive() {
 		return new DERTaggedObject(true, tag, obj);
 	}
 }

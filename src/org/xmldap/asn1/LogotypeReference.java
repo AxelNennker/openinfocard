@@ -31,13 +31,13 @@ import java.util.Vector;
 
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERIA5String;
-import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.x509.DigestInfo;
 
-public class LogotypeReference extends ASN1Encodable {
+public class LogotypeReference implements ASN1Encodable {
 	// LogotypeReference ::= SEQUENCE {
 	// refStructHash SEQUENCE SIZE (1..MAX) OF HashAlgAndValue,
 	// refStructURI SEQUENCE SIZE (1..MAX) OF IA5String }
@@ -112,7 +112,7 @@ public class LogotypeReference extends ASN1Encodable {
 	}
 
 	@Override
-	public DERObject toASN1Object() {
+	public ASN1Primitive toASN1Primitive() {
 		ASN1EncodableVector v = new ASN1EncodableVector();
 		v.add(refStructHash);
 		v.add(refStructURI);

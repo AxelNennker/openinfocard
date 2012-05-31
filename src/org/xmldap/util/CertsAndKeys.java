@@ -64,11 +64,13 @@ import javax.security.auth.x500.X500Principal;
 
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.ASN1Set;
 import org.bouncycastle.asn1.DERBMPString;
 import org.bouncycastle.asn1.DERBitString;
 import org.bouncycastle.asn1.DERIA5String;
-import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.DERSet;
@@ -164,7 +166,7 @@ public class CertsAndKeys {
 	}
 
 	static private X509V3CertificateGenerator addLogotype(
-			X509V3CertificateGenerator gen) {
+			X509V3CertificateGenerator gen) throws IOException {
 		String mediaType = "image/jpg";
 		AlgorithmIdentifier algId = new AlgorithmIdentifier("1.3.14.3.2.26");
 		byte[] digest = { (byte) 0x96, (byte) 0xda, (byte) 0x5a, (byte) 0xf6,
@@ -189,8 +191,8 @@ public class CertsAndKeys {
 		OtherLogotypeInfo[] otherLogos = null;
 		Logotype logotype = new Logotype(communityLogos, issuerLogo,
 				subjectLogo, otherLogos);
-		DERObject obj = logotype.toASN1Object();
-		byte[] logotypeBytes = obj.getDEREncoded();
+		ASN1Primitive obj = logotype.toASN1Primitive();
+		byte[] logotypeBytes = obj.getEncoded();
 		gen.addExtension(Logotype.id_pe_logotype, false, logotypeBytes);
 		return gen;
 	}
@@ -441,9 +443,9 @@ public class CertsAndKeys {
 			byte[] derBytes = cert.getExtensionValue(nceoid);
 			ByteArrayInputStream bis = new ByteArrayInputStream(derBytes);
 			ASN1InputStream dis = new ASN1InputStream(bis);
-			DERObject derObject = dis.readObject();
-			DERSet value = new DERSet(derObject);
-			Attribute attr = new Attribute(new DERObjectIdentifier(nceoid), value);
+			ASN1Primitive derObject = dis.readObject();
+			ASN1Set value = new DERSet(derObject);
+			Attribute attr = new Attribute(new ASN1ObjectIdentifier(nceoid), value);
 			attributes.add(attr);
 		}
 		PKCS10CertificationRequest certificationRequest = new PKCS10CertificationRequest(

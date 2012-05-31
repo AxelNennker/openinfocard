@@ -29,12 +29,12 @@ package org.xmldap.asn1;
 
 import org.bouncycastle.asn1.ASN1Choice;
 import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1TaggedObject;
 import org.bouncycastle.asn1.DERInteger;
-import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DERTaggedObject;
 
-public class LogotypeImageResolution extends ASN1Encodable implements ASN1Choice {
+public class LogotypeImageResolution implements ASN1Choice,ASN1Encodable {
 //	LogotypeImageResolution ::= CHOICE {
 //		   numBits         [1] INTEGER,   -- Resolution in bits
 //		   tableSize       [2] INTEGER }  -- Number of colors or grey tones
@@ -68,7 +68,7 @@ public class LogotypeImageResolution extends ASN1Encodable implements ASN1Choice
 		throw new IllegalArgumentException("unknown object in factory");
 	}
 
-	public LogotypeImageResolution(DERObject obj, int tag) {
+	public LogotypeImageResolution(ASN1Primitive obj, int tag) {
 		if ((tag == LogotypeImageResolution.numBits) || (tag == LogotypeImageResolution.tableSize)) {
 			this.obj = (DERInteger)obj;
 			this.tag = tag;
@@ -78,7 +78,7 @@ public class LogotypeImageResolution extends ASN1Encodable implements ASN1Choice
 	}
 
 	@Override
-	public DERObject toASN1Object() {
+	public ASN1Primitive toASN1Primitive() {
 		return new DERTaggedObject(false, tag, obj);
 	}
 

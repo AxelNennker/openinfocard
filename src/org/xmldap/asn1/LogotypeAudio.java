@@ -28,11 +28,11 @@
 
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DERSequence;
 
-public class LogotypeAudio extends ASN1Encodable {
+public class LogotypeAudio implements ASN1Encodable {
 //	LogotypeAudio ::= SEQUENCE {
 //		   audioDetails    LogotypeDetails,
 //		   audioInfo       LogotypeAudioInfo OPTIONAL }
@@ -54,7 +54,7 @@ public class LogotypeAudio extends ASN1Encodable {
 	}
 
 	@Override
-	public DERObject toASN1Object() {
+	public ASN1Primitive toASN1Primitive() {
 		ASN1EncodableVector v = new ASN1EncodableVector();
 		v.add(audioDetails);
 		v.add(audioInfo);

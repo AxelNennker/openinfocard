@@ -38,17 +38,16 @@ import java.util.Vector;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.ASN1TaggedObject;
-import org.bouncycastle.asn1.DEREncodable;
-import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.DERTaggedObject;
 import org.bouncycastle.x509.extension.X509ExtensionUtil;
 import org.json.JSONException;
 
-public class Logotype extends ASN1Encodable {
+public class Logotype implements ASN1Encodable {
 	// LogotypeExtn ::= SEQUENCE {
 	// communityLogos [0] EXPLICIT SEQUENCE OF LogotypeInfo OPTIONAL,
 	// issuerLogo [1] EXPLICIT LogotypeInfo OPTIONAL,
@@ -99,7 +98,7 @@ public class Logotype extends ASN1Encodable {
 
 		while (e.hasMoreElements()) {
 			DERTaggedObject o = (DERTaggedObject) e.nextElement();
-			DERObject obj = o.getObject();
+			ASN1Primitive obj = o.getObject();
 			switch (o.getTagNo()) {
 			case 0:
 				communityLogosSeq = ASN1Sequence.getInstance(obj);
@@ -121,7 +120,7 @@ public class Logotype extends ASN1Encodable {
 		if (communityLogosSeq != null) {
 			Vector<LogotypeInfo> v = new Vector<LogotypeInfo>();
 			for (int index = 0; index < communityLogosSeq.size(); index++) {
-				DEREncodable obj = communityLogosSeq.getObjectAt(index);
+				ASN1Encodable obj = communityLogosSeq.getObjectAt(index);
 				ASN1TaggedObject coli = (ASN1TaggedObject) obj;
 				LogotypeInfo li = LogotypeInfo.getInstance(coli);
 				v.add(li);
@@ -141,7 +140,7 @@ public class Logotype extends ASN1Encodable {
 		if (otherLogosSeq != null) {
 			Vector<OtherLogotypeInfo> v = new Vector<OtherLogotypeInfo>();
 			for (int index = 0; index < otherLogosSeq.size(); index++) {
-				DEREncodable obj = otherLogosSeq.getObjectAt(index);
+				ASN1Encodable obj = otherLogosSeq.getObjectAt(index);
 				ASN1Sequence coli = (ASN1Sequence) obj;
 				OtherLogotypeInfo li = OtherLogotypeInfo.getInstance(coli);
 				v.add(li);
@@ -168,12 +167,12 @@ public class Logotype extends ASN1Encodable {
 			this.communityLogos = null;
 		}
 		if (issuerLogo != null) {
-			this.issuerLogo = (ASN1TaggedObject) issuerLogo.toASN1Object();
+			this.issuerLogo = (ASN1TaggedObject) issuerLogo.toASN1Primitive();
 		} else {
 			this.issuerLogo = null;
 		}
 		if (subjectLogo != null) {
-			this.subjectLogo = (ASN1TaggedObject) subjectLogo.toASN1Object();
+			this.subjectLogo = (ASN1TaggedObject) subjectLogo.toASN1Primitive();
 		} else {
 			this.subjectLogo = null;
 		}
@@ -253,7 +252,7 @@ public class Logotype extends ASN1Encodable {
 			// .getLogotypeReference();
 			// TODO
 			// LogotypeReference indirect =
-			// LogotypeReference.getInstance((ASN1TaggedObject)issuerLogo.toASN1Object(),
+			// LogotypeReference.getInstance((ASN1TaggedObject)issuerLogo.toASN1Primitive(),
 			// false);
 			// assertNotNull(indirect);
 		}
@@ -285,7 +284,7 @@ public class Logotype extends ASN1Encodable {
 	/**
 	 * Produce an object suitable for an ASN1OutputStream.
 	 */
-	public DERObject toASN1Object() {
+	public ASN1Primitive toASN1Primitive() {
 		ASN1EncodableVector v = new ASN1EncodableVector();
 
 		if (communityLogos != null) {

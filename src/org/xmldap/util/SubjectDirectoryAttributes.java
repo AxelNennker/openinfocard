@@ -7,17 +7,19 @@ import java.util.SimpleTimeZone;
 
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.ASN1Set;
 import org.bouncycastle.asn1.DEREncodableVector;
 import org.bouncycastle.asn1.DERGeneralizedTime;
-import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DERPrintableString;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.DERSet;
 import org.bouncycastle.asn1.x509.Attribute;
 
-public class SubjectDirectoryAttributes extends ASN1Encodable {
+public class SubjectDirectoryAttributes implements ASN1Encodable {
 	// http://asn1.elibel.tm.fr/cgi-bin/oid/display?oid=1.3.6.1.5.5.7.9&action=display
 	// PKIX personal data gender
 	public static final String genderOidStr = "1.3.6.1.5.5.7.9.4";
@@ -50,10 +52,9 @@ public class SubjectDirectoryAttributes extends ASN1Encodable {
 	static public Attribute string2Attribute(DERObjectIdentifier oid,
 			String value) throws UnsupportedEncodingException {
 		if ((value != null) && !value.equals("")) {
-			DERPrintableString genderValue = new DERPrintableString(value
-					.getBytes("UTF-8"));
-			DERSet valueSet = new DERSet(genderValue);
-			Attribute attr = new Attribute(oid, valueSet);
+			DERPrintableString genderValue = new DERPrintableString(value);
+			ASN1Set valueSet = new DERSet(genderValue);
+			Attribute attr = new Attribute(DERObjectIdentifier.getInstance(oid), valueSet);
 			return attr;
 		} else {
 			return null;
@@ -103,8 +104,8 @@ public class SubjectDirectoryAttributes extends ASN1Encodable {
         dateF.setTimeZone(tz);
         String  d = dateF.format(date) + "Z";
         DERGeneralizedTime time = new DERGeneralizedTime(d);
-		DERSet valueSet = new DERSet(time);
-		Attribute attr = new Attribute(new DERObjectIdentifier(dateOfBirthOidStr), valueSet);
+		ASN1Set valueSet = new DERSet(time);
+		Attribute attr = new Attribute(new ASN1ObjectIdentifier(dateOfBirthOidStr), valueSet);
 		return attr;
 	}
 
@@ -144,7 +145,7 @@ public class SubjectDirectoryAttributes extends ASN1Encodable {
 	}
 
 	@Override
-	public DERObject toASN1Object() {
+	public ASN1Primitive toASN1Primitive() {
 		return seq;
 	}
 

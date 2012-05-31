@@ -28,10 +28,10 @@
 package org.xmldap.asn1;
 
 import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.DERInteger;
-import org.bouncycastle.asn1.DERObject;
 
-public class LogoTypeImageType extends ASN1Encodable {
+public class LogoTypeImageType implements ASN1Encodable {
 
 	DERInteger type;
 	
@@ -43,7 +43,7 @@ public class LogoTypeImageType extends ASN1Encodable {
 	}
 
 	@Override
-	public DERObject toASN1Object() {
+	public ASN1Primitive toASN1Primitive() {
 		return type;
 	}
 }

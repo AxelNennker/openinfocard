@@ -29,14 +29,14 @@ package org.xmldap.asn1;
 
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERIA5String;
 import org.bouncycastle.asn1.DERInteger;
-import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.DERTaggedObject;
 
-public class LogotypeImageInfo extends ASN1Encodable {
+public class LogotypeImageInfo implements ASN1Encodable {
 //	LogotypeImageInfo ::= SEQUENCE {
 //		   type            [0] LogotypeImageType DEFAULT color,
 //		   fileSize        INTEGER,  -- In octets
@@ -92,7 +92,7 @@ public class LogotypeImageInfo extends ASN1Encodable {
 	}
 
 	@Override
-	public DERObject toASN1Object() {
+	public ASN1Primitive toASN1Primitive() {
 		ASN1EncodableVector v = new ASN1EncodableVector();
 		DERTaggedObject t = new DERTaggedObject(0, type);
 		v.add(t);

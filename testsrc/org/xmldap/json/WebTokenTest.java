@@ -43,6 +43,7 @@ import java.security.spec.RSAPrivateKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 
 import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
@@ -53,8 +54,18 @@ import javax.crypto.spec.SecretKeySpec;
 
 import junit.framework.TestCase;
 
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.x9.X9ECParameters;
+import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.Digest;
+import org.bouncycastle.crypto.agreement.ECDHBasicAgreement;
 import org.bouncycastle.crypto.digests.SHA256Digest;
+import org.bouncycastle.crypto.params.ECDomainParameters;
+import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
+import org.bouncycastle.crypto.params.ECPublicKeyParameters;
+import org.bouncycastle.jcajce.provider.asymmetric.ec.ECUtil;
+import org.bouncycastle.math.ec.ECCurve;
+import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.util.encoders.Hex;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -122,12 +133,35 @@ public class WebTokenTest extends TestCase {
   RSAPublicKey rsaPublicKey;
   RSAPrivateKey rsaPrivKey;
 
+  static final byte[] ec256_1_x = {48, (byte)160, 66, 76, (byte)210, 28, 41, 68, (byte)131, (byte)138, 45, 117, (byte)201, 43, 55, (byte)231, 110, (byte)162, 13, (byte)159, 0, (byte)137, 58, 59, 78, (byte)238, (byte)138, 60, 10, (byte)175, (byte)236, 62};
+  static final byte[] ec256_1_y = {(byte)224, 75, 101, (byte)233, 36, 86, (byte)217, (byte)136, (byte)139, 82, (byte)179, 121, (byte)189, (byte)251, (byte)213, 30, (byte)232, 105, (byte)239, 31, 15, (byte)198, 91, 102, 89, 105, 91, 108, (byte)206, 8, 23, 35};
+  static final byte[] ec256_1_d = {(byte)243, (byte)189, 12, 7, (byte)168, 31, (byte)185, 50, 120, 30, (byte)213, 39, 82, (byte)246, 12, (byte)200, (byte)154, 107, (byte)229, (byte)229, 25, 52, (byte)254, 1, (byte)147, (byte)141, (byte)219, 85, (byte)216, (byte)247, 120, 1};
+
+  static final String ec256_a_priv = "072f2322c0e75e0c851764b42181996778fd22592f87e5d43836097429a1c3fc";
+//  static final String ec256_a_pub  = "04ed3c831bf3e1059f12077f4be4fdfe905573d1c67645b47d4864ea179dde9986a9a6ad34274a80fc94b3a5ef6c6e782c227a3963a6a42650976da6ade990a161";
+  static final String ec256_b_priv = "1a3eda89dc067871530601f934c6428574f837507c578e45bd10a29b2e019bfb";
+//  static final String ec256_b_pub  = "049d887ec41f36201c1868f1c09c9a93cb9d5a0ff9d08af8dde2175b25ffaa834a6caadaba025a4477beb53af076bdab597153666c70d8458c49df24713ee55e85";
+  
+  BigInteger ec256_a_D;
+  BigInteger ec256_a_X;
+  BigInteger ec256_a_Y;
+  String ec256_a_header;
+  BigInteger ec256_b_D;
+  BigInteger ec256_b_X;
+  BigInteger ec256_b_Y;
+  String ec256_b_header;
+  
+  String ee256;
+
+
   final String epbe = "{\"alg\":\"EPBE\",\r\n"+
                 " \"kid\":\"iauxBG<9\"}"; // the userid the password is bound to. This is NOT encrypted.
   String epbeb64;
   
   String keybytes128B64 = null;
   String keybytes256B64 = null;
+  
+  AsymmetricCipherKeyPair eckp = null;
   
   public void setUp() {
     try {
@@ -209,6 +243,78 @@ public class WebTokenTest extends TestCase {
       keybytes128B64="wkp7v4KkBox9rSwVBXT+aA==";
    	  keybytes256B64="aRjpB3nhFA7B7B+sKwfM4OhU+6kLeg0W7p6OFbn7AfE=";
 
+      String ec256_1_x_b64 = Base64.encodeBytes(ec256_1_x, 
+          org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
+      String ec256_1_y_b64 = Base64.encodeBytes(ec256_1_y, 
+          org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
+   	  ee256 = "{\"alg\":\"ECDH-ES\",\r\n"+
+   	     "\"enc\":\""+WebToken.ENC_ALG_A256GCM+"\",\r\n"+
+   	     "\"iv\":\"__79_Pv6-fg\",\r\n"+
+   	     "\"crv\":\"secp256r1\",\r\n"+
+   	     "\"x\":\""+ec256_1_x_b64+"\",\r\n"+
+   	     "\"y\":\""+ec256_1_y_b64+"\"}";
+   	 
+      ASN1ObjectIdentifier oid = ECUtil.getNamedCurveOid("secp256r1");
+      X9ECParameters x9ECParameters = ECUtil.getNamedCurveByOid(oid);
+//      ECCurve curve = x9ECParameters.getCurve();
+
+   	  {
+        byte[] ec256_a_priv_bytes = Hex.decode(ec256_a_priv);
+        ec256_a_D = new BigInteger(1, ec256_a_priv_bytes);
+        ECPoint pub = x9ECParameters.getG().multiply(ec256_a_D);
+        ec256_a_X = pub.getX().toBigInteger();
+        ec256_a_Y = pub.getY().toBigInteger();
+//        byte[] xyBytes = Hex.decode(ec256_a_pub);
+//        byte[] xBytes = new byte[xyBytes.length/2];
+//        System.arraycopy(xyBytes, 0, xBytes, 0, xBytes.length);
+//        ec256_a_X = new BigInteger(1, xBytes);
+//        String ec256_a_X_b64 = Base64.encodeBytes(xBytes, 
+//            org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL); 
+        String ec256_a_X_b64 = Base64.encodeBytes(ec256_a_X.toByteArray(), 
+            org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL); 
+//        byte[] yBytes = new byte[xyBytes.length/2];
+//        System.arraycopy(xyBytes, xBytes.length/2, yBytes, 0, yBytes.length);
+//        ec256_a_Y = new BigInteger(1, yBytes);
+//      String ec256_a_Y_b64 = Base64.encodeBytes(yBytes, 
+//      org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL); 
+      String ec256_a_Y_b64 = Base64.encodeBytes(ec256_a_Y.toByteArray(), 
+          org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL); 
+        ec256_a_header = "{\"alg\":\"ECDH-ES\",\r\n"+
+            "\"enc\":\""+WebToken.ENC_ALG_A256GCM+"\",\r\n"+
+            "\"iv\":\"__79_Pv6-fg\",\r\n"+
+            "\"crv\":\"secp256r1\",\r\n"+
+            "\"x\":\""+ec256_a_X_b64+"\",\r\n"+
+            "\"y\":\""+ec256_a_Y_b64+"\"}";
+   	  }
+   	  {
+        byte[] ec256_b_priv_bytes = Hex.decode(ec256_b_priv);
+        ec256_b_D = new BigInteger(1, ec256_b_priv_bytes);
+        ECPoint pub = x9ECParameters.getG().multiply(ec256_b_D);
+        ec256_b_X = pub.getX().toBigInteger();
+        ec256_b_Y = pub.getY().toBigInteger();
+//        byte[] xyBytes = Hex.decode(ec256_b_pub);
+//        byte[] xBytes = new byte[xyBytes.length/2];
+//        System.arraycopy(xyBytes, 0, xBytes, 0, xBytes.length);
+//        ec256_b_X = new BigInteger(1, xBytes);
+        String ec256_b_X_b64 = Base64.encodeBytes(ec256_b_X.toByteArray(), 
+            org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL); 
+//        String ec256_b_X_b64 = Base64.encodeBytes(xBytes, 
+//            org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL); 
+//        byte[] yBytes = new byte[xyBytes.length/2];
+//        System.arraycopy(xyBytes, xBytes.length/2, yBytes, 0, yBytes.length);
+//        ec256_b_Y = new BigInteger(1, yBytes);
+//        String ec256_b_Y_b64 = Base64.encodeBytes(yBytes, 
+//            org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL); 
+        String ec256_b_Y_b64 = Base64.encodeBytes(ec256_b_Y.toByteArray(), 
+            org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL); 
+        ec256_b_header = "{\"alg\":\"ECDH-ES\",\r\n"+
+            "\"enc\":\""+WebToken.ENC_ALG_A256GCM+"\",\r\n"+
+            "\"iv\":\"--68-Ou5_ef\",\r\n"+
+            "\"crv\":\"secp256r1\",\r\n"+
+            "\"x\":\""+ec256_b_X_b64+"\",\r\n"+
+            "\"y\":\""+ec256_b_Y_b64+"\"}";
+ 
+   	  }      
     } catch (Exception e) {
       assertTrue(false);
     }
@@ -323,20 +429,17 @@ public class WebTokenTest extends TestCase {
   throws Exception {
 //    byte[] x = {48, (byte)160, 66, 76, (byte)210, 28, 41, 68, (byte)131, (byte)138, 45, 117, (byte)201, 43, 55, (byte)231, 110, (byte)162, 13, (byte)159, 0, (byte)137, 58, 59, 78, (byte)238, (byte)138, 60, 10, (byte)175, (byte)236, 62};
 //    byte[] y = {(byte)224, 75, 101, (byte)233, 36, 86, (byte)217, (byte)136, (byte)139, 82, (byte)179, 121, (byte)189, (byte)251, (byte)213, 30, (byte)232, 105, (byte)239, 31, 15, (byte)198, 91, 102, 89, 105, 91, 108, (byte)206, 8, 23, 35};
-    byte[] d = {(byte)243, (byte)189, 12, 7, (byte)168, 31, (byte)185, 50, 120, 30, (byte)213, 39, 82, (byte)246, 12, (byte)200, (byte)154, 107, (byte)229, (byte)229, 25, 52, (byte)254, 1, (byte)147, (byte)141, (byte)219, 85, (byte)216, (byte)247, 120, 1};
     
 //    "secp256r1 [NIST P-256, X9.62 prime256v1]", "1.2.840.10045.3.1.7"
     WebToken wt = new WebToken(joeStr, es256);
-    String signed = wt.serialize(new BigInteger(1,d));
+    String signed = wt.serialize(new BigInteger(1,ec256_1_d));
     String[] split = signed.split("\\.");
     assertEquals(3, split.length);
     assertEquals("eyJhbGciOiJFUzI1NiJ9", split[0]);
     assertEquals("eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFtcGxlLmNvbS9pc19yb290Ijp0cnVlfQ", split[1]);
     byte[] signatureBytes = Base64.decodeUrl(split[2]);
     assertEquals(64, signatureBytes.length);
-    byte[] x = {48, (byte)160, 66, 76, (byte)210, 28, 41, 68, (byte)131, (byte)138, 45, 117, (byte)201, 43, 55, (byte)231, 110, (byte)162, 13, (byte)159, 0, (byte)137, 58, 59, 78, (byte)238, (byte)138, 60, 10, (byte)175, (byte)236, 62};
-    byte[] y = {(byte)224, 75, 101, (byte)233, 36, 86, (byte)217, (byte)136, (byte)139, 82, (byte)179, 121, (byte)189, (byte)251, (byte)213, 30, (byte)232, 105, (byte)239, 31, 15, (byte)198, 91, 102, 89, 105, 91, 108, (byte)206, 8, 23, 35};
-    assertTrue(WebToken.verify(signed, x, y));
+    assertTrue(WebToken.verify(signed, ec256_1_x, ec256_1_y));
 
   }
   
@@ -481,10 +584,22 @@ public class WebTokenTest extends TestCase {
   }
 
   public void testRE256Gcm() throws Exception {
+    int maxKeyLen = Cipher.getMaxAllowedKeyLength("AES");
+    if (maxKeyLen < 256) {
+      // don't fail. Need to install
+      // Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy Files
+      return;
+    }
 	  testRsa("rsa15AesGcm256", rsa15AesGcm256HeaderStr, rsa15AesGcm256HeaderStrb64);
   }
 
   public void testRE256GcmIV() throws Exception {
+    int maxKeyLen = Cipher.getMaxAllowedKeyLength("AES");
+    if (maxKeyLen < 256) {
+      // don't fail. Need to install
+      // Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy Files
+      return;
+    }
 	JSONObject jo = new JSONObject(rsa15AesGcm256HeaderStr);
 	byte[] N = Hex.decode("cafebabefacedbaddecaf888");
 	String ivB64 = Base64.encodeBytes(N, 
@@ -605,4 +720,74 @@ public class WebTokenTest extends TestCase {
     assertEquals(joeStr, cleartext);
   }
   
+  public void testAgreement() throws Exception {
+    ASN1ObjectIdentifier oid = ECUtil.getNamedCurveOid("secp256r1");
+    X9ECParameters x9ECParameters = ECUtil.getNamedCurveByOid(oid);
+    ECCurve curve = x9ECParameters.getCurve();
+    BigInteger za;
+    {
+//      ECPoint qB = curve.createPoint(ec256_a_X, ec256_a_Y, false);
+//      ECPoint q = new ECPoint.Fp(curve, qB.getX(), qB.getY());
+      
+      ECDomainParameters ecDomainParameters = new ECDomainParameters(curve, x9ECParameters.getG(), x9ECParameters.getN(),
+          x9ECParameters.getH(), x9ECParameters.getSeed());
+//      ECPublicKeyParameters ecPublicKeyParameters = new ECPublicKeyParameters(q, ecDomainParameters);
+      ECPoint pub = x9ECParameters.getG().multiply(ec256_a_D);
+      ECPublicKeyParameters ecPublicKeyParameters = new ECPublicKeyParameters(pub, ecDomainParameters);
+
+      ECPrivateKeyParameters ecPrivateKeyParameters = new ECPrivateKeyParameters(ec256_b_D, ecDomainParameters);
+  
+      ECDHBasicAgreement ecdhBasicAgreement = new ECDHBasicAgreement();
+      ecdhBasicAgreement.init(ecPrivateKeyParameters);
+      za = ecdhBasicAgreement.calculateAgreement(ecPublicKeyParameters);
+      System.out.println("za="+za.toString());
+    }
+    BigInteger zb;
+    {
+//      ECPoint qB = curve.createPoint(ec256_b_X, ec256_b_Y, false);
+//      ECPoint q = new ECPoint.Fp(curve, qB.getX(), qB.getY());
+      ECDomainParameters ecDomainParameters = new ECDomainParameters(curve, x9ECParameters.getG(), x9ECParameters.getN(),
+          x9ECParameters.getH(), x9ECParameters.getSeed());
+//      ECPublicKeyParameters ecPublicKeyParameters = new ECPublicKeyParameters(q, ecDomainParameters);
+  
+      ECPoint pub = x9ECParameters.getG().multiply(ec256_b_D);
+      ECPublicKeyParameters ecPublicKeyParameters = new ECPublicKeyParameters(pub, ecDomainParameters);
+      
+      ECPrivateKeyParameters ecPrivateKeyParameters = new ECPrivateKeyParameters(ec256_a_D, ecDomainParameters);
+  
+      ECDHBasicAgreement ecdhBasicAgreement = new ECDHBasicAgreement();
+      ecdhBasicAgreement.init(ecPrivateKeyParameters);
+      zb = ecdhBasicAgreement.calculateAgreement(ecPublicKeyParameters);
+      System.out.println("zb="+zb.toString());
+    }
+    assertEquals(za.toString(), zb.toString());
+  }
+  
+  public void testECencryption256() throws Exception {
+    String jwtHeaderSegment = ec256_a_header;
+    WebToken jwt = new WebToken(joeStr, jwtHeaderSegment);
+    String encrypted = jwt.encrypt(ec256_a_X, ec256_a_Y, ec256_b_D);
+    
+    String[] split = encrypted.split("\\.");
+    
+    assertEquals(3, split.length);
+    
+    String newJwtHeaderSegment = new String(Base64.decodeUrl(split[0]));
+    JSONObject newJwtHeader = new JSONObject(newJwtHeaderSegment);
+    JSONObject oldJwtHeader = new JSONObject(jwtHeaderSegment);
+    
+    assertEquals(oldJwtHeader.get("alg"), newJwtHeader.get("alg"));
+    assertEquals(oldJwtHeader.get("enc"), newJwtHeader.get("enc"));
+    String ivB64 = oldJwtHeader.optString("iv", null);
+    if (ivB64 != null) {
+      assertEquals(ivB64, newJwtHeader.get("iv"));
+    }
+    System.out.println("ECDH-ES jwtHeaderSegment: " + jwtHeaderSegment);
+    System.out.println("ECDH-ES jwtHeaderSegment base64: " + split[0]);
+    System.out.println("ECDH-ES jwtSymmetricKeySegment base64: " + split[1]);
+    System.out.println("ECDH-ES jwtCryptoSegment base64: " + split[2]);
+
+    String cleartext = WebToken.decrypt(encrypted, ec256_b_X, ec256_b_Y, ec256_a_D);
+    assertEquals(joeStr, cleartext);
+  }
 }

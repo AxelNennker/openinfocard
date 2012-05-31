@@ -31,13 +31,13 @@ import java.util.Vector;
 
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.ASN1TaggedObject;
-import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.DERTaggedObject;
 
-public class LogotypeData extends ASN1Encodable {
+public class LogotypeData implements ASN1Encodable {
 //	LogotypeData ::= SEQUENCE {
 //		   image           SEQUENCE OF LogotypeImage OPTIONAL,
 //		   audio           [1] SEQUENCE OF LogotypeAudio OPTIONAL }
@@ -119,7 +119,7 @@ public class LogotypeData extends ASN1Encodable {
 		if (image != null) {
 			ASN1EncodableVector v = new ASN1EncodableVector();
 			for (int i=0; i<image.length; i++) {
-				v.add(image[i].toASN1Object());
+				v.add(image[i].toASN1Primitive());
 			}
 			this.image = new DERSequence(v);
 		} else {
@@ -128,7 +128,7 @@ public class LogotypeData extends ASN1Encodable {
 		if (audio != null) {
 			ASN1EncodableVector v = new ASN1EncodableVector();
 			for (int i=0; i<audio.length; i++) {
-				v.add(audio[i].toASN1Object());
+				v.add(audio[i].toASN1Primitive());
 			}
 			this.audio = new DERSequence(v);
 		} else {
@@ -149,7 +149,7 @@ public class LogotypeData extends ASN1Encodable {
     /**
      * Produce an object suitable for an ASN1OutputStream.
      */
-    public DERObject toASN1Object()
+    public ASN1Primitive toASN1Primitive()
     {
         ASN1EncodableVector  v = new ASN1EncodableVector();
 
