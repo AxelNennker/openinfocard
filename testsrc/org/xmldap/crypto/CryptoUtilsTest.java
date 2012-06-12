@@ -1,3 +1,30 @@
+/*
+ * Copyright (c) 2012, Axel Nennker - http://axel.nennker.de/
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the names xmldap, xmldap.org, xmldap.com nor the
+ *       names of its contributors may be used to endorse or promote products
+ *       derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE REGENTS AND CONTRIBUTORS BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package org.xmldap.crypto;
 
 import java.security.KeyPair;
@@ -5,19 +32,21 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import junit.framework.TestCase;
+
+import org.bouncycastle.crypto.Digest;
+import org.bouncycastle.crypto.digests.SHA256Digest;
+import org.bouncycastle.crypto.digests.SHA384Digest;
+import org.bouncycastle.crypto.params.KDFParameters;
 import org.xmldap.exceptions.CryptoException;
 import org.xmldap.util.Base64;
 import org.xmldap.util.XmldapCertsAndKeys;
-
-import junit.framework.TestCase;
 
 public class CryptoUtilsTest extends TestCase {
 
@@ -173,4 +202,116 @@ public class CryptoUtilsTest extends TestCase {
       assertTrue(certIn.equals(certOut));
     }
 
+    public void testNimbusConcatKDF_8args384() throws Exception {
+      String hashAlg = "SHA-384";
+      byte[] z = "this is the secrect key phrase".getBytes();
+      int keyDataLen = 256;
+      byte[] algorithmID = {};
+      byte[] partyUInfo = {};
+      byte[] partyVInfo = {};
+      byte[] suppPubInfo = null;
+      byte[] suppPrivInfo = null;
+      byte[] result = ConcatKeyDerivationFunction.concatKDF(hashAlg, z, keyDataLen, algorithmID, partyUInfo, partyVInfo, suppPubInfo, suppPrivInfo);
+      assertEquals("1LBfs0NBIPu1vfgnjYNMrSvBA/IJOlpwMgamYR9VnPA=", Base64.encodeBytesNoBreaks(result));
+  }
+
+//    public void testNimbusConcatKDF_8args256() throws Exception {
+//      String hashAlg = "SHA-256";
+//      byte[] z = "this is the secrect key phrase".getBytes();
+//      int keyDataLen = 256;
+//      byte[] algorithmID = {};
+//      byte[] partyUInfo = {};
+//      byte[] partyVInfo = {};
+//      byte[] suppPubInfo = null;
+//      byte[] suppPrivInfo = null;
+//      byte[] result = ConcatKeyDerivationFunction.concatKDF(hashAlg, z, keyDataLen, algorithmID, partyUInfo, partyVInfo, suppPubInfo, suppPrivInfo);
+//      assertEquals("", Base64.encodeBytesNoBreaks(result));
+//  }
+
+    public void testConcatKdf256() throws Exception {
+      Digest kdfDigest = new SHA256Digest();
+      byte[] zBytes = "this is the secrect key phrase".getBytes();
+      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest);
+      kdfConcatGenerator.init(new KDFParameters(zBytes, null));
+      int keylength = 32;
+      byte[] out = new byte[keylength];
+      kdfConcatGenerator.generateBytes(out, 0, out.length);
+      assertEquals("dU3Oi625alXZTTVSVaNiAtC47nQfYr591+KbRBwCwT4=", Base64.encodeBytesNoBreaks(out));
+    }
+    
+    public void testConcatKdf256_64() throws Exception {
+      Digest kdfDigest = new SHA256Digest();
+      byte[] zBytes = "this is the secrect key phrase".getBytes();
+      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest);
+      kdfConcatGenerator.init(new KDFParameters(zBytes, null));
+      int keylength = 64;
+      byte[] out = new byte[keylength];
+      kdfConcatGenerator.generateBytes(out, 0, out.length);
+      assertEquals("dU3Oi625alXZTTVSVaNiAtC47nQfYr591+KbRBwCwT7dsTpOPFNykjM/aw62LnEdLr7sq08sjvXGS9qFEGucjw==", Base64.encodeBytesNoBreaks(out));
+    }
+    
+    public void testConcatKdf384() throws Exception {
+      Digest kdfDigest = new SHA384Digest();
+      byte[] zBytes = "this is the secrect key phrase".getBytes();
+      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest);
+      kdfConcatGenerator.init(new KDFParameters(zBytes, null));
+      int keylength = 32;
+      byte[] out = new byte[keylength];
+      kdfConcatGenerator.generateBytes(out, 0, out.length);
+      assertEquals("1LBfs0NBIPu1vfgnjYNMrSvBA/IJOlpwMgamYR9VnPA=", Base64.encodeBytesNoBreaks(out));
+    }
+    
+    public void testConcatKdf384_48() throws Exception {
+      Digest kdfDigest = new SHA384Digest();
+      byte[] zBytes = "this is the secrect key phrase".getBytes();
+      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest);
+      kdfConcatGenerator.init(new KDFParameters(zBytes, null));
+      int keylength = 48;
+      byte[] out = new byte[keylength];
+      kdfConcatGenerator.generateBytes(out, 0, out.length);
+      assertEquals("1LBfs0NBIPu1vfgnjYNMrSvBA/IJOlpwMgamYR9VnPA1Tx4RwhcHFlSdsDdWR7bd", Base64.encodeBytesNoBreaks(out));
+    }
+    
+//    public void testConcatKdfXmldapVsNimbus256() throws Exception {
+//      Digest kdfDigest = new SHA256Digest();
+//      byte[] zBytes = "this is the secrect key phrase".getBytes();
+//      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest);
+//      kdfConcatGenerator.init(new KDFParameters(zBytes, null));
+//      int keylength = 32;
+//      byte[] out = new byte[keylength];
+//      kdfConcatGenerator.generateBytes(out, 0, out.length);
+//      assertEquals("dU3Oi625alXZTTVSVaNiAtC47nQfYr591+KbRBwCwT4=", Base64.encodeBytesNoBreaks(out));
+//      
+//      String hashAlg = "SHA-256";
+//      int keyDataLen = 256;
+//      byte[] algorithmID = {};
+//      byte[] partyUInfo = {};
+//      byte[] partyVInfo = {};
+//      byte[] suppPubInfo = null;
+//      byte[] suppPrivInfo = null;
+//      byte[] result = ConcatKeyDerivationFunction.concatKDF(hashAlg, zBytes, keyDataLen, algorithmID, partyUInfo, partyVInfo, suppPubInfo, suppPrivInfo);
+//      assertEquals("dU3Oi625alXZTTVSVaNiAtC47nQfYr591+KbRBwCwT4=", Base64.encodeBytesNoBreaks(result));
+//    }
+    
+    public void testConcatKdfXmldapVsNimbus384() throws Exception {
+      final String expected = "1LBfs0NBIPu1vfgnjYNMrSvBA/IJOlpwMgamYR9VnPA=";
+      Digest kdfDigest = new SHA384Digest();
+      byte[] zBytes = "this is the secrect key phrase".getBytes();
+      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest);
+      kdfConcatGenerator.init(new KDFParameters(zBytes, null));
+      int keylength = 32;
+      byte[] out = new byte[keylength];
+      kdfConcatGenerator.generateBytes(out, 0, out.length);
+      assertEquals(expected, Base64.encodeBytesNoBreaks(out));
+      
+      String hashAlg = "SHA-384";
+      int keyDataLen = 256;
+      byte[] algorithmID = {};
+      byte[] partyUInfo = {};
+      byte[] partyVInfo = {};
+      byte[] suppPubInfo = null;
+      byte[] suppPrivInfo = null;
+      byte[] result = ConcatKeyDerivationFunction.concatKDF(hashAlg, zBytes, keyDataLen, algorithmID, partyUInfo, partyVInfo, suppPubInfo, suppPrivInfo);
+      assertEquals(expected, Base64.encodeBytesNoBreaks(result));
+    }
 }
