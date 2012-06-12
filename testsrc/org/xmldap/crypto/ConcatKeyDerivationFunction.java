@@ -77,11 +77,7 @@ public class ConcatKeyDerivationFunction {
             if (i < reps) {
                 System.arraycopy(hash, 0, key, hashLen * i, hashLen);
             } else {
-                if (keyDataLen % hashLen == 0) {
-                    System.arraycopy(hash, 0, key, hashLen * i, hashLen);
-                } else {
-                    System.arraycopy(hash, 0, key, hashLen * i, keyDataLen % hashLen);
-                }
+                System.arraycopy(hash, 0, key, hashLen * i, keyDataLen % hashLen);
             }
         }
         return key;

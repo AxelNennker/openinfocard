@@ -215,18 +215,18 @@ public class CryptoUtilsTest extends TestCase {
       assertEquals("1LBfs0NBIPu1vfgnjYNMrSvBA/IJOlpwMgamYR9VnPA=", Base64.encodeBytesNoBreaks(result));
   }
 
-//    public void testNimbusConcatKDF_8args256() throws Exception {
-//      String hashAlg = "SHA-256";
-//      byte[] z = "this is the secrect key phrase".getBytes();
-//      int keyDataLen = 256;
-//      byte[] algorithmID = {};
-//      byte[] partyUInfo = {};
-//      byte[] partyVInfo = {};
-//      byte[] suppPubInfo = null;
-//      byte[] suppPrivInfo = null;
-//      byte[] result = ConcatKeyDerivationFunction.concatKDF(hashAlg, z, keyDataLen, algorithmID, partyUInfo, partyVInfo, suppPubInfo, suppPrivInfo);
-//      assertEquals("", Base64.encodeBytesNoBreaks(result));
-//  }
+    public void testNimbusConcatKDF_8args256() throws Exception {
+      String hashAlg = "SHA-256";
+      byte[] z = "this is the secrect key phrase".getBytes();
+      int keyDataLen = 256;
+      byte[] algorithmID = {};
+      byte[] partyUInfo = {};
+      byte[] partyVInfo = {};
+      byte[] suppPubInfo = null;
+      byte[] suppPrivInfo = null;
+      byte[] result = ConcatKeyDerivationFunction.concatKDF(hashAlg, z, keyDataLen, algorithmID, partyUInfo, partyVInfo, suppPubInfo, suppPrivInfo);
+      assertEquals("dU3Oi625alXZTTVSVaNiAtC47nQfYr591+KbRBwCwT4=", Base64.encodeBytesNoBreaks(result));
+  }
 
     public void testConcatKdf256() throws Exception {
       Digest kdfDigest = new SHA256Digest();
@@ -272,26 +272,26 @@ public class CryptoUtilsTest extends TestCase {
       assertEquals("1LBfs0NBIPu1vfgnjYNMrSvBA/IJOlpwMgamYR9VnPA1Tx4RwhcHFlSdsDdWR7bd", Base64.encodeBytesNoBreaks(out));
     }
     
-//    public void testConcatKdfXmldapVsNimbus256() throws Exception {
-//      Digest kdfDigest = new SHA256Digest();
-//      byte[] zBytes = "this is the secrect key phrase".getBytes();
-//      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest);
-//      kdfConcatGenerator.init(new KDFParameters(zBytes, null));
-//      int keylength = 32;
-//      byte[] out = new byte[keylength];
-//      kdfConcatGenerator.generateBytes(out, 0, out.length);
-//      assertEquals("dU3Oi625alXZTTVSVaNiAtC47nQfYr591+KbRBwCwT4=", Base64.encodeBytesNoBreaks(out));
-//      
-//      String hashAlg = "SHA-256";
-//      int keyDataLen = 256;
-//      byte[] algorithmID = {};
-//      byte[] partyUInfo = {};
-//      byte[] partyVInfo = {};
-//      byte[] suppPubInfo = null;
-//      byte[] suppPrivInfo = null;
-//      byte[] result = ConcatKeyDerivationFunction.concatKDF(hashAlg, zBytes, keyDataLen, algorithmID, partyUInfo, partyVInfo, suppPubInfo, suppPrivInfo);
-//      assertEquals("dU3Oi625alXZTTVSVaNiAtC47nQfYr591+KbRBwCwT4=", Base64.encodeBytesNoBreaks(result));
-//    }
+    public void testConcatKdfXmldapVsNimbus256() throws Exception {
+      Digest kdfDigest = new SHA256Digest();
+      byte[] zBytes = "this is the secrect key phrase".getBytes();
+      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest);
+      kdfConcatGenerator.init(new KDFParameters(zBytes, null));
+      int keylength = 32;
+      byte[] out = new byte[keylength];
+      kdfConcatGenerator.generateBytes(out, 0, out.length);
+      assertEquals("dU3Oi625alXZTTVSVaNiAtC47nQfYr591+KbRBwCwT4=", Base64.encodeBytesNoBreaks(out));
+      
+      String hashAlg = "SHA-256";
+      int keyDataLen = 256;
+      byte[] algorithmID = {};
+      byte[] partyUInfo = {};
+      byte[] partyVInfo = {};
+      byte[] suppPubInfo = null;
+      byte[] suppPrivInfo = null;
+      byte[] result = ConcatKeyDerivationFunction.concatKDF(hashAlg, zBytes, keyDataLen, algorithmID, partyUInfo, partyVInfo, suppPubInfo, suppPrivInfo);
+      assertEquals("dU3Oi625alXZTTVSVaNiAtC47nQfYr591+KbRBwCwT4=", Base64.encodeBytesNoBreaks(result));
+    }
     
     public void testConcatKdfXmldapVsNimbus384() throws Exception {
       final String expected = "1LBfs0NBIPu1vfgnjYNMrSvBA/IJOlpwMgamYR9VnPA=";
