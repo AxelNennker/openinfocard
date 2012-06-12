@@ -646,7 +646,7 @@ public class WebToken {
   {
     String[] split = encrypted.split("\\.");
     String headerB64 = split[0];
-    String secretkeyB64 = split[1];
+    //String secretkeyB64 = split[1]; // empty string
     String jwtCryptoSegmentB64 = split[2];
 
     String jwtHeaderSegment = new String(Base64.decodeUrl(headerB64));
@@ -656,32 +656,22 @@ public class WebToken {
     int keylength = 256;
     
     if (ENC_ALG_ECDH_ES.equals(jwtAlgStr)) {
-      byte[] encryptedKey = Base64.decodeUrl(secretkeyB64);
-      
       ECDHBasicAgreement ecdhBasicAgreement = new ECDHBasicAgreement();
       ecdhBasicAgreement.init(ecPrivateKeyParameters);
       BigInteger z = ecdhBasicAgreement.calculateAgreement(ecPublicKeyParameters);
 //      System.out.println("ECDH-ES z=" + z.toString());
       byte[] zBytes = BigIntegers.asUnsignedByteArray(z);
-//      System.out.println("ECDH-ES zBytes.length=" + zBytes.length);
-      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest);
+      byte[] otherInfo = {69, 110, 99, 114, 121, 112, 116, 105, 111, 110};
+      //      System.out.println("ECDH-ES zBytes.length=" + zBytes.length);
+      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest, otherInfo );
       kdfConcatGenerator.init(new KDFParameters(zBytes, null));
-      byte[] out = new byte[12 + (keylength / 8)];
-      kdfConcatGenerator.generateBytes(out, 0, out.length);
-      // encrypt the content encryption key using secretKey
       byte[] secretKeyBytes = new byte[keylength / 8];
-      byte[] ivBytes = new byte[12];
-      System.arraycopy(out, 0, ivBytes, 0, 12);
-      System.arraycopy(out, 12, secretKeyBytes, 0, secretKeyBytes.length);
-      IvParameterSpec ivParamSpec = new IvParameterSpec(ivBytes);
+      kdfConcatGenerator.generateBytes(secretKeyBytes, 0, secretKeyBytes.length);
       SecretKey secretKey = new SecretKeySpec(secretKeyBytes, "AES");
       
-      byte[] keyBytes = aesgcmDecrypt(ivParamSpec, secretKey, encryptedKey);
-      
-      secretKey = new SecretKeySpec(keyBytes, "AES");
       String ivBytesB64 = header.getString("iv");
-      ivBytes = Base64.decodeUrl(ivBytesB64);
-      ivParamSpec = new IvParameterSpec(ivBytes);
+      byte[] ivBytes = Base64.decodeUrl(ivBytesB64);
+      IvParameterSpec ivParamSpec = new IvParameterSpec(ivBytes);
       
       byte[] jwtCryptoSegment = Base64.decodeUrl(jwtCryptoSegmentB64);
       byte[] cleartextBytes = aesgcmDecrypt(ivParamSpec, secretKey, jwtCryptoSegment);
@@ -708,7 +698,6 @@ public class WebToken {
         throw new NoSuchAlgorithmException("JWT enc: " + jwtEncStr);
       }
     }
-    contentEncryptionKey = CryptoUtils.genAesKey(keylength);
 
     String encodedJweCiphertext;
     String encodedJweEncryptedKey;
@@ -721,20 +710,14 @@ public class WebToken {
 //      System.out.println("ECDH-ES z=" + z.toString());
       byte[] zBytes = BigIntegers.asUnsignedByteArray(z);
 //      System.out.println("ECDH-ES zBytes.length=" + zBytes.length);
-      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest);
+      byte[] otherInfo = {69, 110, 99, 114, 121, 112, 116, 105, 111, 110};
+      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest, otherInfo);
       kdfConcatGenerator.init(new KDFParameters(zBytes, null));
-      byte[] out = new byte[12 + (keylength / 8)];
-      kdfConcatGenerator.generateBytes(out, 0, out.length);
-      // encrypt the content encryption key using secretKey
       byte[] secretKeyBytes = new byte[keylength / 8];
-      byte[] ivBytes = new byte[12];
-      System.arraycopy(out, 0, ivBytes, 0, 12);
-      System.arraycopy(out, 12, secretKeyBytes, 0, secretKeyBytes.length);
-      IvParameterSpec ivParamSpec = new IvParameterSpec(ivBytes);
-      SecretKey secretKey = new SecretKeySpec(secretKeyBytes, "AES");
-      byte[] ciphertext = aesgcmEncrypt(ivParamSpec, secretKey, contentEncryptionKey.getEncoded());
-      encodedJweEncryptedKey = Base64.encodeBytes(ciphertext, org.xmldap.util.Base64.DONT_BREAK_LINES
-          | org.xmldap.util.Base64.URL);
+      kdfConcatGenerator.generateBytes(secretKeyBytes, 0, secretKeyBytes.length);
+      contentEncryptionKey = new SecretKeySpec(secretKeyBytes, "RAW");
+      // encrypt the content encryption key using secretKey
+      encodedJweEncryptedKey = "";
     } else {
       throw new NoSuchAlgorithmException("JWT algorithm: " + jwtAlgStr);
     }

@@ -45,16 +45,18 @@ public class KDFConcatGenerator
     private int     counterStart = 1;
     private Digest  digest;
     private byte[]  shared;
-
+    byte[]          otherInfo;
+    
     /**
      * Construct a KDF Parameters generator.
      * <p>
      * @param counterStart value of counter.
      * @param digest the digest to be used as the source of derived keys.
      */
-    public KDFConcatGenerator(Digest  digest)
+    public KDFConcatGenerator(Digest  digest, byte[] otherInfo)
     {
         this.digest = digest;
+        this.otherInfo = otherInfo;
     }
 
     public void init(
@@ -88,9 +90,9 @@ public class KDFConcatGenerator
      * @throws DataLengthException if the out buffer is too small.
      */
     public int generateBytes(
-        byte[]  out,
-        int     outOff,
-        int     len)
+        byte[] out,
+        int    outOff,
+        int    len)
         throws DataLengthException, IllegalArgumentException
     {
         if ((out.length - len) < outOff)
@@ -127,7 +129,8 @@ public class KDFConcatGenerator
             digest.update((byte)(counter >> 16));
             digest.update((byte)(counter >> 8));
             digest.update((byte)counter);
-
+            digest.update(otherInfo, 0, otherInfo.length);
+            
             digest.update(shared, 0, shared.length);
             
             digest.doFinal(dig, 0);

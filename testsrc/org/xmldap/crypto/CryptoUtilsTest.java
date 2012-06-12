@@ -231,7 +231,7 @@ public class CryptoUtilsTest extends TestCase {
     public void testConcatKdf256() throws Exception {
       Digest kdfDigest = new SHA256Digest();
       byte[] zBytes = "this is the secrect key phrase".getBytes();
-      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest);
+      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest, new byte[]{});
       kdfConcatGenerator.init(new KDFParameters(zBytes, null));
       int keylength = 32;
       byte[] out = new byte[keylength];
@@ -239,10 +239,21 @@ public class CryptoUtilsTest extends TestCase {
       assertEquals("dU3Oi625alXZTTVSVaNiAtC47nQfYr591+KbRBwCwT4=", Base64.encodeBytesNoBreaks(out));
     }
     
+    public void testConcatKdf256OtherInfo() throws Exception {
+      Digest kdfDigest = new SHA256Digest();
+      byte[] zBytes = "this is the secrect key phrase".getBytes();
+      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest, new byte[]{});
+      kdfConcatGenerator.init(new KDFParameters(zBytes, null));
+      int keylength = 32;
+      byte[] out = new byte[keylength];
+      kdfConcatGenerator.generateBytes(out, 0, out.length );
+      assertEquals("dU3Oi625alXZTTVSVaNiAtC47nQfYr591+KbRBwCwT4=", Base64.encodeBytesNoBreaks(out));
+    }
+    
     public void testConcatKdf256_64() throws Exception {
       Digest kdfDigest = new SHA256Digest();
       byte[] zBytes = "this is the secrect key phrase".getBytes();
-      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest);
+      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest, new byte[]{});
       kdfConcatGenerator.init(new KDFParameters(zBytes, null));
       int keylength = 64;
       byte[] out = new byte[keylength];
@@ -253,7 +264,7 @@ public class CryptoUtilsTest extends TestCase {
     public void testConcatKdf384() throws Exception {
       Digest kdfDigest = new SHA384Digest();
       byte[] zBytes = "this is the secrect key phrase".getBytes();
-      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest);
+      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest, new byte[]{});
       kdfConcatGenerator.init(new KDFParameters(zBytes, null));
       int keylength = 32;
       byte[] out = new byte[keylength];
@@ -264,7 +275,7 @@ public class CryptoUtilsTest extends TestCase {
     public void testConcatKdf384_48() throws Exception {
       Digest kdfDigest = new SHA384Digest();
       byte[] zBytes = "this is the secrect key phrase".getBytes();
-      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest);
+      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest, new byte[]{});
       kdfConcatGenerator.init(new KDFParameters(zBytes, null));
       int keylength = 48;
       byte[] out = new byte[keylength];
@@ -275,7 +286,7 @@ public class CryptoUtilsTest extends TestCase {
     public void testConcatKdfXmldapVsNimbus256() throws Exception {
       Digest kdfDigest = new SHA256Digest();
       byte[] zBytes = "this is the secrect key phrase".getBytes();
-      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest);
+      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest, new byte[]{});
       kdfConcatGenerator.init(new KDFParameters(zBytes, null));
       int keylength = 32;
       byte[] out = new byte[keylength];
@@ -297,7 +308,7 @@ public class CryptoUtilsTest extends TestCase {
       final String expected = "1LBfs0NBIPu1vfgnjYNMrSvBA/IJOlpwMgamYR9VnPA=";
       Digest kdfDigest = new SHA384Digest();
       byte[] zBytes = "this is the secrect key phrase".getBytes();
-      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest);
+      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest, new byte[]{});
       kdfConcatGenerator.init(new KDFParameters(zBytes, null));
       int keylength = 32;
       byte[] out = new byte[keylength];
