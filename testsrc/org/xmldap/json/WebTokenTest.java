@@ -290,9 +290,10 @@ public class WebTokenTest extends TestCase {
         ec256_a_header = "{\"alg\":\"ECDH-ES\",\r\n"+
             "\"enc\":\""+WebToken.ENC_ALG_A256GCM+"\",\r\n"+
             "\"iv\":\"__79_Pv6-fg\",\r\n"+
-            "\"crv\":\"secp256r1\",\r\n"+
-            "\"x\":\""+ec256_a_X_b64+"\",\r\n"+
-            "\"y\":\""+ec256_a_Y_b64+"\"}";
+            "\"epk\": {\"jwk\": [{\r\n"+
+            " \"crv\":\"secp256r1\",\r\n"+
+            " \"x\":\""+ec256_a_X_b64+"\",\r\n"+
+            " \"y\":\""+ec256_a_Y_b64+"\"}]}}";
    	  }
    	  {
         byte[] ec256_b_priv_bytes = Hex.decode(ec256_b_priv);
@@ -318,9 +319,10 @@ public class WebTokenTest extends TestCase {
         ec256_b_header = "{\"alg\":\"ECDH-ES\",\r\n"+
             "\"enc\":\""+WebToken.ENC_ALG_A256GCM+"\",\r\n"+
             "\"iv\":\"--68-Ou5_ef\",\r\n"+
-            "\"crv\":\"secp256r1\",\r\n"+
-            "\"x\":\""+ec256_b_X_b64+"\",\r\n"+
-            "\"y\":\""+ec256_b_Y_b64+"\"}";
+            "\"epk\": {\"jwk\": [{\r\n"+
+            " \"crv\":\"secp256r1\",\r\n"+
+            " \"x\":\""+ec256_b_X_b64+"\",\r\n"+
+            " \"y\":\""+ec256_b_Y_b64+"\"}]}}";
  
    	  }      
     } catch (Exception e) {
@@ -772,7 +774,7 @@ public class WebTokenTest extends TestCase {
   }
   
   public void testECencryption256() throws Exception {
-    String jwtHeaderSegment = ec256_a_header;
+    String jwtHeaderSegment = ec256_b_header;
     WebToken jwt = new WebToken(joeStr, jwtHeaderSegment);
     String encrypted = jwt.encrypt(ec256_a_X, ec256_a_Y, ec256_b_D);
     
@@ -795,6 +797,7 @@ public class WebTokenTest extends TestCase {
     System.out.println("ECDH-ES jwtSymmetricKeySegment base64: " + split[1]);
     System.out.println("ECDH-ES jwtCryptoSegment base64: " + split[2]);
 
+    // TODO use x,y from the newHeader epk
     String cleartext = WebToken.decrypt(encrypted, ec256_b_X, ec256_b_Y, ec256_a_D);
     assertEquals(joeStr, cleartext);
   }
@@ -826,17 +829,21 @@ public class WebTokenTest extends TestCase {
         org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL); 
     String Y_b64 = Base64.encodeBytes(Y.toByteArray(), 
         org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL); 
+    String D_b64 = Base64.encodeBytes(D.toByteArray(), 
+        org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL); 
+    System.out.println("ECDH-ES D base64=" + D_b64);
     
     String header = "{\"alg\":\"ECDH-ES\",\r\n"+
         "\"enc\":\""+WebToken.ENC_ALG_A256GCM+"\",\r\n"+
         "\"iv\":\"__79_Pv6-fg\",\r\n"+
-        "\"crv\":\""+curveName+"\",\r\n"+
-        "\"x\":\""+X_b64+"\",\r\n"+
-        "\"y\":\""+Y_b64+"\"}";
+        "\"epk\": {\"jwk\": [{\r\n"+
+        " \"crv\":\""+curveName+"\",\r\n"+
+        " \"x\":\""+X_b64+"\",\r\n"+
+        " \"y\":\""+Y_b64+"\"}]}}";
 
     String jwtHeaderSegment = header;
     WebToken jwt = new WebToken(joeStr, jwtHeaderSegment);
-    String encrypted = jwt.encrypt(X, Y, D);
+    String encrypted = jwt.encrypt(ec256_b_X, ec256_b_Y, D);
     
     String[] split = encrypted.split("\\.");
     
@@ -857,7 +864,8 @@ public class WebTokenTest extends TestCase {
     System.out.println("ECDH-ES jwtSymmetricKeySegment base64: " + split[1]);
     System.out.println("ECDH-ES jwtCryptoSegment base64: " + split[2]);
 
-    String cleartext = WebToken.decrypt(encrypted, X, Y, D);
+    // TODO use x,y from header
+    String cleartext = WebToken.decrypt(encrypted, X, Y, ec256_b_D);
     assertEquals(joeStr, cleartext);
   }
 }
