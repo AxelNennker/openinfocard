@@ -34,10 +34,14 @@ import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.ECGenParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPrivateKeySpec;
 import java.security.spec.RSAPublicKeySpec;
@@ -63,7 +67,11 @@ import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
+import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
+import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.ECUtil;
+import org.bouncycastle.jce.interfaces.ECPublicKey;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.math.ec.ECCurve;
 import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.util.encoders.Hex;
@@ -788,6 +796,68 @@ public class WebTokenTest extends TestCase {
     System.out.println("ECDH-ES jwtCryptoSegment base64: " + split[2]);
 
     String cleartext = WebToken.decrypt(encrypted, ec256_b_X, ec256_b_Y, ec256_a_D);
+    assertEquals(joeStr, cleartext);
+  }
+  
+  public void testECencryptionEphemeralKey() throws Exception {
+    String curveName = "secp256r1";
+    ECGenParameterSpec     ecGenSpec = new ECGenParameterSpec(curveName);
+
+    KeyPairGenerator    g = KeyPairGenerator.getInstance("ECDSA", new BouncyCastleProvider());
+
+    g.initialize(ecGenSpec, new SecureRandom());
+
+    //java.lang.ClassCastException: org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey cannot be cast to org.bouncycastle.asn1.sec.ECPrivateKey
+
+    KeyPair pair = g.generateKeyPair();
+    BCECPublicKey publicKey = (BCECPublicKey) pair.getPublic();
+    BCECPrivateKey privateKey = (BCECPrivateKey) pair.getPrivate();
+    
+    //  Bouncycastle
+    BigInteger X = publicKey.getQ().getX().toBigInteger();
+    BigInteger Y = publicKey.getQ().getY().toBigInteger();
+    BigInteger D = privateKey.getD();
+
+//    JCE
+//    BigInteger X  = publicKey.getQ().getAffineX();
+//    BigInteger Y  = publicKey.getQ().getAffineY();
+//    BigInteger D = privateKey.getS();
+    String X_b64 = Base64.encodeBytes(X.toByteArray(), 
+        org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL); 
+    String Y_b64 = Base64.encodeBytes(Y.toByteArray(), 
+        org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL); 
+    
+    String header = "{\"alg\":\"ECDH-ES\",\r\n"+
+        "\"enc\":\""+WebToken.ENC_ALG_A256GCM+"\",\r\n"+
+        "\"iv\":\"__79_Pv6-fg\",\r\n"+
+        "\"crv\":\""+curveName+"\",\r\n"+
+        "\"x\":\""+X_b64+"\",\r\n"+
+        "\"y\":\""+Y_b64+"\"}";
+
+    String jwtHeaderSegment = header;
+    WebToken jwt = new WebToken(joeStr, jwtHeaderSegment);
+    String encrypted = jwt.encrypt(X, Y, D);
+    
+    String[] split = encrypted.split("\\.");
+    
+    assertEquals(3, split.length);
+    
+    String newJwtHeaderSegment = new String(Base64.decodeUrl(split[0]));
+    JSONObject newJwtHeader = new JSONObject(newJwtHeaderSegment);
+    JSONObject oldJwtHeader = new JSONObject(jwtHeaderSegment);
+    
+    assertEquals(oldJwtHeader.get("alg"), newJwtHeader.get("alg"));
+    assertEquals(oldJwtHeader.get("enc"), newJwtHeader.get("enc"));
+    String ivB64 = oldJwtHeader.optString("iv", null);
+    if (ivB64 != null) {
+      assertEquals(ivB64, newJwtHeader.get("iv"));
+    }
+    System.out.println("ECDH-ES jwtHeaderSegment: " + jwtHeaderSegment);
+    System.out.println("ECDH-ES jwtHeaderSegment base64: " + split[0]);
+    System.out.println("ECDH-ES jwtSymmetricKeySegment base64: " + split[1]);
+    System.out.println("ECDH-ES jwtCryptoSegment base64: " + split[2]);
+
+    String cleartext = WebToken.decrypt(encrypted, X, Y, D);
     assertEquals(joeStr, cleartext);
   }
 }
