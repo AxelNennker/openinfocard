@@ -78,6 +78,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.math.ec.ECCurve;
 import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.util.BigIntegers;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.xmldap.crypto.CryptoUtils;
@@ -770,7 +771,11 @@ public class WebToken {
       throw new NoSuchAlgorithmException("JWT algorithm: " + jwtAlgStr);
     }
     
-    String jwtCrvStr = (String) header.getString("crv");
+    String jwtEpkStr = (String) header.getString("epk");
+    JSONObject epkJson = new JSONObject(jwtEpkStr);
+    JSONArray jwkJSON = epkJson.getJSONArray("jwk");
+    JSONObject keyJSON = jwkJSON.getJSONObject(0);
+    String jwtCrvStr = keyJSON.getString("crv");
     Digest digest = new SHA256Digest();
 
     ASN1ObjectIdentifier oid = ECUtil.getNamedCurveOid(jwtCrvStr);

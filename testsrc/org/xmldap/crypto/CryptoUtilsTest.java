@@ -239,15 +239,97 @@ public class CryptoUtilsTest extends TestCase {
       assertEquals("dU3Oi625alXZTTVSVaNiAtC47nQfYr591+KbRBwCwT4=", Base64.encodeBytesNoBreaks(out));
     }
     
+    public void testConcatKdf256Example1() throws Exception {
+      Digest kdfDigest = new SHA256Digest();
+      byte[] zBytes = {4, (byte)211, 31, (byte)197, 84, (byte)157, (byte)252, (byte)254, 11, 100, (byte)157, 
+          (byte)250, 63, (byte)170, 106, (byte)206, 107, 124, (byte)212, 45, 111, 107, 9, (byte)219, 
+          (byte)200, (byte)177, 0, (byte)240, (byte)143, (byte)156, 44, (byte)207};
+      byte[] otherInfo = {69, 110, 99, 114, 121, 112, 116, 105, 111, 110};
+      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest, otherInfo);
+      kdfConcatGenerator.init(new KDFParameters(zBytes, null));
+      int keylength = 32;
+      byte[] out = new byte[keylength];
+      kdfConcatGenerator.generateBytes(out, 0, out.length);
+      byte[] CEK1  = {(byte)249, (byte)255, 87, (byte)218, (byte)224, (byte)223, (byte)221, 53, (byte)204, 
+          121, (byte)166, (byte)130, (byte)195, (byte)184, 50, 69, 11, (byte)237, (byte)202, 71, 10, 96, 59, 
+          (byte)199, (byte)140, 88, 126, (byte)147, (byte)146, 113, (byte)222, 41};
+      String expectedB64 = Base64.encodeBytesNoBreaks(CEK1);
+      assertEquals(expectedB64, Base64.encodeBytesNoBreaks(out));
+      
+      byte[] otherInfoIntegrity = {73, 110, 116, 101, 103, 114, 105, 116, 121};
+      kdfConcatGenerator = new KDFConcatGenerator(kdfDigest, otherInfoIntegrity);
+      kdfConcatGenerator.init(new KDFParameters(zBytes, null));
+      out = new byte[keylength];
+      kdfConcatGenerator.generateBytes(out, 0, out.length);
+      byte[] CIK1  = {(byte)218, (byte)209, (byte)130, 50, (byte)169, 45, 70, (byte)214, 29, (byte)187, 123, 20, 3, 
+          (byte)158, 111, 122, (byte)182, 94, 57, (byte)133, (byte)245, 76, 97, 44, (byte)193, 80, 81, (byte)246, 
+          115, (byte)177, (byte)225, (byte)159};
+      expectedB64 = Base64.encodeBytesNoBreaks(CIK1);
+      assertEquals(expectedB64, Base64.encodeBytesNoBreaks(out));
+      
+    }
+    
+    public void testConcatKdfExample2CEK() throws Exception {
+      Digest kdfDigest = new SHA256Digest();
+      byte[] CMK2 = {
+          (byte)148, (byte)116, (byte)199, (byte)126, (byte)2, (byte)117, (byte)233, (byte)76, 
+          (byte)150, (byte)149, (byte)89, (byte)193, (byte)61, (byte)34, (byte)239, (byte)226,
+          (byte)109, (byte)71, (byte)59, (byte)160, (byte)192, (byte)140, (byte)150, (byte)235, 
+          (byte)106, (byte)204, (byte)49, (byte)176, (byte)68, (byte)119, (byte)13, (byte)34,
+          (byte)49, (byte)19, (byte)41, (byte)69, (byte)5, (byte)20, (byte)252, (byte)145, 
+          (byte)104, (byte)129, (byte)137, (byte)138, (byte)67, (byte)23, (byte)153, (byte)83,
+          (byte)81, (byte)234, (byte)82, (byte)247, (byte)48, (byte)211, (byte)41, (byte)130, 
+          (byte)35, (byte)124, (byte)45, (byte)156, (byte)249, (byte)7, (byte)225, (byte)168};
+      byte[] otherInfo = {69, 110, 99, 114, 121, 112, 116, 105, 111, 110};
+      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest, otherInfo);
+      kdfConcatGenerator.init(new KDFParameters(CMK2, null));
+      int keylength = 16;
+      byte[] out = new byte[keylength];
+      kdfConcatGenerator.generateBytes(out, 0, out.length );
+      byte[] CEK2 = {(byte)137, 5, 92, 9, 17, 47, 17, 86, (byte)253, (byte)235, 34, (byte)247, 121, 78, 11, (byte)144};
+      String expectedB64 = Base64.encodeBytesNoBreaks(CEK2);
+      assertEquals(expectedB64, Base64.encodeBytesNoBreaks(out));
+    }
+    
+    public void testConcatKdfExample2CIK() throws Exception {
+      Digest kdfDigest = new SHA256Digest();
+      byte[] CMK2 = {
+          (byte)148, (byte)116, (byte)199, (byte)126, (byte)2, (byte)117, (byte)233, (byte)76, 
+          (byte)150, (byte)149, (byte)89, (byte)193, (byte)61, (byte)34, (byte)239, (byte)226,
+          (byte)109, (byte)71, (byte)59, (byte)160, (byte)192, (byte)140, (byte)150, (byte)235, 
+          (byte)106, (byte)204, (byte)49, (byte)176, (byte)68, (byte)119, (byte)13, (byte)34,
+          (byte)49, (byte)19, (byte)41, (byte)69, (byte)5, (byte)20, (byte)252, (byte)145, 
+          (byte)104, (byte)129, (byte)137, (byte)138, (byte)67, (byte)23, (byte)153, (byte)83,
+          (byte)81, (byte)234, (byte)82, (byte)247, (byte)48, (byte)211, (byte)41, (byte)130, 
+          (byte)35, (byte)124, (byte)45, (byte)156, (byte)249, (byte)7, (byte)225, (byte)168};
+      byte[] otherInfo = {73, 110, 116, 101, 103, 114, 105, 116, 121};
+      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest, otherInfo);
+      kdfConcatGenerator.init(new KDFParameters(CMK2, null));
+      int keylength = 64;
+      byte[] out = new byte[keylength];
+      kdfConcatGenerator.generateBytes(out, 0, out.length );
+      byte[] CIK2 = {
+          (byte)11, (byte)179, (byte)132, (byte)177, (byte)171, (byte)24, (byte)126, (byte)19, (byte)113, (byte)1, (byte)200, (byte)102, (byte)100, (byte)74, (byte)88, (byte)149,
+          (byte)31, (byte)41, (byte)71, (byte)57, (byte)51, (byte)179, (byte)106, (byte)242, (byte)113, (byte)211, (byte)56, (byte)56, (byte)37, (byte)198, (byte)57, (byte)17,
+          (byte)149, (byte)209, (byte)221, (byte)113, (byte)40, (byte)191, (byte)95, (byte)252, (byte)142, (byte)254, (byte)141, (byte)230, (byte)39, (byte)113, (byte)139, (byte)84,
+          (byte)44, (byte)156, (byte)247, (byte)47, (byte)223, (byte)101, (byte)229, (byte)180, (byte)82, (byte)231, (byte)38, (byte)96, (byte)170, (byte)119, (byte)236, (byte)81
+      };
+      String expectedB64 = Base64.encodeBytesNoBreaks(CIK2);
+      assertEquals(expectedB64, Base64.encodeBytesNoBreaks(out));
+    }
+    
     public void testConcatKdf256OtherInfo() throws Exception {
       Digest kdfDigest = new SHA256Digest();
-      byte[] zBytes = "this is the secrect key phrase".getBytes();
-      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest, new byte[]{});
+      byte[] zBytes = {4, (byte)211, 31, (byte)197, 84, (byte)157, (byte)252, (byte)254, 11, 100, (byte)157, 
+          (byte)250, 63, (byte)170, 106, (byte)206, 107, 124, (byte)212, 45, 111, 107, 9, (byte)219, 
+          (byte)200, (byte)177, 0, (byte)240, (byte)143, (byte)156, 44, (byte)207};
+      byte[] otherInfo = {69, 110, 99, 114, 121, 112, 116, 105, 111, 110};
+      KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest, otherInfo);
       kdfConcatGenerator.init(new KDFParameters(zBytes, null));
       int keylength = 32;
       byte[] out = new byte[keylength];
       kdfConcatGenerator.generateBytes(out, 0, out.length );
-      assertEquals("dU3Oi625alXZTTVSVaNiAtC47nQfYr591+KbRBwCwT4=", Base64.encodeBytesNoBreaks(out));
+      assertEquals("+f9X2uDf3TXMeaaCw7gyRQvtykcKYDvHjFh+k5Jx3ik=", Base64.encodeBytesNoBreaks(out));
     }
     
     public void testConcatKdf256_64() throws Exception {
@@ -305,7 +387,7 @@ public class CryptoUtilsTest extends TestCase {
     }
     
     public void testConcatKdfXmldapVsNimbus384() throws Exception {
-      final String expected = "1LBfs0NBIPu1vfgnjYNMrSvBA/IJOlpwMgamYR9VnPA=";
+      //final String expected = "1LBfs0NBIPu1vfgnjYNMrSvBA/IJOlpwMgamYR9VnPA=";
       Digest kdfDigest = new SHA384Digest();
       byte[] zBytes = "this is the secrect key phrase".getBytes();
       KDFConcatGenerator kdfConcatGenerator = new KDFConcatGenerator(kdfDigest, new byte[]{});
@@ -313,7 +395,6 @@ public class CryptoUtilsTest extends TestCase {
       int keylength = 32;
       byte[] out = new byte[keylength];
       kdfConcatGenerator.generateBytes(out, 0, out.length);
-      assertEquals(expected, Base64.encodeBytesNoBreaks(out));
       
       String hashAlg = "SHA-384";
       int keyDataLen = 256;
@@ -323,6 +404,6 @@ public class CryptoUtilsTest extends TestCase {
       byte[] suppPubInfo = null;
       byte[] suppPrivInfo = null;
       byte[] result = ConcatKeyDerivationFunction.concatKDF(hashAlg, zBytes, keyDataLen, algorithmID, partyUInfo, partyVInfo, suppPubInfo, suppPrivInfo);
-      assertEquals(expected, Base64.encodeBytesNoBreaks(result));
+      assertEquals(Base64.encodeBytesNoBreaks(out), Base64.encodeBytesNoBreaks(result));
     }
 }

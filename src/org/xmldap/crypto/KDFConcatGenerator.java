@@ -129,9 +129,8 @@ public class KDFConcatGenerator
             digest.update((byte)(counter >> 16));
             digest.update((byte)(counter >> 8));
             digest.update((byte)counter);
-            digest.update(otherInfo, 0, otherInfo.length);
-            
             digest.update(shared, 0, shared.length);
+            digest.update(otherInfo, 0, otherInfo.length);
             
             digest.doFinal(dig, 0);
 
