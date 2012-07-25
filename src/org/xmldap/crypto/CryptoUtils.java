@@ -32,6 +32,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.security.AlgorithmParameters;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
@@ -48,23 +50,35 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.ShortBufferException;
+import javax.crypto.spec.IvParameterSpec;
 
 import net.sourceforge.lightcrypto.Crypt;
 import net.sourceforge.lightcrypto.SafeObject;
 
 import org.bouncycastle.crypto.AsymmetricBlockCipher;
+import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.BufferedBlockCipher;
+import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.encodings.OAEPEncoding;
+import org.bouncycastle.crypto.engines.AESEngine;
 import org.bouncycastle.crypto.engines.AESLightEngine;
 import org.bouncycastle.crypto.engines.RSAEngine;
 import org.bouncycastle.crypto.modes.CBCBlockCipher;
+import org.bouncycastle.crypto.modes.GCMBlockCipher;
 import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
+import org.bouncycastle.crypto.params.AEADParameters;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
 import org.bouncycastle.crypto.params.RSAKeyParameters;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.xmldap.exceptions.CryptoException;
 import org.xmldap.exceptions.SerializationException;
 import org.xmldap.util.Base64;
@@ -487,6 +501,70 @@ public class CryptoUtils {
             return certificate;
         }
 
+    }
+
+    // https://developer-content.emc.com/docs/rsashare/share_for_java/1.1/dev_guide/group__JCESAMPLES__ENCDEC__SYMCIPHER__AESGCM.html
+    public static byte[] aesgcmEncrypt(IvParameterSpec paramSpec, SecretKey secretKey, byte[] plaintext)
+        throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException,
+        ShortBufferException, IllegalBlockSizeException, BadPaddingException {
+      Cipher aesEncrypter = Cipher.getInstance("AES/GCM/NoPadding", new BouncyCastleProvider());
+      aesEncrypter.init(Cipher.ENCRYPT_MODE, secretKey, paramSpec);
+      byte[] ciphertext = aesEncrypter.doFinal(plaintext);
+
+      return ciphertext;
+    }
+
+    public static byte[] aesgcmDecrypt(IvParameterSpec ivParamSpec, SecretKey secretKey, byte[] ciphertext)
+        throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException,
+        ShortBufferException, IllegalBlockSizeException, BadPaddingException {
+      Cipher aesEncrypter = Cipher.getInstance("AES/GCM/NoPadding", new BouncyCastleProvider());
+      aesEncrypter.init(Cipher.DECRYPT_MODE, secretKey, ivParamSpec);
+      byte[] plaintext = aesEncrypter.doFinal(ciphertext);
+
+      return plaintext;
+    }
+
+    public static String[] aesgcmEncrypt(AEADParameters aeadParameters, SecretKey secretKey, byte[] plaintextBytes)
+        throws IllegalStateException, InvalidCipherTextException {
+      final int macSize = aeadParameters.getMacSize() / 8;
+      BlockCipher blockCipher = new AESEngine();
+      CipherParameters params = new KeyParameter(secretKey.getEncoded());
+      blockCipher.init(true, params);
+      GCMBlockCipher aGCMBlockCipher = new GCMBlockCipher(blockCipher);
+      aGCMBlockCipher.init(true, aeadParameters);
+      int len = aGCMBlockCipher.getOutputSize(plaintextBytes.length);
+      byte[] out = new byte[len];
+      int outOff = aGCMBlockCipher.processBytes(plaintextBytes, 0, plaintextBytes.length, out, 0);
+      outOff += aGCMBlockCipher.doFinal(out, outOff);
+      byte[] cipherText = new byte[outOff-macSize];
+      System.arraycopy(out, 0, cipherText, 0, cipherText.length);
+      String cipherTextB64 = Base64.encodeBytes(cipherText, org.xmldap.util.Base64.DONT_BREAK_LINES
+          | org.xmldap.util.Base64.URL);
+      byte[] auth = new byte[macSize];
+      System.arraycopy(out, outOff-macSize, auth, 0, auth.length);
+      String authB64 = Base64.encodeBytes(auth, org.xmldap.util.Base64.DONT_BREAK_LINES
+          | org.xmldap.util.Base64.URL);
+      return new String[]{cipherTextB64, authB64};
+    }
+
+    public static byte[] aesgcmDecrypt(
+        AEADParameters aeadParameters, SecretKey secretKey,
+        byte[] ciphertext, byte[] auth)
+        throws IllegalStateException, InvalidCipherTextException {
+      BlockCipher blockCipher = new AESEngine();
+      CipherParameters params = new KeyParameter(secretKey.getEncoded());
+      blockCipher.init(false, params);
+      GCMBlockCipher aGCMBlockCipher = new GCMBlockCipher(blockCipher);
+      aGCMBlockCipher.init(false, aeadParameters);
+      byte[] input = new byte[ciphertext.length+auth.length];
+      System.arraycopy(ciphertext, 0, input, 0, ciphertext.length);
+      System.arraycopy(auth, 0, input, ciphertext.length, auth.length);
+      int len = aGCMBlockCipher.getOutputSize(input.length);
+      byte[] out = new byte[len];
+      int outOff = aGCMBlockCipher.processBytes(input, 0, input.length, out, 0);
+      outOff += aGCMBlockCipher.doFinal(out, outOff);
+
+      return out;
     }
 
 }
