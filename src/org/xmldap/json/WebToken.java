@@ -83,7 +83,7 @@ import org.xmldap.util.Base64;
 public class WebToken {
 
   public static final String SIGN_ALG_HS256 = "HS256";
-  public static final String SIGN_ALG_HS383 = "HS384";
+  public static final String SIGN_ALG_HS384 = "HS384";
   public static final String SIGN_ALG_HS512 = "HS512";
 
   public static final String SIGN_ALG_ES256 = "ES256";
@@ -852,6 +852,38 @@ public class WebToken {
     return key;
   }
   
+  public static int enc2cekLength(String jwtEncStr) throws NoSuchAlgorithmException {
+    int cekLength;
+    {
+      if (ENC_ALG_A128CBC.equals(jwtEncStr)) {
+        cekLength = 128 / 8;
+      } else if (ENC_ALG_A192CBC.equals(jwtEncStr)) {
+        cekLength = 192 / 8;
+      } else if (ENC_ALG_A256CBC.equals(jwtEncStr)) {
+        cekLength = 256 / 8;
+      } else if (ENC_ALG_A512CBC.equals(jwtEncStr)) {
+        cekLength = 512 / 8;
+      } else {
+        throw new NoSuchAlgorithmException("WebToken RSA encrypt: CBC enc=" + jwtEncStr);
+      }
+    }
+    return cekLength;
+  }
+  
+  public static int int2cikLength(String jwtIntStr) throws NoSuchAlgorithmException {
+    int cikLength;
+    if (SIGN_ALG_HS256.equals(jwtIntStr)) {
+      cikLength = 256 / 8;
+    } else if (SIGN_ALG_HS384.equals(jwtIntStr)) {
+      cikLength = 384 / 8;
+    } else if (SIGN_ALG_HS512.equals(jwtIntStr)) {
+      cikLength = 512 / 8;
+    } else {
+      throw new NoSuchAlgorithmException("WebToken RSA encrypt: CBC inc=" + jwtIntStr);
+    }
+    return cikLength;
+  }
+  
   public String encrypt(RSAPublicKey rsaPublicKey, SecretKey contentEncryptionKey) throws Exception {
     String b64;
     String jwtEncStr = (String) mHeader.get("enc");
@@ -889,7 +921,8 @@ public class WebToken {
 
     if ((ENC_ALG_A128CBC.equals(jwtEncStr)) || ((ENC_ALG_A192CBC.equals(jwtEncStr)))
         || ((ENC_ALG_A256CBC.equals(jwtEncStr))) || ((ENC_ALG_A512CBC.equals(jwtEncStr)))) {
-      byte[] cek = generateCEK(contentEncryptionKey.getEncoded(), 32);
+      int cekLength = enc2cekLength(jwtEncStr);
+      byte[] cek = generateCEK(contentEncryptionKey.getEncoded(), cekLength);
       {
         SafeObject keyBytes = new SafeObject();
         keyBytes.setText(cek);
@@ -905,8 +938,9 @@ public class WebToken {
             | org.xmldap.util.Base64.URL);
         {
           String stringToSign = encodedJweHeader + "." + encodedJweEncryptedKey + "." + encodedJweCiphertext;
-          byte[] cik = generateCIK(contentEncryptionKey.getEncoded(), 32);
           String jwtIntStr = (String) mHeader.get("int");
+          int cikLength = int2cikLength(jwtIntStr);
+          byte[] cik = generateCIK(contentEncryptionKey.getEncoded(), cikLength);
           byte[] bytes = doMac(jwtIntStr, cik, stringToSign.getBytes());
           encodedJweIntegrityValue = Base64.encodeBytes(bytes, org.xmldap.util.Base64.DONT_BREAK_LINES
             | org.xmldap.util.Base64.URL);
@@ -998,17 +1032,17 @@ public class WebToken {
       Cipher encrypter = Cipher.getInstance("RSA/ECB/PKCS1Padding");
       encrypter.init(Cipher.DECRYPT_MODE, rsaPrivateKey);
       byte[] secretKeyBytes = encrypter.doFinal(cipheredKeyBytes);
-      if (8 * secretKeyBytes.length != keylength) {
-        throw new Exception("WebToken.decrypt RSA PKCS1Padding symmetric key length mismatch: " + secretKeyBytes.length
-            + " != " + keylength);
-      }
+//      if (8 * secretKeyBytes.length != keylength) {
+//        throw new Exception("WebToken.decrypt RSA PKCS1Padding symmetric key length mismatch: "
+//            + Integer.toString(8 * secretKeyBytes.length) + " != " + keylength);
+//      }
       keySpec = new SecretKeySpec(secretKeyBytes, symmetricAlgorithm);
     } else if (ENC_ALG_RSA_OAEP.equals(jwtAlgStr)) {
       byte[] secretKeyBytes = CryptoUtils.decryptRSAOAEP(cipheredKeyBytes, rsaPrivateKey);
-      if (8 * secretKeyBytes.length != keylength) {
-        throw new Exception("WebToken.decrypt RSA OAEP symmetric key length mismatch: " + secretKeyBytes.length
-            + " != " + keylength);
-      }
+//      if (8 * secretKeyBytes.length != keylength) {
+//        throw new Exception("WebToken.decrypt RSA OAEP symmetric key length mismatch: " + secretKeyBytes.length
+//            + " != " + keylength);
+//      }
       keySpec = new SecretKeySpec(secretKeyBytes, symmetricAlgorithm);
     } else {
       throw new NoSuchAlgorithmException("RSA decrypt " + jwtAlgStr);
@@ -1016,7 +1050,8 @@ public class WebToken {
 
     if ((ENC_ALG_A128CBC.equals(jwtEncStr)) || (ENC_ALG_A192CBC.equals(jwtEncStr))
         || (ENC_ALG_A256CBC.equals(jwtEncStr)) || (ENC_ALG_A512CBC.equals(jwtEncStr))) {
-      byte[] cek = generateCEK(keySpec.getEncoded(), 32);
+      int cekLength = enc2cekLength(jwtEncStr);
+      byte[] cek = generateCEK(keySpec.getEncoded(), cekLength);
 
       SafeObject keyBytes = new SafeObject();
       byte[] secretKeyBytes = cek;
@@ -1025,15 +1060,15 @@ public class WebToken {
       byte[] jwtCryptoSegmentBytes = Base64.decodeUrl(encodedJwtCryptoSegment);
       StringBuffer clearTextBuffer = CryptoUtils.decryptAESCBC(new StringBuffer(new String(jwtCryptoSegmentBytes)),
           keyBytes);
-
-      byte[] cik = generateCIK(keySpec.getEncoded(), 32);
-      String stringToSign = encodedJwtHeaderSegment + "." + encodedJwtKeySegment + "." + encodedJwtCryptoSegment;
       String jwtIntStr = (String) header.get("int");
+      int cikLength = int2cikLength(jwtIntStr);
+      byte[] cik = generateCIK(keySpec.getEncoded(), cikLength);
+      String stringToSign = encodedJwtHeaderSegment + "." + encodedJwtKeySegment + "." + encodedJwtCryptoSegment;
       byte[] bytes = doMac(jwtIntStr, cik, stringToSign.getBytes());
       if (Arrays.constantTimeAreEqual(bytes, jwtIntegritySegmentBytes)) {
         return clearTextBuffer.toString();
       } else {
-        throw new Exception("jwt integrety check failed");
+        throw new Exception("jwt integrity check failed");
       }
     }
     if ((ENC_ALG_A128GCM.equals(jwtEncStr)) || (ENC_ALG_A192GCM.equals(jwtEncStr))
