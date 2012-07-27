@@ -39,7 +39,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import net.sourceforge.lightcrypto.SafeObject;
 import nu.xom.Attribute;
 import nu.xom.Builder;
 import nu.xom.Document;
@@ -303,19 +302,11 @@ public class STSWithSym  extends HttpServlet {
         }
 
 
-        SafeObject keyBytes = new SafeObject();
-        try {
-            keyBytes.setText(clearTextKey);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
          StringBuffer clearTextBuffer = new StringBuffer(cipherText);
 
-         StringBuffer rst = null;
+         byte[] rst = null;
          try {
-             rst = CryptoUtils.decryptAESCBC(clearTextBuffer, keyBytes);
+             rst = CryptoUtils.decryptAESCBC(cipherText, clearTextKey);
          } catch (org.xmldap.exceptions.CryptoException e) {
              e.printStackTrace();
          }
@@ -324,9 +315,9 @@ public class STSWithSym  extends HttpServlet {
 
 
          StringBuffer tokenBuffer = new StringBuffer(tokenCipherText);
-         StringBuffer token = null;
+         byte[] token = null;
          try {
-             token = CryptoUtils.decryptAESCBC(tokenBuffer, keyBytes);
+             token = CryptoUtils.decryptAESCBC(tokenCipherText, clearTextKey);
          } catch (org.xmldap.exceptions.CryptoException e) {
              e.printStackTrace();
          }
@@ -346,7 +337,7 @@ public class STSWithSym  extends HttpServlet {
 
         Bag tokenElements = null;
         try {
-            tokenElements = parseToken(token.toString());
+            tokenElements = parseToken(new String(token));
         } catch (ParsingException e) {
             e.printStackTrace();
             //TODO - SOAP Fault

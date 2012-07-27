@@ -30,7 +30,6 @@ package org.xmldap.xmlenc;
 
 import java.security.cert.X509Certificate;
 
-import net.sourceforge.lightcrypto.SafeObject;
 import nu.xom.Attribute;
 import nu.xom.Element;
 
@@ -128,21 +127,13 @@ public class EncryptedData implements Serializable {
         Element cipherData = new Element(WSConstants.ENC_PREFIX + ":CipherData", WSConstants.ENC_NAMESPACE);
         Element cipherValue = new Element(WSConstants.ENC_PREFIX + ":CipherValue", WSConstants.ENC_NAMESPACE);
 
-
-        SafeObject keyBytes = new SafeObject();
+        String cipherText = null;
         try {
-            keyBytes.setText(secretKey);
-        } catch (Exception e) {
-            throw new SerializationException("keyBytes.setText threw:", e);
-        }
-        StringBuffer clearTextBuffer = new StringBuffer(data);
-        StringBuffer cipherText = null;
-        try {
-            cipherText = CryptoUtils.encryptAESCBC(clearTextBuffer, keyBytes);
+          cipherText = CryptoUtils.encryptAESCBC(data, secretKey);
         } catch (org.xmldap.exceptions.CryptoException e) {
             e.printStackTrace();
         }
-        cipherValue.appendChild(cipherText.toString());
+        cipherValue.appendChild(cipherText);
         cipherData.appendChild(cipherValue);
         encryptedData.appendChild(cipherData);
 

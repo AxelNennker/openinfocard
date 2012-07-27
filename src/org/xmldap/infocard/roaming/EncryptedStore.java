@@ -39,7 +39,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Random;
 
-import net.sourceforge.lightcrypto.SafeObject;
 import nu.xom.Builder;
 import nu.xom.Document;
 import nu.xom.Element;
@@ -209,21 +208,11 @@ public class EncryptedStore {
         System.arraycopy(data, 0, ivPlusData, 16, data.length);
 
 
-        SafeObject keyBytes = new SafeObject();
-        try {
-            keyBytes.setText(keys.getEncryptionKey());
-        } catch (Exception e) {
-            throw new CryptoException("Error Parsing Roaming Store", e);
-        }
-
-
-        StringBuffer clearText = null;
-
-        clearText = CryptoUtils.decryptAESCBC(new StringBuffer(Base64.encodeBytesNoBreaks(ivPlusData)), keyBytes);
+        byte[] clearText = CryptoUtils.decryptAESCBC(Base64.encodeBytesNoBreaks(ivPlusData), keys.getEncryptionKey());
 
         byte[] hashedIntegrityCode;
         try {
-        	hashedIntegrityCode = getHashedIntegrityCode(iv, keys.getIntegrityKey(),  clearText.toString());
+        	hashedIntegrityCode = getHashedIntegrityCode(iv, keys.getIntegrityKey(),  clearText);
         } catch (NoSuchAlgorithmException e) {
         	throw new CryptoException("NoSuchAlgorithmException while Parsing Roaming Store", e);
         } catch (UnsupportedEncodingException e) {
@@ -235,8 +224,9 @@ public class EncryptedStore {
         }
 
         //get rid of the byte order mark
-        int start = clearText.indexOf("<RoamingStore");
-        return clearText.substring(start);
+        int start = 0;
+        while (start < clearText.length && clearText[start] != '<') start++;
+        return new String(clearText, start, clearText.length-start);
 
     }
 
@@ -294,7 +284,7 @@ public class EncryptedStore {
         }
         byte[] integrityCode;
         try {
-        	integrityCode= getHashedIntegrityCode(iv, keys.getIntegrityKey(),roamingStoreString);
+        	integrityCode= getHashedIntegrityCode(iv, keys.getIntegrityKey(),roamingStoreString.getBytes());
         } catch (NoSuchAlgorithmException e) {
         	throw new CryptoException("NoSuchAlgorithmException while getting getHashedIntegrityCode", e);
         } catch (UnsupportedEncodingException e) {
@@ -370,15 +360,12 @@ public class EncryptedStore {
 
 
 
-    private static byte[] getHashedIntegrityCode(byte[] iv, byte[] integrityKey,  String clearText) throws UnsupportedEncodingException, NoSuchAlgorithmException {
+    private static byte[] getHashedIntegrityCode(byte[] iv, byte[] integrityKey,  byte[] clearBytes) throws UnsupportedEncodingException, NoSuchAlgorithmException {
 
-        byte[] clearBytes = new byte[0];
-        clearBytes = clearText.getBytes("UTF8");
         byte[] lastBlock = new byte[16];
         System.arraycopy(clearBytes,clearBytes.length - 16 ,lastBlock, 0, 16);
 
-        MessageDigest digest = null;
-        digest = MessageDigest.getInstance("SHA-256");
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
 
         byte[] integrityCheck = new byte[64];
         System.arraycopy(iv, 0, integrityCheck, 0, 16);

@@ -31,7 +31,6 @@ package org.xmldap.rp;
 import java.io.IOException;
 import java.security.PrivateKey;
 
-import net.sourceforge.lightcrypto.SafeObject;
 import nu.xom.Document;
 import nu.xom.Element;
 import nu.xom.Nodes;
@@ -99,24 +98,13 @@ public class DecryptUtil {
             throw new CryptoException("Error using RSA to decrypt the AES Encryption Key", e);
         }
         
-        SafeObject keyBytes = new SafeObject();
         try {
-            keyBytes.setText(clearTextKey);
-        } catch (Exception e) {
-            throw new CryptoException("Error Generating SafeObject for AES decryption of token", e);
-        }
-        StringBuffer clearTextBuffer = new StringBuffer(dataCipherText);
-
-        StringBuffer clearText = null;
-        try {
-            clearText = CryptoUtils.decryptAESCBC(clearTextBuffer, keyBytes);
+            byte[] cleartextBytes = CryptoUtils.decryptAESCBC(dataCipherText, clearTextKey);
+            return new String(cleartextBytes);
         } catch (org.xmldap.exceptions.CryptoException e) {
-            System.out.println("ClearTextBuffer: " + clearTextBuffer.toString());
+            System.out.println("dataCipherText: " + dataCipherText);
             throw new CryptoException("Error performing AES decryption of token", e);
         }
-
-        return clearText.toString();
-
     }
 
 	/**

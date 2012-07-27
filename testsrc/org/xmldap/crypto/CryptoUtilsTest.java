@@ -30,6 +30,7 @@ package org.xmldap.crypto;
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -51,7 +52,6 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.ShortBufferException;
-import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import junit.framework.TestCase;
@@ -68,7 +68,6 @@ import org.bouncycastle.crypto.params.AEADParameters;
 import org.bouncycastle.crypto.params.KDFParameters;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.util.encoders.Hex;
 import org.xmldap.exceptions.CryptoException;
 import org.xmldap.util.Base64;
 import org.xmldap.util.XmldapCertsAndKeys;
@@ -532,31 +531,31 @@ public class CryptoUtilsTest extends TestCase {
     assertTrue(Arrays.equals(cmk, decrypted));
   }
 
-  private void testAesGcm(IvParameterSpec ivParamSpec, SecretKey secretKey, byte[] plaintext)
-      throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException,
-      ShortBufferException, IllegalBlockSizeException, BadPaddingException {
-    byte[] ciphertext = CryptoUtils.aesgcmEncrypt(ivParamSpec, secretKey, plaintext);
+//  private void testAesGcm(IvParameterSpec ivParamSpec, SecretKey secretKey, byte[] plaintext)
+//      throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException,
+//      ShortBufferException, IllegalBlockSizeException, BadPaddingException {
+//    byte[] ciphertext = CryptoUtils.aesgcmEncrypt(ivParamSpec, secretKey, plaintext);
+//
+//    byte[] recoveredplaintext = CryptoUtils.aesgcmDecrypt(ivParamSpec, secretKey, ciphertext);
+//
+//    String plaintextB64 = Base64.encodeBytesNoBreaks(plaintext);
+//    String recoveredplaintextB64 = Base64.encodeBytesNoBreaks(recoveredplaintext);
+//    assertEquals(plaintextB64, recoveredplaintextB64);
+//  }
 
-    byte[] recoveredplaintext = CryptoUtils.aesgcmDecrypt(ivParamSpec, secretKey, ciphertext);
-
-    String plaintextB64 = Base64.encodeBytesNoBreaks(plaintext);
-    String recoveredplaintextB64 = Base64.encodeBytesNoBreaks(recoveredplaintext);
-    assertEquals(plaintextB64, recoveredplaintextB64);
-  }
-
-  public void testAesGcm128() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException,
-      InvalidAlgorithmParameterException, ShortBufferException, IllegalBlockSizeException, BadPaddingException {
-    byte[] plaintext = "plaintext".getBytes();
-    String keybytes128B64 = "wkp7v4KkBox9rSwVBXT+aA==";
-
-    byte[] keyData = Base64.decode(keybytes128B64);
-    SecretKey secretKey = new SecretKeySpec(keyData, "AES128");
-
-    byte[] N = Hex.decode("cafebabefacedbaddecaf888");
-    IvParameterSpec ivParamSpec = new IvParameterSpec(N);
-
-    testAesGcm(ivParamSpec, secretKey, plaintext);
-  }
+//  public void testAesGcm128() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException,
+//      InvalidAlgorithmParameterException, ShortBufferException, IllegalBlockSizeException, BadPaddingException {
+//    byte[] plaintext = "plaintext".getBytes();
+//    String keybytes128B64 = "wkp7v4KkBox9rSwVBXT+aA==";
+//
+//    byte[] keyData = Base64.decode(keybytes128B64);
+//    SecretKey secretKey = new SecretKeySpec(keyData, "AES");
+//
+//    byte[] N = Hex.decode("cafebabefacedbaddecaf888");
+//    IvParameterSpec ivParamSpec = new IvParameterSpec(N);
+//
+//    testAesGcm(ivParamSpec, secretKey, plaintext);
+//  }
 
   public void testAesGcm128Auth() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException,
       InvalidAlgorithmParameterException, ShortBufferException, IllegalBlockSizeException, BadPaddingException,
@@ -622,25 +621,26 @@ public class CryptoUtilsTest extends TestCase {
   }
 
   public void testEncryptAesGcmAEAD() throws Exception {
-    String encodedJwtHeader = "eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00iLCJpdiI6IjQ4VjFfQUxiNlVTMDRVM2IifQ";
-    String encodedJweEncryptedKey = "jvwoyhWxOMboB5cxX6ncAi7Wp3Q5FKRtlmIx35pfR9HpEa6Oy-iEpxEqM30W3YcR"
+    final String encodedJwtHeader = "eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00iLCJpdiI6IjQ4VjFfQUxiNlVTMDRVM2IifQ";
+    final String encodedJweEncryptedKey = "jvwoyhWxOMboB5cxX6ncAi7Wp3Q5FKRtlmIx35pfR9HpEa6Oy-iEpxEqM30W3YcR"
         + "Q8WU9ouRoO5jd6tfdcpX-2X-OteHw4dnMXdMLjHGGx86LMDeFRAN2KGz7EGPJiva"
         + "w0yM80fzT3zY0PKrIvU5ml1M5szqUnX4Jw0-PNcIM_j-L5YkLhv3Yk04XCwTJwxN"
         + "NmXCflYAQO9f00Aa213TJJr6dbHV6I642FwU-EWvtEfN3evgX3EFIVYSnT3HCHkA"
         + "AIdBQ9ykD-abRzVA_dGp_yJAZQcrZuNTqzThd_22YMPhIpzTygfC_4k7qqxI6t7L" + "e_l5_o-taUG7vaNAl5FjEQ";
 
-    byte[] cmk = { (byte) 177, (byte) 161, (byte) 244, (byte) 128, (byte) 84, (byte) 143, (byte) 225, (byte) 115,
+    final byte[] cmk = { (byte) 177, (byte) 161, (byte) 244, (byte) 128, (byte) 84, (byte) 143, (byte) 225, (byte) 115,
         (byte) 63, (byte) 180, (byte) 3, (byte) 255, (byte) 107, (byte) 154, (byte) 212, (byte) 246, (byte) 138,
         (byte) 7, (byte) 110, (byte) 91, (byte) 112, (byte) 46, (byte) 34, (byte) 105, (byte) 47, (byte) 130,
         (byte) 203, (byte) 46, (byte) 122, (byte) 234, (byte) 64, (byte) 252 };
-    byte[] plaintextBytes = { 76, 105, 118, 101, 32, 108, 111, 110, 103, 32, 97, 110, 100, 32, 112, 114, 111, 115, 112,
+    System.out.println("cmk.length="+cmk.length);
+    final byte[] plaintextBytes = { 76, 105, 118, 101, 32, 108, 111, 110, 103, 32, 97, 110, 100, 32, 112, 114, 111, 115, 112,
         101, 114, 46 };
     KeyParameter key = new KeyParameter(cmk);
-    int macSizeBits = 128;
+    final int macSizeBits = 128; // FIXME why 128?
     byte[] nonce = { (byte) 227, (byte) 197, (byte) 117, (byte) 252, (byte) 2, (byte) 219, (byte) 233, (byte) 68,
         (byte) 180, (byte) 225, (byte) 77, (byte) 219 };
     String associatedText = encodedJwtHeader.concat(".").concat(encodedJweEncryptedKey);
-    String expected = "eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00iLCJpdiI6IjQ4VjFfQUxi" + "NlVTMDRVM2IifQ."
+    final String expected = "eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00iLCJpdiI6IjQ4VjFfQUxi" + "NlVTMDRVM2IifQ."
         + "jvwoyhWxOMboB5cxX6ncAi7Wp3Q5FKRtlmIx35pfR9HpEa6Oy-iEpxEqM30W3YcR"
         + "Q8WU9ouRoO5jd6tfdcpX-2X-OteHw4dnMXdMLjHGGx86LMDeFRAN2KGz7EGPJiva"
         + "w0yM80fzT3zY0PKrIvU5ml1M5szqUnX4Jw0-PNcIM_j-L5YkLhv3Yk04XCwTJwxN"
@@ -658,6 +658,53 @@ public class CryptoUtilsTest extends TestCase {
     assertEquals("YbZSeHCNDZBqAdzpROlyiw", encodedJweIntegrityValue);
   }
   
+  public void testEncryptAesGcmAEAD1() throws Exception {
+    final String encodedJwtHeader = "eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00iLCJpdiI6IjQ4VjFfQUxiNlVTMDRVM2IifQ";
+    final String encodedJweEncryptedKey = "jvwoyhWxOMboB5cxX6ncAi7Wp3Q5FKRtlmIx35pfR9HpEa6Oy-iEpxEqM30W3YcR"
+        + "Q8WU9ouRoO5jd6tfdcpX-2X-OteHw4dnMXdMLjHGGx86LMDeFRAN2KGz7EGPJiva"
+        + "w0yM80fzT3zY0PKrIvU5ml1M5szqUnX4Jw0-PNcIM_j-L5YkLhv3Yk04XCwTJwxN"
+        + "NmXCflYAQO9f00Aa213TJJr6dbHV6I642FwU-EWvtEfN3evgX3EFIVYSnT3HCHkA"
+        + "AIdBQ9ykD-abRzVA_dGp_yJAZQcrZuNTqzThd_22YMPhIpzTygfC_4k7qqxI6t7L" + "e_l5_o-taUG7vaNAl5FjEQ";
+
+    final byte[] cmk = { (byte) 177, (byte) 161, (byte) 244, (byte) 128, (byte) 84, (byte) 143, (byte) 225, (byte) 115,
+        (byte) 63, (byte) 180, (byte) 3, (byte) 255, (byte) 107, (byte) 154, (byte) 212, (byte) 246, (byte) 138,
+        (byte) 7, (byte) 110, (byte) 91, (byte) 112, (byte) 46, (byte) 34, (byte) 105, (byte) 47, (byte) 130,
+        (byte) 203, (byte) 46, (byte) 122, (byte) 234, (byte) 64, (byte) 252 };
+    System.out.println("cmk.length="+cmk.length);
+    final byte[] plaintextBytes = { 76, 105, 118, 101, 32, 108, 111, 110, 103, 32, 97, 110, 100, 32, 112, 114, 111, 115, 112,
+        101, 114, 46 };
+    byte[] nonce = { (byte) 227, (byte) 197, (byte) 117, (byte) 252, (byte) 2, (byte) 219, (byte) 233, (byte) 68,
+        (byte) 180, (byte) 225, (byte) 77, (byte) 219 };
+    String associatedText = encodedJwtHeader.concat(".").concat(encodedJweEncryptedKey);
+    final String expected = "eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00iLCJpdiI6IjQ4VjFfQUxi" + "NlVTMDRVM2IifQ."
+        + "jvwoyhWxOMboB5cxX6ncAi7Wp3Q5FKRtlmIx35pfR9HpEa6Oy-iEpxEqM30W3YcR"
+        + "Q8WU9ouRoO5jd6tfdcpX-2X-OteHw4dnMXdMLjHGGx86LMDeFRAN2KGz7EGPJiva"
+        + "w0yM80fzT3zY0PKrIvU5ml1M5szqUnX4Jw0-PNcIM_j-L5YkLhv3Yk04XCwTJwxN"
+        + "NmXCflYAQO9f00Aa213TJJr6dbHV6I642FwU-EWvtEfN3evgX3EFIVYSnT3HCHkA"
+        + "AIdBQ9ykD-abRzVA_dGp_yJAZQcrZuNTqzThd_22YMPhIpzTygfC_4k7qqxI6t7L" + "e_l5_o-taUG7vaNAl5FjEQ";
+    assertEquals(expected, associatedText);
+    byte[] associatedTextBytes = associatedText.getBytes();
+
+    String[] result = CryptoUtils.aesgcmEncrypt(cmk, plaintextBytes, nonce, associatedTextBytes);
+    String encodedJweCiphertext = result[0];
+    String encodedJweIntegrityValue = result[1];
+    assertEquals("_e21tGGhac_peEFkLXr2dMPUZiUkrw", encodedJweCiphertext);
+    assertEquals("YbZSeHCNDZBqAdzpROlyiw", encodedJweIntegrityValue);
+  }
+  
+  public void testAESWrapping() throws Exception {
+    int keylength = 128;
+    byte[] cmk = new byte[keylength];
+    SecureRandom sr = new SecureRandom();
+    sr.nextBytes(cmk);
+    SecretKeySpec keyEncryptionKey = new SecretKeySpec("passwordpassword".getBytes(), "AES");
+    SecretKeySpec keyToBeWrapped = new SecretKeySpec(cmk, "AES");
+    byte[] wrappedKey = CryptoUtils.wrapAesKey(keyToBeWrapped, keyEncryptionKey);
+
+    Key unwrappedKey = CryptoUtils.unwrapAesKey(wrappedKey, keyEncryptionKey);
+    assertTrue(Arrays.equals(unwrappedKey.getEncoded(), cmk));
+    
+  }
   public void testAesCbc() throws Exception {
     
   }

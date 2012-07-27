@@ -31,7 +31,6 @@ package org.xmldap.json;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
-import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -47,14 +46,9 @@ import java.security.spec.RSAPrivateKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.Arrays;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
-import javax.crypto.ShortBufferException;
-import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import junit.framework.TestCase;
@@ -62,19 +56,12 @@ import junit.framework.TestCase;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
-import org.bouncycastle.crypto.BlockCipher;
-import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.Digest;
-import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.agreement.ECDHBasicAgreement;
 import org.bouncycastle.crypto.digests.SHA256Digest;
-import org.bouncycastle.crypto.engines.AESEngine;
-import org.bouncycastle.crypto.modes.GCMBlockCipher;
-import org.bouncycastle.crypto.params.AEADParameters;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
-import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.ECUtil;
@@ -90,12 +77,12 @@ import org.xmldap.util.Base64;
 public class WebTokenTest extends TestCase {
   JSONObject joeO = null;
 
-  String joeStr = "{\"iss\":\"joe\",\r\n" + " \"exp\":1300819380,\r\n" + " \"http://example.com/is_root\":true}";
+  final String joeStr = "{\"iss\":\"joe\",\r\n" + " \"exp\":1300819380,\r\n" + " \"http://example.com/is_root\":true}";
 
-  String hs256 = "{\"typ\":\"JWT\",\r\n" + " \"alg\":\"HS256\"}";
-  String hs384 = "{\"typ\":\"JWT\",\r\n" + " \"alg\":\"HS384\"}";
-  String hs512 = "{\"typ\":\"JWT\",\r\n" + " \"alg\":\"HS512\"}";
-  byte[] hsKey = { 3, (byte) 35, (byte) 53, (byte) 75, (byte) 43, (byte) 15, (byte) 165, (byte) 188, (byte) 131,
+  final String hs256 = "{\"typ\":\"JWT\",\r\n" + " \"alg\":\"HS256\"}";
+  final String hs384 = "{\"typ\":\"JWT\",\r\n" + " \"alg\":\"HS384\"}";
+  final String hs512 = "{\"typ\":\"JWT\",\r\n" + " \"alg\":\"HS512\"}";
+  final byte[] hsKey = { 3, (byte) 35, (byte) 53, (byte) 75, (byte) 43, (byte) 15, (byte) 165, (byte) 188, (byte) 131,
       (byte) 126, (byte) 6, (byte) 101, (byte) 119, (byte) 123, (byte) 166, (byte) 143, (byte) 90, (byte) 179,
       (byte) 40, (byte) 230, (byte) 240, (byte) 84, (byte) 201, (byte) 40, (byte) 169, (byte) 15, (byte) 132,
       (byte) 178, (byte) 210, (byte) 80, (byte) 46, (byte) 191, (byte) 211, (byte) 251, (byte) 90, (byte) 146,
@@ -111,21 +98,19 @@ public class WebTokenTest extends TestCase {
   String rs384 = "{\"alg\":\"RS384\"}";
   String rs512 = "{\"alg\":\"RS512\"}";
 
-  String ae128 = "{\"alg\":\"AE128\"}";
-  String ae192 = "{\"alg\":\"AE192\"}";
-  String ae256 = "{\"alg\":\"AE256\"}";
+  String a128kw = "{\"alg\":\"A128KW\", \"enc\":\"A128GCM\", \"iv\":\"AxY8DCtDaGlsbGljb3RoZQ\"}";
+  String a256kw = "{\"alg\":\"A256KW\", \"int\":\"HS256\", \"enc\":\"A256CBC\", \"iv\":\"AxY8DCtDaGlsbGljb3RoZQ\"}";
 
   String A128GCM = "{\"alg\":\"A128GCM\"}";
 
-  String re256GCM = "{\"alg\":\"RSA1_5\",\r\n" + "\"enc\":\"A256GCM\",\r\n" + "\"iv\":\"__79_Pv6-fg\",\r\n"
+  String re256GCM = "{\"alg\":\"RSA1_5\",\r\n" + "\"enc\":\"A256GCM\",\r\n" + "\"iv\":\"AxY8DCtDaGlsbGljb3RoZQ\",\r\n"
       + "\"x5t\":\"7noOPq-hJ1_hCnvWh6IeYI2w9Q0\"}";
 
-  String re128GCM = "{\"alg\":\"RSA1_5\",\r\n" + "\"enc\":\"A128GCM\",\r\n" + "\"iv\":\"__79_Pv6-fg\",\r\n"
+  String re128GCM = "{\"alg\":\"RSA1_5\",\r\n" + "\"enc\":\"A128GCM\",\r\n" + "\"iv\":\"AxY8DCtDaGlsbGljb3RoZQ\",\r\n"
       + "\"x5t\":\"7noOPq-hJ1_hCnvWh6IeYI2w9Q0\"}";
 
-  String ae128b64;
-  String ae192b64;
-  String ae256b64;
+  String a128kwb64;
+  String a256kwb64;
 
   String rsa15AesGcm128HeaderStr;
   String rsa15AesGcm128HeaderStrb64;
@@ -287,11 +272,9 @@ public class WebTokenTest extends TestCase {
       rsaOaepAesCbc256HeaderStrb64 = Base64.encodeBytes(rsaOaepAesCbc256HeaderStr.getBytes("utf-8"),
           org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
 
-      ae128b64 = Base64.encodeBytes(ae128.getBytes("utf-8"), org.xmldap.util.Base64.DONT_BREAK_LINES
+      a128kwb64 = Base64.encodeBytes(a128kw.getBytes("utf-8"), org.xmldap.util.Base64.DONT_BREAK_LINES
           | org.xmldap.util.Base64.URL);
-      ae192b64 = Base64.encodeBytes(ae192.getBytes("utf-8"), org.xmldap.util.Base64.DONT_BREAK_LINES
-          | org.xmldap.util.Base64.URL);
-      ae256b64 = Base64.encodeBytes(ae256.getBytes("utf-8"), org.xmldap.util.Base64.DONT_BREAK_LINES
+      a256kwb64 = Base64.encodeBytes(a256kw.getBytes("utf-8"), org.xmldap.util.Base64.DONT_BREAK_LINES
           | org.xmldap.util.Base64.URL);
 
       // byte[] keybytes128 = new byte[16];
@@ -383,51 +366,12 @@ public class WebTokenTest extends TestCase {
   public void testBadHeader() throws Exception {
     String b = "{\"alg\":\"ECDH-ES\",\"alg\":\"another alg\"}";
     try {
+      @SuppressWarnings("unused")
       JSONObject j = new JSONObject(b);
       fail();
     } catch (JSONException e) {
 
     }
-  }
-
-  // public void testAesGcm256() throws InvalidKeyException,
-  // NoSuchAlgorithmException, NoSuchPaddingException,
-  // InvalidAlgorithmParameterException, ShortBufferException,
-  // IllegalBlockSizeException, BadPaddingException
-  // {
-  // byte[] plaintext = "plaintext".getBytes();
-  // byte[] keyData = Base64.decode(keybytes256B64);
-  // System.out.println("keyData.length=" + keyData.length);
-  // byte[] N = Hex.decode("cafebabefacedbaddecaf888");
-  // IvParameterSpec ivParamSpec = new IvParameterSpec(N);
-  //
-  // SecretKey secretKey = new SecretKeySpec(keyData , "AES256");
-  // testAesGcm(ivParamSpec, secretKey, plaintext);
-  // }
-
-  public void testAesGcmJWE() throws Exception {
-    JSONObject jweHeaderO = new JSONObject();
-    jweHeaderO.put("alg", "A128GCM");
-    byte[] ivBytes = Hex.decode("cafebabefacedbaddecaf888");
-    String base64urlStr = Base64.encodeBytes(ivBytes, org.xmldap.util.Base64.DONT_BREAK_LINES
-        | org.xmldap.util.Base64.URL);
-    jweHeaderO.put("iv", base64urlStr);
-    String jwe = jweHeaderO.toString();
-    System.out.println("testAesGcmJWE jweB64url=" + jwe);
-    WebToken jwt = new WebToken(joeStr, jweHeaderO);
-
-    byte[] keyData = Base64.decode(keybytes128B64);
-    System.out.println("keyData.length=" + keyData.length);
-    byte[] N = Hex.decode("cafebabefacedbaddecaf888");
-    IvParameterSpec ivParamSpec = new IvParameterSpec(N);
-    SecretKey secretKey = new SecretKeySpec(keyData, "AES");
-
-    String encryptedJWT = jwt.encrypt(secretKey, ivParamSpec);
-    String expected = "eyJhbGciOiJBMTI4R0NNIiwiaXYiOiJ5djY2dnZyTzI2M2V5dmlJIn0.H7I-QNvM8VtMylQfBbbqyrT8xiFcVv-7CZTn-dkXr10dpIOmzjMbqjmbqevK2aAoRu4s5DhU8dbeu8SbRJTCDYYAkYfOo_Hc5NY6B5-VwhnOWc0sres";
-    assertEquals(expected, encryptedJWT);
-
-    String decryptedJWT = WebToken.decrypt(encryptedJWT, secretKey);
-    assertEquals(joeStr, decryptedJWT);
   }
 
   public void testJoeEncoding() throws UnsupportedEncodingException {
@@ -590,8 +534,8 @@ public class WebTokenTest extends TestCase {
     System.out.println(name + " jwtSymmetricKeySegment base64: " + split[1]);
     System.out.println(name + " jwtCryptoSegment base64: " + split[2]);
 
-    String cleartext = WebToken.decrypt(encrypted, rsaPrivKey);
-    assertEquals(joeStr, cleartext);
+    byte[] cleartextBytes = WebToken.jwtDecrypt(encrypted, rsaPrivKey);
+    assertEquals(joeStr, new String(cleartextBytes));
   }
 
   public void testRE128() throws Exception {
@@ -634,8 +578,7 @@ public class WebTokenTest extends TestCase {
       return;
     }
     JSONObject jo = new JSONObject(rsa15AesGcm256HeaderStr);
-    byte[] N = Hex.decode("cafebabefacedbaddecaf888");
-    String ivB64 = Base64.encodeBytes(N, org.xmldap.util.Base64.DONT_BREAK_LINES | org.xmldap.util.Base64.URL);
+    String ivB64 = "48V1_ALb6US04U3b";
     System.out.println("rsa15AesGcm256 fixed IV = " + ivB64);
     jo.put("iv", ivB64);
     String headerStr = jo.toString();
@@ -645,7 +588,7 @@ public class WebTokenTest extends TestCase {
   }
 
   public void testAE128() throws Exception {
-    WebToken jwt = new WebToken(joeStr, ae128);
+    WebToken jwt = new WebToken(joeStr, a128kw);
 
     KeyGenerator keygen;
     try {
@@ -654,82 +597,84 @@ public class WebTokenTest extends TestCase {
       throw new CryptoException(e);
     }
 
-    keygen.init(128);
+    int keylength = 128;
+    
+    keygen.init(keylength);
     SecretKey key = keygen.generateKey();
 
-    String encrypted = jwt.encrypt(key, null);
+    String encrypted = jwt.encrypt(key);
 
     String[] split = encrypted.split("\\.");
 
-    assertEquals(2, split.length);
-    assertEquals(ae128b64, split[0]);
+    assertEquals(4, split.length);
+    assertEquals(a128kwb64, split[0]);
 
     System.out.println("AES128 jwtCryptoSegment base64: " + split[1]);
 
-    String cleartext = WebToken.decrypt(encrypted, key);
-    assertEquals(joeStr, cleartext);
+    byte[] cleartext = WebToken.decrypt(encrypted, key);
+    assertTrue(Arrays.equals(joeStr.getBytes(), cleartext));
   }
 
-  private void printBytes(String label, byte[] bytes) {
-    System.out.print(label + "\n[");
-    for (int i = 0; i < bytes.length - 1; i++) {
-      System.out.print(Integer.toString(bytes[i]) + ", ");
-    }
-    System.out.println(Integer.toString(bytes[bytes.length - 1]) + "]");
-  }
+//  private void printBytes(String label, byte[] bytes) {
+//    System.out.print(label + "\n[");
+//    for (int i = 0; i < bytes.length - 1; i++) {
+//      System.out.print(Integer.toString(bytes[i]) + ", ");
+//    }
+//    System.out.println(Integer.toString(bytes[bytes.length - 1]) + "]");
+//  }
 
-  public void testAE192fixedKey() throws Exception {
-    WebToken jwt = new WebToken(joeStr, ae192);
-    byte[] encodedKey = new byte[] { 126, (byte) -34, (byte) -48, (byte) -34, (byte) 61, (byte) 72, (byte) -63,
-        (byte) -36, (byte) 14, (byte) 53, (byte) -27, (byte) -7, (byte) -35, (byte) -57, (byte) 59, (byte) -89,
-        (byte) 51, (byte) 84, (byte) 115, (byte) -119, (byte) -1, (byte) -125, (byte) -115, (byte) 108 };
+//  public void testAE192fixedKey() throws Exception {
+//    WebToken jwt = new WebToken(joeStr, ae192);
+//    byte[] encodedKey = new byte[] { 126, (byte) -34, (byte) -48, (byte) -34, (byte) 61, (byte) 72, (byte) -63,
+//        (byte) -36, (byte) 14, (byte) 53, (byte) -27, (byte) -7, (byte) -35, (byte) -57, (byte) 59, (byte) -89,
+//        (byte) 51, (byte) 84, (byte) 115, (byte) -119, (byte) -1, (byte) -125, (byte) -115, (byte) 108 };
+//
+//    SecretKey key = new SecretKeySpec(encodedKey, "AES");
+//    printBytes("fixed AES192 keybytes", key.getEncoded());
+//
+//    String encrypted = jwt.encrypt(key, null);
+//
+//    String[] split = encrypted.split("\\.");
+//
+//    assertEquals(2, split.length);
+//    assertEquals(ae192b64, split[0]);
+//
+//    System.out.println("AES192 jwtCryptoSegment base64: " + split[1]);
+//
+//    String cleartext = WebToken.decrypt(encrypted, key);
+//    assertEquals(joeStr, cleartext);
+//
+//  }
 
-    SecretKey key = new SecretKeySpec(encodedKey, "AES");
-    printBytes("fixed AES192 keybytes", key.getEncoded());
-
-    String encrypted = jwt.encrypt(key, null);
-
-    String[] split = encrypted.split("\\.");
-
-    assertEquals(2, split.length);
-    assertEquals(ae192b64, split[0]);
-
-    System.out.println("AES192 jwtCryptoSegment base64: " + split[1]);
-
-    String cleartext = WebToken.decrypt(encrypted, key);
-    assertEquals(joeStr, cleartext);
-
-  }
-
-  public void testAE192() throws Exception {
-    WebToken jwt = new WebToken(joeStr, ae192);
-
-    KeyGenerator keygen;
-    try {
-      keygen = KeyGenerator.getInstance("AES");
-    } catch (NoSuchAlgorithmException e) {
-      throw new CryptoException(e);
-    }
-
-    keygen.init(192);
-    SecretKey key = keygen.generateKey();
-    printBytes("AES192 keybytes", key.getEncoded());
-
-    String encrypted = jwt.encrypt(key, null);
-
-    String[] split = encrypted.split("\\.");
-
-    assertEquals(2, split.length);
-    assertEquals(ae192b64, split[0]);
-
-    System.out.println("AES192 jwtCryptoSegment base64: " + split[1]);
-
-    String cleartext = WebToken.decrypt(encrypted, key);
-    assertEquals(joeStr, cleartext);
-  }
+//  public void testAE192() throws Exception {
+//    WebToken jwt = new WebToken(joeStr, ae192);
+//
+//    KeyGenerator keygen;
+//    try {
+//      keygen = KeyGenerator.getInstance("AES");
+//    } catch (NoSuchAlgorithmException e) {
+//      throw new CryptoException(e);
+//    }
+//
+//    keygen.init(192);
+//    SecretKey key = keygen.generateKey();
+//    printBytes("AES192 keybytes", key.getEncoded());
+//
+//    String encrypted = jwt.encrypt(key, null);
+//
+//    String[] split = encrypted.split("\\.");
+//
+//    assertEquals(2, split.length);
+//    assertEquals(ae192b64, split[0]);
+//
+//    System.out.println("AES192 jwtCryptoSegment base64: " + split[1]);
+//
+//    String cleartext = WebToken.decrypt(encrypted, key);
+//    assertEquals(joeStr, cleartext);
+//  }
 
   public void testAE256() throws Exception {
-    WebToken jwt = new WebToken(joeStr, ae256);
+    WebToken jwt = new WebToken(joeStr, a256kw);
 
     KeyGenerator keygen;
     try {
@@ -741,17 +686,17 @@ public class WebTokenTest extends TestCase {
     keygen.init(256);
     SecretKey key = keygen.generateKey();
 
-    String encrypted = jwt.encrypt(key, null);
+    String encrypted = jwt.encrypt(key);
 
     String[] split = encrypted.split("\\.");
 
-    assertEquals(2, split.length);
-    assertEquals(ae256b64, split[0]);
+    assertEquals(4, split.length);
+    assertEquals(a256kwb64, split[0]);
 
     System.out.println("AES256 jwtCryptoSegment base64: " + split[1]);
 
-    String cleartext = WebToken.decrypt(encrypted, key);
-    assertEquals(joeStr, cleartext);
+    byte[] cleartext = WebToken.decrypt(encrypted, key);
+    assertTrue(Arrays.equals(joeStr.getBytes(), cleartext));
   }
 
   public void testAgreement() throws Exception {
@@ -806,7 +751,7 @@ public class WebTokenTest extends TestCase {
 
     String[] split = encrypted.split("\\.");
 
-    assertEquals(3, split.length);
+    assertEquals(4, split.length);
 
     String newJwtHeaderSegment = new String(Base64.decodeUrl(split[0]));
     JSONObject newJwtHeader = new JSONObject(newJwtHeaderSegment);
@@ -824,8 +769,8 @@ public class WebTokenTest extends TestCase {
     System.out.println("ECDH-ES jwtCryptoSegment base64: " + split[2]);
 
     // TODO use x,y from the newHeader epk
-    String cleartext = WebToken.decrypt(encrypted, ec256_b_X, ec256_b_Y, ec256_a_D);
-    assertEquals(joeStr, cleartext);
+    byte[] cleartext = WebToken.decrypt(encrypted, ec256_b_X, ec256_b_Y, ec256_a_D);
+    assertTrue(Arrays.equals(joeStr.getBytes(), cleartext));
   }
 
   public void testECencryptionEphemeralKey() throws Exception {
@@ -871,7 +816,7 @@ public class WebTokenTest extends TestCase {
 
     String[] split = encrypted.split("\\.");
 
-    assertEquals(3, split.length);
+    assertEquals(4, split.length);
 
     String newJwtHeaderSegment = new String(Base64.decodeUrl(split[0]));
     JSONObject newJwtHeader = new JSONObject(newJwtHeaderSegment);
@@ -889,8 +834,8 @@ public class WebTokenTest extends TestCase {
     System.out.println("ECDH-ES jwtCryptoSegment base64: " + split[2]);
 
     // TODO use x,y from header
-    String cleartext = WebToken.decrypt(encrypted, X, Y, ec256_b_D);
-    assertEquals(joeStr, cleartext);
+    byte[] cleartext = WebToken.decrypt(encrypted, X, Y, ec256_b_D);
+    assertTrue(Arrays.equals(joeStr.getBytes(), cleartext));
   }
 
   // public void testMikesExample2() throws Exception {
@@ -923,7 +868,7 @@ public class WebTokenTest extends TestCase {
   // assertEquals(jwtHeaderStr, new String(headerBytes, "UTF-8"));
   // String encodedHeader =
   // "eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00iLCJpdiI6IjQ4VjFfQUxiNlVTMDRVM2IifQ";
-  // assertEquals(encodedHeader,
+  // assertEquals(4ncodedHeader,
   // Base64.encodeBytes(headerBytes, org.xmldap.util.Base64.DONT_BREAK_LINES |
   // org.xmldap.util.Base64.URL));
   //
@@ -1052,7 +997,7 @@ public class WebTokenTest extends TestCase {
   //
   // String[] split = encrypted.split("\\.");
   //
-  // assertEquals(3, split.length);
+  // assertEquals(4, split.length);
   //
   // String newJwtHeaderSegment = new String(Base64.decodeUrl(split[0]));
   // JSONObject newJwtHeader = new JSONObject(newJwtHeaderSegment);
@@ -1102,7 +1047,7 @@ public class WebTokenTest extends TestCase {
         101, 114, 46 };
     assertTrue(Arrays.equals(plaintext.getBytes(), plaintextBytes));
 
-    String ivB64 = "48V1_ALb6US04U3b";
+    //String ivB64 = "48V1_ALb6US04U3b";
     String headerStr = "{\"alg\":\"RSA-OAEP\",\"enc\":\"A256GCM\",\"iv\":\"48V1_ALb6US04U3b\"}";
     String headerStrB64 = "eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00iLCJpdiI6IjQ4VjFfQUxiNlVTMDRVM2IifQ";
     assertEquals(headerStrB64,
@@ -1188,8 +1133,8 @@ public class WebTokenTest extends TestCase {
     String[] split = encrypted.split("\\.");
     assertEquals(4, split.length);
 
-    String cleartext = WebToken.decrypt(encrypted, aRsaPrivKey);
-    assertEquals(plaintext, cleartext);
+    byte[] cleartextBytes = WebToken.jwtDecrypt(encrypted, aRsaPrivKey);
+    assertTrue(Arrays.equals(plaintextBytes, cleartextBytes));
   }
 
   //
@@ -1288,7 +1233,27 @@ public class WebTokenTest extends TestCase {
     String[] split = encrypted.split("\\.");
     assertEquals(4, split.length);
 
-    String cleartext = WebToken.decrypt(encrypted, aRsaPrivKey);
-    assertEquals(plaintext, cleartext);
+    byte[] cleartextBytes = WebToken.jwtDecrypt(encrypted, aRsaPrivKey);
+    assertTrue(Arrays.equals(plaintextBytes, cleartextBytes));
+    
+    String ivStr = "AxY8DCtDaGlsbGljb3RoZQ";
+    byte[]ivBytes = Base64.decodeUrl(ivStr);
+    assertEquals(16, ivBytes.length);
+    
+    String webToken = "eyJhbGciOiJSU0ExXzUiLCJlbmMiOiJBMTI4Q0JDIiwiaW50IjoiSFMyNTYiLCJp" +
+   "diI6IkF4WThEQ3REYUdsc2JHbGpiM1JvWlEifQ." +
+   "IPI_z172hSWHMFgED8EG9DM6hIXU_6NaO1DImCn0vNeuoBq847Sl6qw_GHSYHJUQ" +
+   "XtXJq7S_CxWVrI82wjrOyaQca5tLZRZc45BfKHeqByThKI261QevEK56SyAwwXfK" +
+   "KZjSvkQ5dwTFSgfy76rMSUvVynHYEhdCatBF9HWTAiXPx7hgZixG1FeP_QCmOylz" +
+   "2VClVyYFCbjKREOwBFf-puNYfO75S3LNlJUtTsGGQL2oTKpMsEiUTdefkje91VX9" +
+   "h8g7908lFsggbjV7NicJsufuXxnTj1fcWIrRDeNIOmakiPEODi0gTSz0ou-W-LWK" +
+   "-3T1zYlOIiIKBjsExQKZ-w." +
+   "_Z_djlIoC4MDSCKireWS2beti4Q6iSG2UjFujQvdz-_PQdUcFNkOulegD6BgjgdF" +
+   "LjeB4HHOO7UHvP8PEDu0a0sA2a_-CI0w2YQQ2QQe35M." +
+   "c41k4T4eAgCCt63m8ZNmiOinMciFFypOFpvid7i6D0k";
+
+    byte[] x = WebToken.jwtDecrypt(webToken, aRsaPrivKey);
+    assertTrue(Arrays.equals(plaintextBytes, x));
   }
+  
 }
