@@ -69,7 +69,6 @@ import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.crypto.params.KDFParameters;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.signers.ECDSASigner;
-import org.bouncycastle.jcajce.provider.asymmetric.ec.ECUtil;
 import org.bouncycastle.math.ec.ECCurve;
 import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.util.Arrays;
@@ -905,6 +904,18 @@ public class WebToken {
     }
   }
 
+  static ASN1ObjectIdentifier getNamedCurveOid(String jwtCrvStr) {
+    if ("P-256".equals(jwtCrvStr)) {
+      return SECObjectIdentifiers.secp256r1;
+    } else if ("P-384".equals(jwtCrvStr)) {
+      return SECObjectIdentifiers.secp384r1;
+    } else if ("P-521".equals(jwtCrvStr)) {
+      return SECObjectIdentifiers.secp521r1;
+    } else {
+      return null;
+    }
+  }
+  
   public static byte[] decrypt(String encrypted, BigInteger x, BigInteger y, BigInteger D) throws Exception {
     String[] split = encrypted.split("\\.");
     String headerB64 = split[0];
@@ -923,12 +934,12 @@ public class WebToken {
     String jwtCrvStr = keyJSON.getString("crv");
     Digest digest = new SHA256Digest();
 
-    ASN1ObjectIdentifier oid = ECUtil.getNamedCurveOid(jwtCrvStr);
+    ASN1ObjectIdentifier oid = getNamedCurveOid(jwtCrvStr);
     if (oid == null) {
-      throw new NoSuchAlgorithmException("JWT EC curve: " + jwtAlgStr);
+      throw new NoSuchAlgorithmException("JWT EC curve: " + jwtCrvStr);
     }
 
-    X9ECParameters x9ECParameters = ECUtil.getNamedCurveByOid(oid);
+    X9ECParameters x9ECParameters = SECNamedCurves.getByOID(oid);
     ECCurve curve = x9ECParameters.getCurve();
     ECPoint qB = curve.createPoint(x, y, false);
     ECPoint q = new ECPoint.Fp(curve, qB.getX(), qB.getY());
