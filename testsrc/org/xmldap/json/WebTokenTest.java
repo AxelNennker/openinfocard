@@ -31,6 +31,8 @@ package org.xmldap.json;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.security.AlgorithmParameterGenerator;
+import java.security.AlgorithmParameters;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -40,6 +42,7 @@ import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPrivateKeySpec;
@@ -54,6 +57,7 @@ import javax.crypto.spec.SecretKeySpec;
 import junit.framework.TestCase;
 
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.Digest;
@@ -90,23 +94,23 @@ public class WebTokenTest extends TestCase {
       (byte) 98, (byte) 61, (byte) 34, (byte) 61, (byte) 46, (byte) 33, (byte) 114, (byte) 5, (byte) 46, (byte) 79,
       (byte) 8, (byte) 192, (byte) 205, (byte) 154, (byte) 245, (byte) 103, (byte) 208, (byte) 128, (byte) 163 };
 
-  String es256 = "{\"alg\":\"ES256\"}";
-  String es384 = "{\"alg\":\"ES384\"}";
-  String es512 = "{\"alg\":\"ES512\"}";
+  final String es256 = "{\"alg\":\"ES256\"}";
+  final String es384 = "{\"alg\":\"ES384\"}";
+  final String es512 = "{\"alg\":\"ES512\"}";
 
-  String rs256 = "{\"alg\":\"RS256\"}";
-  String rs384 = "{\"alg\":\"RS384\"}";
-  String rs512 = "{\"alg\":\"RS512\"}";
+  final String rs256 = "{\"alg\":\"RS256\"}";
+  final String rs384 = "{\"alg\":\"RS384\"}";
+  final String rs512 = "{\"alg\":\"RS512\"}";
 
-  String a128kw = "{\"alg\":\"A128KW\", \"enc\":\"A128GCM\", \"iv\":\"AxY8DCtDaGlsbGljb3RoZQ\"}";
-  String a256kw = "{\"alg\":\"A256KW\", \"int\":\"HS256\", \"enc\":\"A256CBC\", \"iv\":\"AxY8DCtDaGlsbGljb3RoZQ\"}";
+  final String a128kw = "{\"alg\":\"A128KW\", \"enc\":\"A128GCM\", \"iv\":\"AxY8DCtDaGlsbGljb3RoZQ\"}";
+  final String a256kw = "{\"alg\":\"A256KW\", \"int\":\"HS256\", \"enc\":\"A256CBC\", \"iv\":\"AxY8DCtDaGlsbGljb3RoZQ\"}";
 
-  String A128GCM = "{\"alg\":\"A128GCM\"}";
+  final String A128GCM = "{\"alg\":\"A128GCM\"}";
 
-  String re256GCM = "{\"alg\":\"RSA1_5\",\r\n" + "\"enc\":\"A256GCM\",\r\n" + "\"iv\":\"AxY8DCtDaGlsbGljb3RoZQ\",\r\n"
+  final String re256GCM = "{\"alg\":\"RSA1_5\",\r\n" + "\"enc\":\"A256GCM\",\r\n" + "\"iv\":\"AxY8DCtDaGlsbGljb3RoZQ\",\r\n"
       + "\"x5t\":\"7noOPq-hJ1_hCnvWh6IeYI2w9Q0\"}";
 
-  String re128GCM = "{\"alg\":\"RSA1_5\",\r\n" + "\"enc\":\"A128GCM\",\r\n" + "\"iv\":\"AxY8DCtDaGlsbGljb3RoZQ\",\r\n"
+  final String re128GCM = "{\"alg\":\"RSA1_5\",\r\n" + "\"enc\":\"A128GCM\",\r\n" + "\"iv\":\"AxY8DCtDaGlsbGljb3RoZQ\",\r\n"
       + "\"x5t\":\"7noOPq-hJ1_hCnvWh6IeYI2w9Q0\"}";
 
   String a128kwb64;
@@ -162,6 +166,8 @@ public class WebTokenTest extends TestCase {
   String keybytes256B64 = null;
 
   AsymmetricCipherKeyPair eckp = null;
+
+  private JsonCryptoProvider provider;
 
   public void setUp() {
     try {
@@ -299,7 +305,7 @@ public class WebTokenTest extends TestCase {
           + "\"iv\":\"__79_Pv6-fg\",\r\n" + "\"crv\":\"secp256r1\",\r\n" + "\"x\":\"" + ec256_1_x_b64 + "\",\r\n"
           + "\"y\":\"" + ec256_1_y_b64 + "\"}";
 
-      ASN1ObjectIdentifier oid = ECUtil.getNamedCurveOid("secp256r1");
+      ASN1ObjectIdentifier oid = SECNamedCurves.getOID("secp256r1");
       X9ECParameters x9ECParameters = ECUtil.getNamedCurveByOid(oid);
       // ECCurve curve = x9ECParameters.getCurve();
 
@@ -361,8 +367,29 @@ public class WebTokenTest extends TestCase {
     } catch (Exception e) {
       assertTrue(false);
     }
+
+    provider = new JsonCryptoProvider();
+    
   }
 
+  public void testAlgorithmParameterGenerator() throws Exception {
+    AlgorithmParameterSpec genParamSpec = new JsonCryptoParameterSpec(rsaOaepAesCbc128HeaderStr);
+    AlgorithmParameterGenerator apg = AlgorithmParameterGenerator.getInstance("RSA15", provider);
+    apg.init(genParamSpec);
+    AlgorithmParameters algorithmParameters = apg.generateParameters();
+    assertNotNull(algorithmParameters);
+    assertEquals("RSA15", algorithmParameters.getAlgorithm());
+    assertEquals(rsaOaepAesCbc128HeaderStr, new String(algorithmParameters.getEncoded()));
+  }
+  
+  public void testAlgorithmParameters() throws Exception {
+    AlgorithmParameterSpec genParamSpec = new JsonCryptoParameterSpec(rsaOaepAesCbc128HeaderStr);
+    AlgorithmParameters algorithmParameters = AlgorithmParameters.getInstance("RSA15", provider);
+    algorithmParameters.init(genParamSpec);
+    assertEquals("RSA15", algorithmParameters.getAlgorithm());
+    assertEquals(rsaOaepAesCbc128HeaderStr, new String(algorithmParameters.getEncoded()));
+  }
+  
   public void testBadHeader() throws Exception {
     String b = "{\"alg\":\"ECDH-ES\",\"alg\":\"another alg\"}";
     try {
@@ -432,8 +459,7 @@ public class WebTokenTest extends TestCase {
     // (byte)206, 8, 23, 35};
 
     // "secp256r1 [NIST P-256, X9.62 prime256v1]", "1.2.840.10045.3.1.7"
-    WebToken wt = new WebToken(joeStr, es256);
-    String signed = wt.serialize(new BigInteger(1, ec256_1_d));
+    String signed = WebToken.serialize(joeStr.getBytes(), new JSONObject(es256), new BigInteger(1, ec256_1_d));
     String[] split = signed.split("\\.");
     assertEquals(3, split.length);
     assertEquals("eyJhbGciOiJFUzI1NiJ9", split[0]);
@@ -445,17 +471,16 @@ public class WebTokenTest extends TestCase {
 
   }
 
-  private void testHMACSHA(String jwtAlgorithm, String jwtHeaderSegment, String jwtCryptoSegment)
+  private void testHMACSHA(String jwsHeaderStr, String encodedJwtHeaderSegment, String encodedJwtCryptoSegment)
       throws InvalidKeyException, NoSuchAlgorithmException, IllegalStateException, UnsupportedEncodingException,
       JSONException {
-    WebToken jwt = new WebToken(joeStr, jwtAlgorithm);
-    String signed = jwt.serialize(hsKey);
+    String signed = WebToken.serialize(joeStr.getBytes(), jwsHeaderStr, hsKey);
     String[] split = signed.split("\\.");
     assertEquals(3, split.length);
-    assertEquals(jwtHeaderSegment, split[0]);
+    assertEquals(encodedJwtHeaderSegment, split[0]);
     assertEquals("eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFtcGxlLmNvbS9pc19yb290Ijp0cnVlfQ",
         split[1]);
-    assertEquals(jwtCryptoSegment, split[2]);
+    assertEquals(encodedJwtCryptoSegment, split[2]);
     String expected = split[0] + "." + split[1] + "." + split[2];
     assertEquals(expected, signed);
   }
@@ -480,9 +505,7 @@ public class WebTokenTest extends TestCase {
   private void testRSASHA(String jwtAlgorithm, String jwtHeaderSegment, String jwtCryptoSegment)
       throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, SignatureException, JSONException,
       IOException {
-    WebToken jwt = new WebToken(joeStr, jwtAlgorithm);
-
-    String signed = jwt.serialize(rsaPrivKey);
+    String signed = WebToken.serialize(joeStr.getBytes(), new JSONObject(jwtAlgorithm), rsaPrivKey);
     String[] split = signed.split("\\.");
 
     assertEquals(3, split.length);
@@ -514,9 +537,7 @@ public class WebTokenTest extends TestCase {
     System.out.println("jwtHeaderSegment: " + name + " " + jwtHeaderSegment);
     System.out.println("jwtHeaderSegment: " + name + " " + jwtHeaderSegmentB64);
 
-    WebToken jwt = new WebToken(joeStr, jwtHeaderSegment);
-    String encrypted = jwt.encrypt(rsaPublicKey);
-
+    String encrypted  = WebToken.encrypt(joeStr.getBytes(), jwtHeaderSegment, rsaPublicKey);
     String[] split = encrypted.split("\\.");
 
     assertEquals(4, split.length);
@@ -537,6 +558,10 @@ public class WebTokenTest extends TestCase {
     byte[] cleartextBytes = WebToken.jwtDecrypt(encrypted, rsaPrivKey);
     assertEquals(joeStr, new String(cleartextBytes));
   }
+  
+  public void testRE128Gcm() throws Exception {
+    testRsa("rsa15AesGcm128", rsa15AesGcm128HeaderStr, rsa15AesGcm128HeaderStrb64);
+  }
 
   public void testRE128() throws Exception {
     testRsa("rsaOaepAesCbc128", rsaOaepAesCbc128HeaderStr, rsaOaepAesCbc128HeaderStrb64);
@@ -553,10 +578,6 @@ public class WebTokenTest extends TestCase {
   // public void testRE256Gcm() throws Exception {
   // WebToken jwt = new WebToken(joeStr, ae128);
   // }
-
-  public void testRE128Gcm() throws Exception {
-    testRsa("rsa15AesGcm128", rsa15AesGcm128HeaderStr, rsa15AesGcm128HeaderStrb64);
-  }
 
   public void testRE256Gcm() throws Exception {
     int maxKeyLen = Cipher.getMaxAllowedKeyLength("AES");
@@ -588,8 +609,6 @@ public class WebTokenTest extends TestCase {
   }
 
   public void testAE128() throws Exception {
-    WebToken jwt = new WebToken(joeStr, a128kw);
-
     KeyGenerator keygen;
     try {
       keygen = KeyGenerator.getInstance("AES");
@@ -602,7 +621,7 @@ public class WebTokenTest extends TestCase {
     keygen.init(keylength);
     SecretKey key = keygen.generateKey();
 
-    String encrypted = jwt.encrypt(key);
+    String encrypted = WebToken.encrypt(joeStr.getBytes(), a128kw, key);
 
     String[] split = encrypted.split("\\.");
 
@@ -674,8 +693,6 @@ public class WebTokenTest extends TestCase {
 //  }
 
   public void testAE256() throws Exception {
-    WebToken jwt = new WebToken(joeStr, a256kw);
-
     KeyGenerator keygen;
     try {
       keygen = KeyGenerator.getInstance("AES");
@@ -686,7 +703,7 @@ public class WebTokenTest extends TestCase {
     keygen.init(256);
     SecretKey key = keygen.generateKey();
 
-    String encrypted = jwt.encrypt(key);
+    String encrypted = WebToken.encrypt(joeStr.getBytes(), a256kw, key);
 
     String[] split = encrypted.split("\\.");
 
@@ -700,7 +717,7 @@ public class WebTokenTest extends TestCase {
   }
 
   public void testAgreement() throws Exception {
-    ASN1ObjectIdentifier oid = ECUtil.getNamedCurveOid("secp256r1");
+    ASN1ObjectIdentifier oid = SECNamedCurves.getOID("secp256r1");
     X9ECParameters x9ECParameters = ECUtil.getNamedCurveByOid(oid);
     ECCurve curve = x9ECParameters.getCurve();
     BigInteger za;
@@ -746,8 +763,7 @@ public class WebTokenTest extends TestCase {
 
   public void testECencryption256() throws Exception {
     String jwtHeaderSegment = ec256_b_header;
-    WebToken jwt = new WebToken(joeStr, jwtHeaderSegment);
-    String encrypted = jwt.encrypt(ec256_a_X, ec256_a_Y, ec256_b_D);
+    String encrypted = WebToken.encrypt(joeStr.getBytes(), jwtHeaderSegment, ec256_a_X, ec256_a_Y, ec256_b_D);
 
     String[] split = encrypted.split("\\.");
 
@@ -811,8 +827,7 @@ public class WebTokenTest extends TestCase {
         + " \"x\":\"" + X_b64 + "\",\r\n" + " \"y\":\"" + Y_b64 + "\"}]}}";
 
     String jwtHeaderSegment = header;
-    WebToken jwt = new WebToken(joeStr, jwtHeaderSegment);
-    String encrypted = jwt.encrypt(ec256_b_X, ec256_b_Y, D);
+    String encrypted = WebToken.encrypt(joeStr.getBytes(), jwtHeaderSegment, ec256_b_X, ec256_b_Y, D);
 
     String[] split = encrypted.split("\\.");
 
@@ -1127,9 +1142,8 @@ public class WebTokenTest extends TestCase {
     RSAPublicKey aRsaPublicKey = (RSAPublicKey) keyFactory.generatePublic(pubKeySpec);
     RSAPrivateKey aRsaPrivKey = (RSAPrivateKey) keyFactory.generatePrivate(privKeySpec);
 
-    WebToken jwt = new WebToken(plaintext, headerStr);
     SecretKey contentEncryptionKey = new SecretKeySpec(cmk, "AES");
-    String encrypted = jwt.encrypt(aRsaPublicKey, contentEncryptionKey);
+    String encrypted = WebToken.encrypt(plaintext.getBytes(), headerStr, aRsaPublicKey, contentEncryptionKey);
     String[] split = encrypted.split("\\.");
     assertEquals(4, split.length);
 
@@ -1227,9 +1241,8 @@ public class WebTokenTest extends TestCase {
     RSAPublicKey aRsaPublicKey = (RSAPublicKey) keyFactory.generatePublic(pubKeySpec);
     RSAPrivateKey aRsaPrivKey = (RSAPrivateKey) keyFactory.generatePrivate(privKeySpec);
 
-    WebToken jwt = new WebToken(plaintext, headerStr);
     SecretKey contentEncryptionKey = new SecretKeySpec(cmk, "AES");
-    String encrypted = jwt.encrypt(aRsaPublicKey, contentEncryptionKey);
+    String encrypted = WebToken.encrypt(plaintext.getBytes(), headerStr, aRsaPublicKey, contentEncryptionKey);
     String[] split = encrypted.split("\\.");
     assertEquals(4, split.length);
 

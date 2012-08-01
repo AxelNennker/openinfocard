@@ -229,13 +229,13 @@ public class CryptoUtils {
     return aesCbcEncrypt(data, keybytes, sr);
   }
 
-  public static byte[] jwtAesCbcEncrypt(String data, byte[] keybytes, IvParameterSpec parameters) throws CryptoException {
+  public static byte[] jwtAesCbcEncrypt(byte[] contentBytes, byte[] keybytes, IvParameterSpec parameters) throws CryptoException {
     Cipher cipher;
     try {
       cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
       SecretKeySpec keyspec = new SecretKeySpec(keybytes, "AES");
       cipher.init(Cipher.ENCRYPT_MODE, keyspec, parameters);
-      return cipher.doFinal(data.getBytes());
+      return cipher.doFinal(contentBytes);
     } catch (NoSuchAlgorithmException e) {
       throw new CryptoException(e);
     } catch (NoSuchPaddingException e) {
